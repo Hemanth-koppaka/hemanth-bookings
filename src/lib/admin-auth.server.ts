@@ -1,7 +1,7 @@
 // Server-only admin authentication.
 //
-// - The access code is stored as a PBKDF2 hash (legacy plain-text codes are
-//   accepted once and upgraded in place).
+// - The access code is stored as a PBKDF2 hash; plaintext credentials never
+//   authenticate.
 // - Wrong codes are throttled per device (internet connection): after 5
 //   misses that device is locked out, and each further run of misses doubles
 //   its lock (up to an hour). Other devices, like the salon's own phone, can
@@ -297,15 +297,14 @@ export async function signIn(code: string): Promise<SignInResult> {
   if (wait) return { ok: false, lockedFor: wait };
 
   const stored = await readSecret();
+  // In particular, never treat the literal starter value from the original
+  // database seed as a working credential. Legacy plaintext entries must be
+  // securely reconfigured before admin access is available.
+  if (!stored.startsWith("pbkdf2$")) return recordMiss(GUARD_KEY, g, dev, now);
   if (!(await matches(code, stored))) return recordMiss(GUARD_KEY, g, dev, now);
 
-  let current = stored;
-  if (!stored.startsWith("pbkdf2$")) {
-    current = await hashCode(code);
-    await supabaseAdmin.from("admin_secret").update({ pin: current }).eq("id", 1);
-  }
   await recordSuccess(GUARD_KEY, g, dev, now);
-  return { ok: true, ...(await issueToken(current, isWeakCode(code))), weak: isWeakCode(code) };
+  return { ok: true, ...(await issueToken(stored, isWeakCode(code))), weak: isWeakCode(code) };
 }
 
 /** Changes the access code. Requires the current code again, not just a session. */
