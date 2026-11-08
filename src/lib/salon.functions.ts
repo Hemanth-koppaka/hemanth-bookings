@@ -377,43 +377,34 @@ const maskPhone = (p: string) => {
   return d.length >= 4 ? `•••••• ${d.slice(-4)}` : "••••";
 };
 
-/**
- * Manage booking: look up by booking ID *or* by the mobile number used to book.
- * A phone returns that guest's upcoming bookings (and the last 30 days). The
- * phone is never sent back; each result carries a key that authorises changes.
- */
+/** Manage booking requires the exact reference and the booking phone together. */
 export const findMyBookings = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ query: z.string().trim().min(3).max(30) }).parse(d))
+  .inputValidator(
+    (d) =>
+      z
+        .object({
+          reference: z.string().trim().regex(/^HB-[A-Z0-9]{6}$/i),
+          phone: z.string().trim().min(10).max(20).regex(/^[+\d\s().-]+$/),
+        })
+        .strict()
+        .parse(d),
+  )
   .handler(async ({ data }) => {
     const sb = await db();
     const { manageToken } = await import("./admin-auth.server");
-    const q = data.query.trim();
-    const digits = q.replace(/\D/g, "");
-    const isPhone = !/[a-z]/i.test(q) && digits.length >= 10;
-    let rows: Record<string, unknown>[] = [];
-    if (isPhone) {
-      const since = new Date(Date.now() + 330 * 60_000 - 30 * 86_400_000).toISOString().slice(0, 10);
-      const key = digits.slice(-10);
-      // customers are matched on their cleaned 10-digit number; older bookings on the raw text
-      const { data: cust } = await sb.from("customers" as never).select("id").eq("phone_key", key);
-      const ids = ((cust ?? []) as { id: string }[]).map((c) => c.id);
-      const base = () => sb.from("bookings").select("*").gte("date", since).limit(40);
-      const [byCustomer, byText] = await Promise.all([
-        ids.length ? base().in("customer_id" as never, ids as never) : Promise.resolve({ data: [] }),
-        base().ilike("customer->>phone" as never, `%${key.slice(-4)}%`),
-      ]);
-      const seen = new Set<string>();
-      rows = ([...(byCustomer.data ?? []), ...(byText.data ?? [])] as Record<string, unknown>[])
-        .filter((r) => last10((r["customer"] as { phone: string }).phone) === key)
-        .filter((r) => !seen.has(r["reference"] as string) && Boolean(seen.add(r["reference"] as string)))
-        .sort((a, b) => String(a["date"]).localeCompare(String(b["date"])) || (a["time"] as number) - (b["time"] as number));
-    } else {
-      const ref = q.toUpperCase().replace(/\s+/g, "");
-      const { data: r } = await sb.from("bookings").select("*").eq("reference", ref).maybeSingle();
-      if (r) rows = [r as Record<string, unknown>];
-    }
+    const reference = data.reference.toUpperCase();
+    const { data: row } = await sb
+      .from("bookings")
+      .select("*")
+      .eq("reference", reference)
+      .maybeSingle();
+    const phoneKey = last10(data.phone);
+    const rows: Record<string, unknown>[] =
+      row && phoneKey.length === 10 && last10((row.customer as { phone?: string })?.phone ?? "") === phoneKey
+        ? [row as Record<string, unknown>]
+        : [];
     const bookings = await Promise.all(
-      rows.slice(0, 12).map(async (r) => {
+      rows.map(async (r) => {
         const b = toRow(r);
         const row = r as Record<string, unknown>;
         const snap = (row["services_snapshot"] as { id?: string; name: string; price: number; minutes?: number }[] | null) ?? [];
@@ -429,17 +420,11 @@ export const findMyBookings = createServerFn({ method: "POST" })
             : null,
           meta: {},
           customer: { ...b.customer, phone: maskPhone(b.customer.phone), email: "" },
-          // Knowing a phone number is not proof of being that guest: a phone
-          // lookup shows upcoming bookings view-only. Changing or cancelling
-          // needs the booking ID (from the guest's own confirmation). Finished
-          // visits keep a key so they can still be rated.
-          ...(isPhone && !visitOverRow(row) ? { readOnly: true as const } : { token: await manageToken(b.reference) }),
-          // view-only: the booking ID stays the guest's secret too
-          ...(isPhone && !visitOverRow(row) ? { reference: `${b.reference.slice(0, 5)}••••` } : {}),
+          token: await manageToken(b.reference),
         };
       }),
     );
-    return { bookings, by: isPhone ? ("phone" as const) : ("reference" as const) };
+    return { bookings };
   });
 
 export const findMyBooking = createServerFn({ method: "POST" })
