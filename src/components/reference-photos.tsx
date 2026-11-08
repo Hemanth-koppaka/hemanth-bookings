@@ -56,7 +56,9 @@ export function ReferencePhotos({ compact }: { compact?: boolean }) {
   const remove = (p: RefPhoto) => {
     update((d) => ({ photos: (d.photos ?? []).filter((x) => x.path !== p.path) }));
     if (draft.draftId && p.proof)
-      void removeReferencePhoto({ data: { draftId: draft.draftId, path: p.path, proof: p.proof } }).catch(() => {});
+      void removeReferencePhoto({
+        data: { draftId: draft.draftId, path: p.path, proof: p.proof },
+      }).catch(() => {});
   };
 
   const tile = compact ? "h-20 w-20" : "h-24 w-24";
@@ -72,7 +74,8 @@ export function ReferencePhotos({ compact }: { compact?: boolean }) {
         </span>
       </div>
       <p className="mb-4 text-[0.85rem] leading-relaxed text-muted-foreground">
-        Show us a look you love. They're only shared with your stylist, appear as “Your look” on the home page an hour before your visit, and are deleted after it.
+        Show us a look you love. They're only shared with your stylist, appear as “Your look” on the
+        home page an hour before your visit, and are deleted after it.
       </p>
       <div className="flex flex-wrap gap-3">
         {photos.map((p) => (

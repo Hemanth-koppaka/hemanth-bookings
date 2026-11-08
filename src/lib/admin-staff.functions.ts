@@ -62,10 +62,7 @@ export const adminStaffList = createServerFn({ method: "POST" })
     const S = await import("./staff-store.server");
     const store = await S.loadStore(); // one read for every table below
     const [st, svc, hrs, brk, lv, un, bk, menu] = await Promise.all([
-      S.stable("staff", store)
-        .select("*")
-        .is("archived_at", null)
-        .order("display_order"),
+      S.stable("staff", store).select("*").is("archived_at", null).order("display_order"),
       S.stable("staff_services", store).select("*"),
       S.stable("staff_working_hours", store).select("*"),
       S.stable("staff_breaks", store).select("*"),
@@ -146,7 +143,10 @@ export const adminStaffList = createServerFn({ method: "POST" })
     });
     const { staffPhotos, defaultStaffPhoto } = await import("./staff-photos.server");
     const photos = await staffPhotos(staff).catch(() => ({}) as Record<string, string>);
-    for (const m of staff) { m.photo = photos[m.id] ?? null; m.photoUploaded = Boolean(m.photo && m.photo !== defaultStaffPhoto(m.name)); }
+    for (const m of staff) {
+      m.photo = photos[m.id] ?? null;
+      m.photoUploaded = Boolean(m.photo && m.photo !== defaultStaffPhoto(m.name));
+    }
     return {
       available: true as const,
       staff,
@@ -218,12 +218,16 @@ export const adminSaveStaff = createServerFn({ method: "POST" })
     };
     let id = x.id;
     if (id) {
-      const { error } = await (await staffTable())("staff")
+      const { error } = await (
+        await staffTable()
+      )("staff")
         .update(row as never)
         .eq("id", id);
       if (error) return { ok: false as const, error: "Couldn't save this stylist." };
     } else {
-      const { data: made, error } = await (await staffTable())("staff")
+      const { data: made, error } = await (
+        await staffTable()
+      )("staff")
         .insert(row as never)
         .select();
       if (error || !Array.isArray(made) || !made[0])
@@ -231,39 +235,36 @@ export const adminSaveStaff = createServerFn({ method: "POST" })
       id = (made[0] as Row)["id"] as string;
     }
     // replace services, hours and breaks with the edited set
-    await (await staffTable())("staff_services")
-      .delete()
-      .eq("staff_id", id);
+    await (await staffTable())("staff_services").delete().eq("staff_id", id);
     if (x.services.length)
-      await (await staffTable())("staff_services")
-        .insert(x.services.map((s) => ({ staff_id: id, service_id: s })) as never);
-    await (await staffTable())("staff_working_hours")
-      .delete()
-      .eq("staff_id", id);
-    await (await staffTable())("staff_working_hours")
-      .insert(
-        x.hours.map((h) => ({
+      await (
+        await staffTable()
+      )("staff_services").insert(x.services.map((s) => ({ staff_id: id, service_id: s })) as never);
+    await (await staffTable())("staff_working_hours").delete().eq("staff_id", id);
+    await (
+      await staffTable()
+    )("staff_working_hours").insert(
+      x.hours.map((h) => ({
+        staff_id: id,
+        day_of_week: h.day,
+        is_working: h.working,
+        start_minute: h.start,
+        end_minute: Math.max(h.end, h.start + 5),
+      })) as never,
+    );
+    await (await staffTable())("staff_breaks").delete().eq("staff_id", id);
+    if (x.breaks.length)
+      await (
+        await staffTable()
+      )("staff_breaks").insert(
+        x.breaks.map((b) => ({
           staff_id: id,
-          day_of_week: h.day,
-          is_working: h.working,
-          start_minute: h.start,
-          end_minute: Math.max(h.end, h.start + 5),
+          day_of_week: b.day,
+          start_minute: b.start,
+          end_minute: b.end,
+          label: b.label || "Break",
         })) as never,
       );
-    await (await staffTable())("staff_breaks")
-      .delete()
-      .eq("staff_id", id);
-    if (x.breaks.length)
-      await (await staffTable())("staff_breaks")
-        .insert(
-          x.breaks.map((b) => ({
-            staff_id: id,
-            day_of_week: b.day,
-            start_minute: b.start,
-            end_minute: b.end,
-            label: b.label || "Break",
-          })) as never,
-        );
     await audit({
       action: x.id ? "staff.update" : "staff.create",
       entity: "staff",
@@ -325,15 +326,18 @@ export const adminAddLeave = createServerFn({ method: "POST" })
     const sb = await admin(data.pin);
     const hit = await clashes(data.staffId, data.start, data.end);
     if (hit.length && !data.confirm) return { ok: false as const, clashes: hit };
-    const { error } = await (await staffTable())("staff_leave")
-      .insert({
-        staff_id: data.staffId,
-        start_date: data.start,
-        end_date: data.end,
-        reason: data.reason,
-      } as never);
+    const { error } = await (
+      await staffTable()
+    )("staff_leave").insert({
+      staff_id: data.staffId,
+      start_date: data.start,
+      end_date: data.end,
+      reason: data.reason,
+    } as never);
     if (error) return { ok: false as const, error: "Couldn't save the leave." };
-    const { data: s } = await (await staffTable())("staff")
+    const { data: s } = await (
+      await staffTable()
+    )("staff")
       .select("name")
       .eq("id", data.staffId)
       .maybeSingle();
@@ -366,16 +370,19 @@ export const adminAddStaffBlock = createServerFn({ method: "POST" })
     const sb = await admin(data.pin);
     const hit = await clashes(data.staffId, data.date, data.date, data.start, data.end);
     if (hit.length && !data.confirm) return { ok: false as const, clashes: hit };
-    const { error } = await (await staffTable())("staff_unavailability")
-      .insert({
-        staff_id: data.staffId,
-        date: data.date,
-        start_minute: data.start,
-        end_minute: data.end,
-        reason: data.reason,
-      } as never);
+    const { error } = await (
+      await staffTable()
+    )("staff_unavailability").insert({
+      staff_id: data.staffId,
+      date: data.date,
+      start_minute: data.start,
+      end_minute: data.end,
+      reason: data.reason,
+    } as never);
     if (error) return { ok: false as const, error: "Couldn't save." };
-    const { data: s } = await (await staffTable())("staff")
+    const { data: s } = await (
+      await staffTable()
+    )("staff")
       .select("name")
       .eq("id", data.staffId)
       .maybeSingle();
@@ -429,7 +436,9 @@ export const adminClosures = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await admin(data.pin);
     const today = salonToday();
-    const { data: rows, error } = await (await staffTable())("salon_closures")
+    const { data: rows, error } = await (
+      await staffTable()
+    )("salon_closures")
       .select("*")
       .is("reopened_at", null)
       .order("start_date");
@@ -545,7 +554,9 @@ export const adminReopen = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ pin, id: z.string().uuid() }).parse(d))
   .handler(async ({ data }) => {
     const sb = await admin(data.pin);
-    const { data: r } = await (await staffTable())("salon_closures")
+    const { data: r } = await (
+      await staffTable()
+    )("salon_closures")
       .select("*")
       .eq("id", data.id)
       .maybeSingle();
@@ -557,10 +568,14 @@ export const adminReopen = createServerFn({ method: "POST" })
     const yesterday = y.toISOString().slice(0, 10);
     const began = (row["start_date"] as string) <= yesterday && row["start_minute"] == null;
     const { error } = began
-      ? await (await staffTable())("salon_closures")
+      ? await (
+          await staffTable()
+        )("salon_closures")
           .update({ end_date: yesterday } as never)
           .eq("id", data.id)
-      : await (await staffTable())("salon_closures")
+      : await (
+          await staffTable()
+        )("salon_closures")
           .update({ reopened_at: new Date().toISOString() } as never)
           .eq("id", data.id);
     if (error) return { ok: false as const, error: "Couldn't reopen." };
@@ -596,20 +611,36 @@ export const adminServiceRule = createServerFn({ method: "POST" })
 /** "any" = every qualified stylist; otherwise prefer this stylist (others only if the guest chooses). */
 export const adminSetServiceRule = createServerFn({ method: "POST" })
   .inputValidator((d) =>
-    z.object({ pin, id: z.string().max(80), preferred: z.union([z.literal("any"), z.string().max(80)]) }).parse(d),
+    z
+      .object({
+        pin,
+        id: z.string().max(80),
+        preferred: z.union([z.literal("any"), z.string().max(80)]),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const sb = await admin(data.pin);
-    const { data: cur } = await sb.from("site_settings").select("value").eq("key", "service_rules").maybeSingle();
+    const { data: cur } = await sb
+      .from("site_settings")
+      .select("value")
+      .eq("key", "service_rules")
+      .maybeSingle();
     const value = { ...((cur?.value as Record<string, unknown>) ?? {}) };
-    value[data.id] = data.preferred === "any" ? { mode: "any" } : { mode: "preferred", stylist: data.preferred };
-    const { error } = await sb.from("site_settings").upsert({ key: "service_rules", value: value as never });
+    value[data.id] =
+      data.preferred === "any" ? { mode: "any" } : { mode: "preferred", stylist: data.preferred };
+    const { error } = await sb
+      .from("site_settings")
+      .upsert({ key: "service_rules", value: value as never });
     if (error) return { ok: false as const, error: "Couldn't save the stylist rule." };
     await audit({
       action: "service.stylist_rule",
       entity: "service",
       entityId: data.id,
-      summary: data.preferred === "any" ? "Service open to any qualified stylist" : "Service prefers a specific stylist",
+      summary:
+        data.preferred === "any"
+          ? "Service open to any qualified stylist"
+          : "Service prefers a specific stylist",
       before: cur?.value ?? null,
       after: value,
     });

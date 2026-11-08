@@ -65,10 +65,13 @@ export const adminPushTest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await admin(data.pin);
     const P = await import("./push.server");
-    return P.pushToSalon({
-      title: "Booking alerts are on",
-      body: "New bookings, moves and cancellations will appear here.",
-      url: "/hb-desk-7392",
-      tag: "test",
-    }, { ownersOnly: true });
+    return P.pushToSalon(
+      {
+        title: "Booking alerts are on",
+        body: "New bookings, moves and cancellations will appear here.",
+        url: "/hb-desk-7392",
+        tag: "test",
+      },
+      { ownersOnly: true },
+    );
   });

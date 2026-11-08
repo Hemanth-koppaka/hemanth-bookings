@@ -49,21 +49,34 @@ export const stylistDay = createServerFn({ method: "POST" })
     const sid = await stylist(data.token);
     const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
     const { staffIdOf } = await import("./booking-staff");
-    const { data: rows } = await sb.from("bookings").select("*").eq("date", data.date).neq("status", "cancelled").order("time");
+    const { data: rows } = await sb
+      .from("bookings")
+      .select("*")
+      .eq("date", data.date)
+      .neq("status", "cancelled")
+      .order("time");
     const appts: StylistAppt[] = ((rows ?? []) as Record<string, unknown>[])
       .filter((r) => staffIdOf(r) === sid)
-      .filter((r) => !["cancelled"].includes(((r["meta"] as Record<string, unknown> | null)?.["status"] as string) ?? ""))
+      .filter(
+        (r) =>
+          !["cancelled"].includes(
+            ((r["meta"] as Record<string, unknown> | null)?.["status"] as string) ?? "",
+          ),
+      )
       .map((r) => {
         const c = (r["customer"] ?? {}) as { name?: string; phone?: string; photos?: string[] };
         const meta = (r["meta"] ?? {}) as Record<string, unknown>;
-        const minutes = (r["duration_minutes"] as number | null) ?? ((r["slots"] as number) ?? 1) * 30;
+        const minutes =
+          (r["duration_minutes"] as number | null) ?? ((r["slots"] as number) ?? 1) * 30;
         return {
           reference: r["reference"] as string,
           time: r["time"] as number,
           end: (r["time"] as number) + minutes,
           name: c.name ?? "",
           phone: c.phone ?? "",
-          services: ((r["services_snapshot"] as { name: string }[] | null) ?? []).map((x) => x.name),
+          services: ((r["services_snapshot"] as { name: string }[] | null) ?? []).map(
+            (x) => x.name,
+          ),
           status: (meta["status"] as string) ?? "upcoming",
           note: (meta["note"] as string) ?? "",
           photos: (c.photos ?? []).length,
@@ -81,17 +94,34 @@ export const stylistDay = createServerFn({ method: "POST" })
 /** Moves one of the stylist's own appointments along. */
 export const stylistSetStatus = createServerFn({ method: "POST" })
   .inputValidator((d) =>
-    z.object({ token, reference: z.string().max(20), status: z.enum(["arrived", "in-chair", "completed", "no-show"]) }).parse(d),
+    z
+      .object({
+        token,
+        reference: z.string().max(20),
+        status: z.enum(["arrived", "in-chair", "completed", "no-show"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const sid = await stylist(data.token);
     const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
     const { staffIdOf } = await import("./booking-staff");
-    const { data: r } = await sb.from("bookings").select("*").eq("reference", data.reference).maybeSingle();
-    if (!r || staffIdOf(r as Record<string, unknown>) !== sid || (r as Record<string, unknown>)["status"] === "cancelled")
+    const { data: r } = await sb
+      .from("bookings")
+      .select("*")
+      .eq("reference", data.reference)
+      .maybeSingle();
+    if (
+      !r ||
+      staffIdOf(r as Record<string, unknown>) !== sid ||
+      (r as Record<string, unknown>)["status"] === "cancelled"
+    )
       return { ok: false as const, error: "That appointment isn't yours." };
     const row = r as Record<string, unknown>;
-    const meta = { ...((row["meta"] as Record<string, unknown> | null) ?? {}), status: data.status };
+    const meta = {
+      ...((row["meta"] as Record<string, unknown> | null) ?? {}),
+      status: data.status,
+    };
     const { patchBooking } = await import("./bookings.server");
     const error = await patchBooking(data.reference, { meta }, {});
     if (error) return { ok: false as const, error: "Couldn't update. Please try again." };
@@ -132,15 +162,19 @@ export const stylistPushSubscribe = createServerFn({ method: "POST" })
     const P = await import("./push.server");
     if (data.off) await P.removeSub(data.endpoint, sid);
     else {
-      const saved = await P.addSub({
-        endpoint: data.endpoint,
-        keys: { p256dh: data.p256dh, auth: data.auth },
-        device: `${await staffName(sid)} · ${data.device || "Phone"}`,
-        origin: data.origin,
-        at: Date.now(),
-        staffId: sid,
-      }, sid);
-      if (!saved) return { ok: false as const, error: "That phone is already connected to another account." };
+      const saved = await P.addSub(
+        {
+          endpoint: data.endpoint,
+          keys: { p256dh: data.p256dh, auth: data.auth },
+          device: `${await staffName(sid)} · ${data.device || "Phone"}`,
+          origin: data.origin,
+          at: Date.now(),
+          staffId: sid,
+        },
+        sid,
+      );
+      if (!saved)
+        return { ok: false as const, error: "That phone is already connected to another account." };
     }
     return { ok: true as const };
   });
@@ -156,15 +190,23 @@ export const adminStylistCodes = createServerFn({ method: "POST" })
   });
 
 export const adminSetStylistCode = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ pin, staffId: z.string().max(80), code: z.string().max(64) }).parse(d))
+  .inputValidator((d) =>
+    z.object({ pin, staffId: z.string().max(80), code: z.string().max(64) }).parse(d),
+  )
   .handler(async ({ data }) => {
-    const { assertAdmin, setStylistCode, isWeakCode, WEAK_CODE_HINT } = await import("./admin-auth.server");
+    const { assertAdmin, setStylistCode, isWeakCode, WEAK_CODE_HINT } =
+      await import("./admin-auth.server");
     await assertAdmin(data.pin);
     const code = data.code.trim();
     if (code && isWeakCode(code)) return { ok: false as const, error: WEAK_CODE_HINT };
     const ok = await setStylistCode(data.staffId, code);
     if (!ok) return { ok: false as const, error: "Couldn't save. Please try again." };
     const E = await import("./engine.server");
-    await E.audit({ action: "staff.code", entity: "staff", entityId: data.staffId, summary: code ? "Set a stylist's phone code" : "Removed a stylist's phone code" });
+    await E.audit({
+      action: "staff.code",
+      entity: "staff",
+      entityId: data.staffId,
+      summary: code ? "Set a stylist's phone code" : "Removed a stylist's phone code",
+    });
     return { ok: true as const };
   });

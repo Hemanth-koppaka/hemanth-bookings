@@ -29,7 +29,13 @@ function HoursScreen() {
   const open = WEEK.filter((d) => !d.closed);
   const first = open[0]?.breaks?.[0];
   const lunch =
-    first && open.every((d) => d.breaks?.length === 1 && d.breaks[0]!.start === first.start && d.breaks[0]!.end === first.end)
+    first &&
+    open.every(
+      (d) =>
+        d.breaks?.length === 1 &&
+        d.breaks[0]!.start === first.start &&
+        d.breaks[0]!.end === first.end,
+    )
       ? first
       : null;
 
@@ -48,7 +54,10 @@ function HoursScreen() {
       }
       panelSub={`Closed ${BUSINESS.closedDay}s`}
     >
-      <InfoTitle eyebrow="Opening hours" sub="Booking slots run every 30 minutes, and we only show times that are genuinely free.">
+      <InfoTitle
+        eyebrow="Opening hours"
+        sub="Booking slots run every 30 minutes, and we only show times that are genuinely free."
+      >
         When we're <span className="italic text-bronze">open.</span>
       </InfoTitle>
 
@@ -71,7 +80,12 @@ function HoursScreen() {
                   </span>
                 ) : null}
               </span>
-              <span className={"text-[0.9rem] tabular-nums " + (d.closed ? "italic text-foreground/40" : "text-muted-foreground")}>
+              <span
+                className={
+                  "text-[0.9rem] tabular-nums " +
+                  (d.closed ? "italic text-foreground/40" : "text-muted-foreground")
+                }
+              >
                 {d.closed
                   ? "Closed"
                   : `${minuteLabel(d.open ?? OPEN_MINUTE)} – ${minuteLabel(d.close ?? CLOSE_MINUTE)}`}

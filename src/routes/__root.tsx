@@ -9,6 +9,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, useRef, type ReactNode } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -30,10 +31,7 @@ function NotFoundComponent() {
           <br />
           not on the menu.
         </h1>
-        <Link
-          to="/"
-          className="label-caps mt-8 inline-flex border-b border-foreground/30 pb-1"
-        >
+        <Link to="/" className="label-caps mt-8 inline-flex border-b border-foreground/30 pb-1">
           Return home
         </Link>
       </div>
@@ -112,7 +110,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     // the salon for search engines (name, address, hours, services, prices)
     scripts: loaderData?.configJson
-      ? [{ type: "application/ld+json", children: salonJsonLd(loaderData.configJson, loaderData.origin ?? "") }]
+      ? [
+          {
+            type: "application/ld+json",
+            children: salonJsonLd(loaderData.configJson, loaderData.origin ?? ""),
+          },
+        ]
       : [],
   }),
   loader: async () => {
@@ -145,6 +148,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         {children}
         <Scripts />
+        <SpeedInsights />
       </body>
     </html>
   );
@@ -163,7 +167,10 @@ const FLOW: Record<string, number> = {
 
 /** Installs interface sound once and gives every route change its sound. */
 /** Counts which booking steps visitors reach (once per page view; no cookies). */
-const TRACKED: Record<string, "home" | "book" | "services" | "time" | "details" | "review" | "booked"> = {
+const TRACKED: Record<
+  string,
+  "home" | "book" | "services" | "time" | "details" | "review" | "booked"
+> = {
   "/": "home",
   "/book": "book",
   "/services": "services",

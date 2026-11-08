@@ -34,23 +34,28 @@ export function sunAltitude(iso: string, minute: number, lat = SALON_LAT, lon = 
   const y = Math.tan((eps / 2) * RAD) ** 2;
   // equation of time, minutes
   const eqTime =
-    4 *
-    (y * Math.sin(2 * L0 * RAD) -
-      2 * e * Math.sin(M * RAD) +
-      4 * e * y * Math.sin(M * RAD) * Math.cos(2 * L0 * RAD) -
-      0.5 * y * y * Math.sin(4 * L0 * RAD) -
-      1.25 * e * e * Math.sin(2 * M * RAD)) /
+    (4 *
+      (y * Math.sin(2 * L0 * RAD) -
+        2 * e * Math.sin(M * RAD) +
+        4 * e * y * Math.sin(M * RAD) * Math.cos(2 * L0 * RAD) -
+        0.5 * y * y * Math.sin(4 * L0 * RAD) -
+        1.25 * e * e * Math.sin(2 * M * RAD))) /
     RAD;
-  const utcMinutes = ((utcMs / 60_000) % 1440 + 1440) % 1440;
+  const utcMinutes = (((utcMs / 60_000) % 1440) + 1440) % 1440;
   const solarTime = (utcMinutes + eqTime + 4 * lon + 1440) % 1440;
   const hourAngle = solarTime / 4 - 180;
   const cosZenith =
-    Math.sin(lat * RAD) * Math.sin(decl * RAD) + Math.cos(lat * RAD) * Math.cos(decl * RAD) * Math.cos(hourAngle * RAD);
+    Math.sin(lat * RAD) * Math.sin(decl * RAD) +
+    Math.cos(lat * RAD) * Math.cos(decl * RAD) * Math.cos(hourAngle * RAD);
   return 90 - Math.acos(Math.min(1, Math.max(-1, cosZenith))) / RAD;
 }
 
 type RGB = [number, number, number];
-const hex = (h: string): RGB => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const hex = (h: string): RGB => [
+  parseInt(h.slice(1, 3), 16),
+  parseInt(h.slice(3, 5), 16),
+  parseInt(h.slice(5, 7), 16),
+];
 
 /**
  * Real sky colours by the sun's altitude (top of the sky, horizon): clear day
@@ -69,7 +74,8 @@ const SKY: [number, RGB, RGB][] = [
   [90, hex("#2f86dc"), hex("#b5dcf8")], // high sun
 ];
 
-const mix = (a: RGB, b: RGB, k: number): RGB => a.map((v, i) => Math.round(v + (b[i]! - v) * k)) as RGB;
+const mix = (a: RGB, b: RGB, k: number): RGB =>
+  a.map((v, i) => Math.round(v + (b[i]! - v) * k)) as RGB;
 
 export function skyFor(altitude: number) {
   const a = Math.max(-18, Math.min(90, altitude));

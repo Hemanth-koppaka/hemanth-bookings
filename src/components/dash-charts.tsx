@@ -18,7 +18,11 @@ export const DASH = {
 } as const;
 
 const shortDate = (iso: string) =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
 
 function niceMax(v: number) {
   if (v <= 0) return 1;
@@ -125,7 +129,14 @@ export function AreaTrend({
         </defs>
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke={DASH.grid} strokeDasharray={t ? "3 4" : undefined} />
+            <line
+              x1={PAD.l}
+              x2={W - PAD.r}
+              y1={y(t)}
+              y2={y(t)}
+              stroke={DASH.grid}
+              strokeDasharray={t ? "3 4" : undefined}
+            />
             <text x={PAD.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill={DASH.axis}>
               {format(t)}
             </text>
@@ -146,13 +157,37 @@ export function AreaTrend({
           ) : null,
         )}
         <g clipPath={`url(#c${id})`}>
-          <path d={`${path} L${x(points.length - 1)},${y(0)} L${x(0)},${y(0)} Z`} fill={`url(#g${id})`} />
-          <path d={path} fill="none" stroke={color} strokeWidth="2.25" strokeLinejoin="round" strokeLinecap="round" />
+          <path
+            d={`${path} L${x(points.length - 1)},${y(0)} L${x(0)},${y(0)} Z`}
+            fill={`url(#g${id})`}
+          />
+          <path
+            d={path}
+            fill="none"
+            stroke={color}
+            strokeWidth="2.25"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
         </g>
         {hp ? (
           <g>
-            <line x1={x(hover!)} x2={x(hover!)} y1={PAD.t} y2={PAD.t + ih} stroke={DASH.axis} strokeDasharray="3 3" />
-            <circle cx={x(hover!)} cy={y(hp.value)} r="5" fill={color} stroke="#fff" strokeWidth="2" />
+            <line
+              x1={x(hover!)}
+              x2={x(hover!)}
+              y1={PAD.t}
+              y2={PAD.t + ih}
+              stroke={DASH.axis}
+              strokeDasharray="3 3"
+            />
+            <circle
+              cx={x(hover!)}
+              cy={y(hp.value)}
+              r="5"
+              fill={color}
+              stroke="#fff"
+              strokeWidth="2"
+            />
           </g>
         ) : null}
       </svg>
@@ -196,10 +231,23 @@ export function StackedBars({
 
   return (
     <div className="relative" ref={box}>
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full select-none" role="img" aria-label={label} onPointerLeave={() => setHover(null)}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="h-auto w-full select-none"
+        role="img"
+        aria-label={label}
+        onPointerLeave={() => setHover(null)}
+      >
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.l} x2={W - PAD.r} y1={y(t)} y2={y(t)} stroke={DASH.grid} strokeDasharray={t ? "3 4" : undefined} />
+            <line
+              x1={PAD.l}
+              x2={W - PAD.r}
+              y1={y(t)}
+              y2={y(t)}
+              stroke={DASH.grid}
+              strokeDasharray={t ? "3 4" : undefined}
+            />
             <text x={PAD.l - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill={DASH.axis}>
               {t}
             </text>
@@ -208,9 +256,7 @@ export function StackedBars({
         {days.map((d, i) => {
           const cx = PAD.l + slot * i + slot / 2;
           let acc = 0;
-          const segs = series
-            .map((s) => ({ s, v: Number(d[s.key] ?? 0) }))
-            .filter((x) => x.v > 0);
+          const segs = series.map((s) => ({ s, v: Number(d[s.key] ?? 0) })).filter((x) => x.v > 0);
           return (
             <g
               key={d.date}
@@ -221,7 +267,14 @@ export function StackedBars({
               {/* a wider invisible target than the bar */}
               <rect x={cx - slot / 2} y={PAD.t} width={slot} height={ih} fill="transparent" />
               {d.date === today ? (
-                <rect x={cx - slot / 2 + 1} y={PAD.t} width={slot - 2} height={ih} rx="4" fill="#f4efe6" />
+                <rect
+                  x={cx - slot / 2 + 1}
+                  y={PAD.t}
+                  width={slot - 2}
+                  height={ih}
+                  rx="4"
+                  fill="#f4efe6"
+                />
               ) : null}
               {segs.map(({ s, v }, k) => {
                 const top = y(acc + v);
@@ -244,7 +297,14 @@ export function StackedBars({
                 );
               })}
               {i % every === 0 ? (
-                <text x={cx} y={H - 6} textAnchor="middle" fontSize="11" fill={d.date === today ? "#1c1611" : DASH.axis} fontWeight={d.date === today ? 600 : 400}>
+                <text
+                  x={cx}
+                  y={H - 6}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill={d.date === today ? "#1c1611" : DASH.axis}
+                  fontWeight={d.date === today ? 600 : 400}
+                >
                   {d.date === today ? "Today" : shortDate(d.date)}
                 </text>
               ) : null}
@@ -255,9 +315,13 @@ export function StackedBars({
       {hd ? (
         <div
           className="pointer-events-none absolute top-1 z-10 min-w-[8.5rem] -translate-x-1/2 rounded-lg border border-hairline bg-white px-3 py-2 text-[0.75rem] shadow-[0_10px_30px_-12px_rgba(30,20,10,0.35)]"
-          style={{ left: `${Math.min(Math.max(((PAD.l + slot * hover! + slot / 2) / W) * 100, 14), 86)}%` }}
+          style={{
+            left: `${Math.min(Math.max(((PAD.l + slot * hover! + slot / 2) / W) * 100, 14), 86)}%`,
+          }}
         >
-          <div className="mb-1 text-muted-foreground">{hd.date === today ? "Today" : shortDate(hd.date)}</div>
+          <div className="mb-1 text-muted-foreground">
+            {hd.date === today ? "Today" : shortDate(hd.date)}
+          </div>
           {series.map((s) => (
             <div key={s.key} className="flex items-center justify-between gap-3">
               <span className="inline-flex items-center gap-1.5">
@@ -292,7 +356,12 @@ export function Donut({
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
       <div className="relative h-[180px] w-[180px] shrink-0">
-        <svg viewBox="0 0 180 180" className="h-full w-full -rotate-90" role="img" aria-label="Top services">
+        <svg
+          viewBox="0 0 180 180"
+          className="h-full w-full -rotate-90"
+          role="img"
+          aria-label="Top services"
+        >
           <circle cx="90" cy="90" r={R} fill="none" stroke={DASH.grid} strokeWidth="22" />
           {items.map((it, i) => {
             const len = (it.value / total) * C;
@@ -322,12 +391,18 @@ export function Donut({
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
           {hover != null && items[hover] ? (
             <>
-              <span className="text-[1.6rem] font-semibold leading-none tabular-nums">{items[hover]!.value}</span>
-              <span className="mt-1 max-w-[6.5rem] truncate text-[0.7rem] text-muted-foreground">{items[hover]!.label}</span>
+              <span className="text-[1.6rem] font-semibold leading-none tabular-nums">
+                {items[hover]!.value}
+              </span>
+              <span className="mt-1 max-w-[6.5rem] truncate text-[0.7rem] text-muted-foreground">
+                {items[hover]!.label}
+              </span>
             </>
           ) : (
             <>
-              <span className="text-[1.6rem] font-semibold leading-none tabular-nums">{centre}</span>
+              <span className="text-[1.6rem] font-semibold leading-none tabular-nums">
+                {centre}
+              </span>
               <span className="mt-1 text-[0.7rem] text-muted-foreground">{centreHint}</span>
             </>
           )}
@@ -339,11 +414,16 @@ export function Donut({
             key={it.label}
             onPointerEnter={() => setHover(i)}
             onPointerLeave={() => setHover(null)}
-            className={cn("flex items-center gap-2.5 rounded-md px-2 py-1 text-[0.85rem] transition-colors", hover === i && "bg-foreground/[0.04]")}
+            className={cn(
+              "flex items-center gap-2.5 rounded-md px-2 py-1 text-[0.85rem] transition-colors",
+              hover === i && "bg-foreground/[0.04]",
+            )}
           >
             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: it.color }} />
             <span className="min-w-0 flex-1 truncate">{it.label}</span>
-            <span className="tabular-nums text-muted-foreground">{Math.round((it.value / total) * 100)}%</span>
+            <span className="tabular-nums text-muted-foreground">
+              {Math.round((it.value / total) * 100)}%
+            </span>
           </li>
         ))}
       </ul>

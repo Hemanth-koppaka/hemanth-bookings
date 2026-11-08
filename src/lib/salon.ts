@@ -63,7 +63,10 @@ export const BUSINESS = {
   googleReviewUrl: "https://share.google/1XYLXWkKdYhTgbDMB",
   /** Instagram: the salon's page and Bhargav's own work. */
   instagram: {
-    salon: { handle: "the_hairbybhargav_salon", url: "https://www.instagram.com/the_hairbybhargav_salon/" },
+    salon: {
+      handle: "the_hairbybhargav_salon",
+      url: "https://www.instagram.com/the_hairbybhargav_salon/",
+    },
     bhargav: { handle: "hair_by_bhargav", url: "https://www.instagram.com/hair_by_bhargav/" },
   },
   hoursOpenDays: "Wednesday to Monday",

@@ -12,7 +12,11 @@ type Store = Awaited<ReturnType<typeof loadStore>>;
 type Row = Record<string, unknown>;
 
 export async function loadRuleSettings(): Promise<Record<string, ServiceRuleSetting>> {
-  const { data } = await sb.from("site_settings").select("value").eq("key", "service_rules").maybeSingle();
+  const { data } = await sb
+    .from("site_settings")
+    .select("value")
+    .eq("key", "service_rules")
+    .maybeSingle();
   return ((data?.value ?? {}) as Record<string, ServiceRuleSetting>) || {};
 }
 
@@ -41,7 +45,13 @@ export function resolveRules(
       for (const svc of cat.services) {
         const set = settings[svc.id];
         const preferredId =
-          set?.mode === "preferred" ? set.stylist : set?.mode === "any" ? null : SIGNATURE_RE.test(svc.name) ? ((bhargav?.["id"] as string) ?? null) : null;
+          set?.mode === "preferred"
+            ? set.stylist
+            : set?.mode === "any"
+              ? null
+              : SIGNATURE_RE.test(svc.name)
+                ? ((bhargav?.["id"] as string) ?? null)
+                : null;
         const preferred = preferredId ? byId.get(preferredId) : undefined;
         if (!preferred) continue; // no (valid) preferred stylist: normal multi-stylist rules
         const siblings = cat.services.filter((x) => x.id !== svc.id).map((x) => x.id);
@@ -49,7 +59,11 @@ export function resolveRules(
           .filter((r) => r["id"] !== preferredId && r["bookable"] !== false)
           .filter((r) => siblings.some((id) => offers.get(r["id"] as string)?.has(id)))
           .map((r) => r["id"] as string);
-        out[svc.id] = { preferred: preferredId!, preferredName: String(preferred["name"] ?? ""), fallback };
+        out[svc.id] = {
+          preferred: preferredId!,
+          preferredName: String(preferred["name"] ?? ""),
+          fallback,
+        };
       }
   return out;
 }

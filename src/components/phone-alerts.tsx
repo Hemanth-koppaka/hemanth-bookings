@@ -6,7 +6,12 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BellRing, BellOff, Loader2, Share, Smartphone, X } from "lucide-react";
 import { useAdmin } from "@/lib/admin-store";
-import { adminPushInfo, adminPushSubscribe, adminPushTest, adminPushUnsubscribe } from "@/lib/push.functions";
+import {
+  adminPushInfo,
+  adminPushSubscribe,
+  adminPushTest,
+  adminPushUnsubscribe,
+} from "@/lib/push.functions";
 import { cn } from "@/lib/utils";
 
 type State = "checking" | "unsupported" | "ios-home" | "denied" | "off" | "on";
@@ -27,9 +32,12 @@ function deviceName() {
   return "This device";
 }
 
-const isIos = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+const isIos = () =>
+  /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 const standalone = () =>
-  window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  window.matchMedia?.("(display-mode: standalone)").matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
 async function registration() {
   return navigator.serviceWorker.register("/admin-sw.js");
@@ -42,7 +50,8 @@ function usePhoneAlerts() {
   const [devices, setDevices] = useState<{ endpoint: string; device: string; at: number }[]>([]);
 
   const refresh = useCallback(async () => {
-    const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    const supported =
+      "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
     if (!supported) return setState(isIos() && !standalone() ? "ios-home" : "unsupported");
     if (Notification.permission === "denied") return setState("denied");
     try {
@@ -73,10 +82,20 @@ function usePhoneAlerts() {
       const { publicKey } = await adminPushInfo({ data: { pin } });
       const sub =
         (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) as BufferSource }));
+        (await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: keyBytes(publicKey) as BufferSource,
+        }));
       const j = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
       await adminPushSubscribe({
-        data: { pin, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, device: deviceName(), origin: location.origin },
+        data: {
+          pin,
+          endpoint: j.endpoint,
+          p256dh: j.keys.p256dh,
+          auth: j.keys.auth,
+          device: deviceName(),
+          origin: location.origin,
+        },
       });
       toast.success("Booking alerts are on for this phone.");
       await refresh();
@@ -155,7 +174,8 @@ export function PhoneAlertsPanel() {
                 <span className="flex-1">
                   {d.device}{" "}
                   <span className="text-[0.75rem] text-muted-foreground">
-                    · since {new Date(d.at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    · since{" "}
+                    {new Date(d.at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </span>
                 </span>
                 <button
@@ -182,23 +202,27 @@ function Body({ a }: { a: ReturnType<typeof usePhoneAlerts> }) {
     return (
       <ol className="space-y-1.5 text-[0.88rem]">
         <li>
-          1. In Safari, tap <Share className="inline h-4 w-4 align-[-3px]" strokeWidth={1.5} /> Share, then{" "}
-          <b className="font-medium">Add to Home Screen</b>.
+          1. In Safari, tap <Share className="inline h-4 w-4 align-[-3px]" strokeWidth={1.5} />{" "}
+          Share, then <b className="font-medium">Add to Home Screen</b>.
         </li>
-        <li>2. Open <b className="font-medium">HB Salon</b> from your Home Screen and sign in.</li>
+        <li>
+          2. Open <b className="font-medium">HB Salon</b> from your Home Screen and sign in.
+        </li>
         <li>3. Come back here and tap “Turn on alerts on this phone”.</li>
       </ol>
     );
   if (a.state === "unsupported")
     return (
       <p className="text-[0.88rem] text-muted-foreground">
-        This browser can't show notifications. Open the console in Chrome (Android) or add it to the Home Screen (iPhone).
+        This browser can't show notifications. Open the console in Chrome (Android) or add it to the
+        Home Screen (iPhone).
       </p>
     );
   if (a.state === "denied")
     return (
       <p className="text-[0.88rem] text-muted-foreground">
-        Notifications are blocked for this site. Allow them in the phone's settings for this site (or the HB Salon app), then come back.
+        Notifications are blocked for this site. Allow them in the phone's settings for this site
+        (or the HB Salon app), then come back.
       </p>
     );
   if (a.state === "on")
@@ -207,17 +231,36 @@ function Body({ a }: { a: ReturnType<typeof usePhoneAlerts> }) {
         <span className="mr-2 inline-flex items-center gap-2 text-[0.88rem] text-emerald-700">
           <span className="h-2 w-2 rounded-full bg-emerald-600" /> On for this phone
         </span>
-        <button type="button" disabled={a.busy} onClick={() => void a.test()} className={cn(btn, "border border-foreground/15")}>
+        <button
+          type="button"
+          disabled={a.busy}
+          onClick={() => void a.test()}
+          className={cn(btn, "border border-foreground/15")}
+        >
           Send a test
         </button>
-        <button type="button" disabled={a.busy} onClick={() => void a.turnOff()} className={cn(btn, "text-muted-foreground")}>
+        <button
+          type="button"
+          disabled={a.busy}
+          onClick={() => void a.turnOff()}
+          className={cn(btn, "text-muted-foreground")}
+        >
           <BellOff className="h-4 w-4" strokeWidth={1.5} /> Turn off
         </button>
       </div>
     );
   return (
-    <button type="button" disabled={a.busy} onClick={() => void a.turnOn()} className={cn(btn, "bg-foreground text-background")}>
-      {a.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellRing className="h-4 w-4" strokeWidth={1.5} />}
+    <button
+      type="button"
+      disabled={a.busy}
+      onClick={() => void a.turnOn()}
+      className={cn(btn, "bg-foreground text-background")}
+    >
+      {a.busy ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <BellRing className="h-4 w-4" strokeWidth={1.5} />
+      )}
       Turn on alerts on this phone
     </button>
   );
@@ -255,11 +298,21 @@ export function PhoneAlertsNudge() {
         </span>
       </div>
       {a.state === "off" ? (
-        <button type="button" disabled={a.busy} onClick={() => void a.turnOn()} className={cn(btn, "bg-foreground text-background")}>
+        <button
+          type="button"
+          disabled={a.busy}
+          onClick={() => void a.turnOn()}
+          className={cn(btn, "bg-foreground text-background")}
+        >
           {a.busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Turn on
         </button>
       ) : null}
-      <button type="button" onClick={dismiss} aria-label="Not now" className="press rounded p-1.5 text-muted-foreground hover:bg-foreground/5">
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label="Not now"
+        className="press rounded p-1.5 text-muted-foreground hover:bg-foreground/5"
+      >
         <X className="h-4 w-4" />
       </button>
     </div>

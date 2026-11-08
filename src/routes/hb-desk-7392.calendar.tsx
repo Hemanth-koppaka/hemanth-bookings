@@ -18,7 +18,13 @@ import { StaffAvatar } from "@/components/staff-avatar";
 import { adminUpsertBooking } from "@/lib/salon.functions";
 import { fromISO, hoursFor, isClosed, minuteLabel, toISO } from "@/lib/salon";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/hb-desk-7392/calendar")({
   head: () => ({
@@ -60,7 +66,11 @@ function CalendarScreen() {
   const [view, setView] = useState<View>("day");
   const [date, setDate] = useState(salonToday());
   const [drawer, setDrawer] = useState<string | null>(null);
-  const [newAt, setNewAt] = useState<{ date: string; time: number | null; staffId?: string | undefined } | null>(null);
+  const [newAt, setNewAt] = useState<{
+    date: string;
+    time: number | null;
+    staffId?: string | undefined;
+  } | null>(null);
   const [blockOpen, setBlockOpen] = useState(false);
   const [version, setVersion] = useState(0);
   const refresh = () => setVersion((v) => v + 1);
@@ -100,13 +110,24 @@ function CalendarScreen() {
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
-          <button aria-label="Previous" onClick={() => step(-1)} className="press grid h-9 w-9 place-items-center rounded-md border border-foreground/15">
+          <button
+            aria-label="Previous"
+            onClick={() => step(-1)}
+            className="press grid h-9 w-9 place-items-center rounded-md border border-foreground/15"
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button aria-label="Next" onClick={() => step(1)} className="press grid h-9 w-9 place-items-center rounded-md border border-foreground/15">
+          <button
+            aria-label="Next"
+            onClick={() => step(1)}
+            className="press grid h-9 w-9 place-items-center rounded-md border border-foreground/15"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <button onClick={() => setDate(salonToday())} className="press ml-1 h-9 rounded-md border border-foreground/15 px-3 text-[0.8rem]">
+          <button
+            onClick={() => setDate(salonToday())}
+            className="press ml-1 h-9 rounded-md border border-foreground/15 px-3 text-[0.8rem]"
+          >
             Today
           </button>
           <h2 className="ml-3 font-display text-[1.5rem] leading-none">{title}</h2>
@@ -116,7 +137,10 @@ function CalendarScreen() {
             <button
               key={v}
               onClick={() => setView(v)}
-              className={cn("rounded px-3.5 py-1.5 text-[0.8rem] capitalize", view === v ? "bg-foreground text-background" : "text-muted-foreground")}
+              className={cn(
+                "rounded px-3.5 py-1.5 text-[0.8rem] capitalize",
+                view === v ? "bg-foreground text-background" : "text-muted-foreground",
+              )}
             >
               {v}
             </button>
@@ -125,7 +149,13 @@ function CalendarScreen() {
       </div>
 
       {view === "day" ? (
-        <DayView key={`${date}-${version}`} date={date} onOpen={setDrawer} onBook={(t, staffId) => setNewAt({ date, time: t, staffId })} onChanged={refresh} />
+        <DayView
+          key={`${date}-${version}`}
+          date={date}
+          onOpen={setDrawer}
+          onBook={(t, staffId) => setNewAt({ date, time: t, staffId })}
+          onChanged={refresh}
+        />
       ) : view === "week" ? (
         <WeekView
           key={`${weekStart(date)}-${version}`}
@@ -156,7 +186,12 @@ function CalendarScreen() {
         initialStaffId={newAt?.staffId}
         onCreated={refresh}
       />
-      <BlockTimeDialog open={blockOpen} onOpenChange={setBlockOpen} initialDate={date} onSaved={refresh} />
+      <BlockTimeDialog
+        open={blockOpen}
+        onOpenChange={setBlockOpen}
+        initialDate={date}
+        onSaved={refresh}
+      />
     </AdminShell>
   );
 }
@@ -177,17 +212,29 @@ function DayView({
   onChanged: () => void;
 }) {
   const { pin } = useAdmin();
-  const { data, loading, error, reload } = useAdminData((p) => adminDay({ data: { pin: p, date } }), [date]);
+  const { data, loading, error, reload } = useAdminData(
+    (p) => adminDay({ data: { pin: p, date } }),
+    [date],
+  );
   const [drag, setDrag] = useState<{ ref: string; dy: number; dx: number } | null>(null);
   // a move: new time, and (dragged sideways) another stylist
-  const [move, setMove] = useState<{ b: AdminBooking; to: number; staffId?: string; staffName?: string } | null>(null);
+  const [move, setMove] = useState<{
+    b: AdminBooking;
+    to: number;
+    staffId?: string;
+    staffName?: string;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
   const origin = useRef<{ y: number; x: number; moved: boolean } | null>(null);
 
   if (!data) return <LoadState loading={loading} error={error} onRetry={reload} />;
   const { plan, interval } = data;
   if (plan.closed)
-    return <p className="rounded-md border border-dashed border-foreground/15 px-6 py-16 text-center text-muted-foreground">The studio is closed on this day.</p>;
+    return (
+      <p className="rounded-md border border-dashed border-foreground/15 px-6 py-16 text-center text-muted-foreground">
+        The studio is closed on this day.
+      </p>
+    );
 
   const start = plan.open;
   const end = plan.close;
@@ -196,7 +243,10 @@ function DayView({
   const snap = (m: number) => Math.round(m / interval) * interval;
   const hours: number[] = [];
   for (let m = Math.ceil(start / 60) * 60; m <= end; m += 60) hours.push(m);
-  const nowLine = data.now.iso === date && data.now.minute >= start && data.now.minute <= end ? data.now.minute : null;
+  const nowLine =
+    data.now.iso === date && data.now.minute >= start && data.now.minute <= end
+      ? data.now.minute
+      : null;
   const visible = data.bookings.filter((b) => b.status !== "cancelled");
   const movable = (b: AdminBooking) => ["pending", "upcoming"].includes(b.status);
 
@@ -231,7 +281,11 @@ function DayView({
     const target = col?.dataset["colStaff"];
     const other = target && target !== b.staffId ? target : undefined;
     if (to !== b.time || other)
-      setMove({ b, to, ...(other ? { staffId: other, staffName: col?.dataset["colName"] ?? "" } : {}) });
+      setMove({
+        b,
+        to,
+        ...(other ? { staffId: other, staffName: col?.dataset["colName"] ?? "" } : {}),
+      });
   };
 
   const confirmMove = async () => {
@@ -239,20 +293,40 @@ function DayView({
     setSaving(true);
     try {
       await adminUpsertBooking({
-        data: { pin, reference: move.b.reference, patch: { date, time: move.to, ...(move.staffId ? { staffId: move.staffId } : {}) } },
+        data: {
+          pin,
+          reference: move.b.reference,
+          patch: { date, time: move.to, ...(move.staffId ? { staffId: move.staffId } : {}) },
+        },
       });
-      toast.success(`Moved to ${minuteLabel(move.to)}${move.staffName ? ` with ${move.staffName}` : ""}.`);
+      toast.success(
+        `Moved to ${minuteLabel(move.to)}${move.staffName ? ` with ${move.staffName}` : ""}.`,
+      );
       setMove(null);
       onChanged();
     } catch (e) {
-      toast.error(e instanceof Error && e.message.length < 120 ? e.message : "That time is no longer available.");
+      toast.error(
+        e instanceof Error && e.message.length < 120
+          ? e.message
+          : "That time is no longer available.",
+      );
     } finally {
       setSaving(false);
     }
   };
 
   // one column per stylist (and one for any booking without a stylist)
-  type Col = { id: string; staffId: string | undefined; name: string; photo?: string | null; note: string; off: { start: number; end: number }[]; breaks: { start: number; end: number; label?: string }[]; blocks: { start: number; end: number; label?: string }[]; bookings: AdminBooking[] };
+  type Col = {
+    id: string;
+    staffId: string | undefined;
+    name: string;
+    photo?: string | null;
+    note: string;
+    off: { start: number; end: number }[];
+    breaks: { start: number; end: number; label?: string }[];
+    blocks: { start: number; end: number; label?: string }[];
+    bookings: AdminBooking[];
+  };
   const team = data.team ?? [];
   const columns: Col[] = team.length
     ? team.map((t) => ({
@@ -260,15 +334,47 @@ function DayView({
         staffId: t.id,
         name: t.name,
         photo: t.photo,
-        note: t.working && t.start != null && t.end != null ? `${minuteLabel(t.start)}–${minuteLabel(t.end)}` : "Off today",
-        off: !t.working || t.start == null || t.end == null ? [{ start, end }] : [...(t.start > start ? [{ start, end: t.start }] : []), ...(t.end < end ? [{ start: t.end, end }] : [])],
+        note:
+          t.working && t.start != null && t.end != null
+            ? `${minuteLabel(t.start)}–${minuteLabel(t.end)}`
+            : "Off today",
+        off:
+          !t.working || t.start == null || t.end == null
+            ? [{ start, end }]
+            : [
+                ...(t.start > start ? [{ start, end: t.start }] : []),
+                ...(t.end < end ? [{ start: t.end, end }] : []),
+              ],
         breaks: t.breaks,
         blocks: t.blocks,
         bookings: visible.filter((b) => b.staffId === t.id),
       }))
-    : [{ id: "all", staffId: undefined, name: "", note: "", off: [], breaks: [], blocks: [], bookings: visible }];
-  const orphans = team.length ? visible.filter((b) => !b.staffId || !team.some((t) => t.id === b.staffId)) : [];
-  if (orphans.length) columns.push({ id: "none", staffId: undefined, name: "No stylist", note: "Assign from the booking", off: [], breaks: [], blocks: [], bookings: orphans });
+    : [
+        {
+          id: "all",
+          staffId: undefined,
+          name: "",
+          note: "",
+          off: [],
+          breaks: [],
+          blocks: [],
+          bookings: visible,
+        },
+      ];
+  const orphans = team.length
+    ? visible.filter((b) => !b.staffId || !team.some((t) => t.id === b.staffId))
+    : [];
+  if (orphans.length)
+    columns.push({
+      id: "none",
+      staffId: undefined,
+      name: "No stylist",
+      note: "Assign from the booking",
+      off: [],
+      breaks: [],
+      blocks: [],
+      bookings: orphans,
+    });
 
   return (
     <>
@@ -277,13 +383,23 @@ function DayView({
           <div className="sticky top-0 z-30 flex border-b border-hairline bg-card">
             <div className="w-16 shrink-0" />
             {columns.map((c) => (
-              <div key={c.id} className="flex min-w-[9rem] flex-1 items-center gap-2.5 border-l border-hairline px-3 py-2 first:border-l-0">
+              <div
+                key={c.id}
+                className="flex min-w-[9rem] flex-1 items-center gap-2.5 border-l border-hairline px-3 py-2 first:border-l-0"
+              >
                 {c.staffId ? (
-                  <StaffAvatar name={c.name} photo={c.photo} colour={STYLIST_COLOURS[columns.indexOf(c) % STYLIST_COLOURS.length]} className="h-9 w-9" />
+                  <StaffAvatar
+                    name={c.name}
+                    photo={c.photo}
+                    colour={STYLIST_COLOURS[columns.indexOf(c) % STYLIST_COLOURS.length]}
+                    className="h-9 w-9"
+                  />
                 ) : null}
                 <span className="min-w-0">
                   <span className="block truncate text-[0.88rem] font-medium">{c.name}</span>
-                  <span className="block text-[0.7rem] text-muted-foreground">{c.note} · {c.bookings.length} booked</span>
+                  <span className="block text-[0.7rem] text-muted-foreground">
+                    {c.note} · {c.bookings.length} booked
+                  </span>
                 </span>
               </div>
             ))}
@@ -293,7 +409,11 @@ function DayView({
           {/* hour rail */}
           <div className="relative w-16 shrink-0 border-r border-hairline">
             {hours.map((m) => (
-              <span key={m} className="absolute right-2 -translate-y-1/2 text-[0.7rem] tabular-nums text-muted-foreground" style={{ top: y(m) }}>
+              <span
+                key={m}
+                className="absolute right-2 -translate-y-1/2 text-[0.7rem] tabular-nums text-muted-foreground"
+                style={{ top: y(m) }}
+              >
                 {minuteLabel(m)}
               </span>
             ))}
@@ -305,7 +425,11 @@ function DayView({
               className="relative min-w-[9rem] flex-1 border-l border-hairline first:border-l-0"
             >
               {hours.map((m) => (
-                <span key={m} className="absolute inset-x-0 border-t border-hairline" style={{ top: y(m) }} />
+                <span
+                  key={m}
+                  className="absolute inset-x-0 border-t border-hairline"
+                  style={{ top: y(m) }}
+                />
               ))}
               {/* empty time: click to book there (with this stylist) */}
               <button
@@ -313,12 +437,19 @@ function DayView({
                 className="absolute inset-0 cursor-copy"
                 onClick={(e) => {
                   const r = e.currentTarget.getBoundingClientRect();
-                  onBook(Math.max(start, snap(start + (e.clientY - r.top) / PX_PER_MIN - interval / 2)), col.staffId);
+                  onBook(
+                    Math.max(start, snap(start + (e.clientY - r.top) / PX_PER_MIN - interval / 2)),
+                    col.staffId,
+                  );
                 }}
               />
               {/* outside this stylist's hours */}
               {col.off.map((r, i) => (
-                <div key={`o${i}`} className="pointer-events-none absolute inset-x-0 bg-foreground/[0.05]" style={{ top: y(r.start), height: (r.end - r.start) * PX_PER_MIN }} />
+                <div
+                  key={`o${i}`}
+                  className="pointer-events-none absolute inset-x-0 bg-foreground/[0.05]"
+                  style={{ top: y(r.start), height: (r.end - r.start) * PX_PER_MIN }}
+                />
               ))}
               {[...plan.breaks, ...col.breaks].map((r, i) => (
                 <div
@@ -330,9 +461,22 @@ function DayView({
                 </div>
               ))}
               {[
-                ...data.blocks.map((r) => ({ start: r.start, end: r.end, label: r.kind === "break" ? r.reason || "Break" : `Blocked · ${r.reason || "Unavailable"}` })),
-                ...plan.blocks.filter((r) => !data.blocks.some((x) => x.start === r.start && x.end === r.end)).map((r) => ({ start: r.start, end: r.end, label: r.label || "Closed" })),
-                ...col.blocks.map((r) => ({ start: r.start, end: r.end, label: r.label || "Unavailable" })),
+                ...data.blocks.map((r) => ({
+                  start: r.start,
+                  end: r.end,
+                  label:
+                    r.kind === "break"
+                      ? r.reason || "Break"
+                      : `Blocked · ${r.reason || "Unavailable"}`,
+                })),
+                ...plan.blocks
+                  .filter((r) => !data.blocks.some((x) => x.start === r.start && x.end === r.end))
+                  .map((r) => ({ start: r.start, end: r.end, label: r.label || "Closed" })),
+                ...col.blocks.map((r) => ({
+                  start: r.start,
+                  end: r.end,
+                  label: r.label || "Unavailable",
+                })),
               ].map((r, i) => (
                 <div
                   key={`k${i}`}
@@ -343,7 +487,10 @@ function DayView({
                 </div>
               ))}
               {nowLine != null ? (
-                <div className="pointer-events-none absolute inset-x-0 z-20 flex items-center" style={{ top: y(nowLine) }}>
+                <div
+                  className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
+                  style={{ top: y(nowLine) }}
+                >
                   <span className="-ml-1 h-2 w-2 rounded-full bg-bronze" />
                   <span className="h-px flex-1 bg-bronze" />
                 </div>
@@ -376,16 +523,26 @@ function DayView({
                       top,
                       height: Math.max(26, b.minutes * PX_PER_MIN - 2),
                       ...(left ? { transform: `translateX(${left}px)` } : {}),
-                      ...(col.staffId ? { borderLeft: `3px solid ${STYLIST_COLOURS[columns.indexOf(col) % STYLIST_COLOURS.length]}` } : {}),
+                      ...(col.staffId
+                        ? {
+                            borderLeft: `3px solid ${STYLIST_COLOURS[columns.indexOf(col) % STYLIST_COLOURS.length]}`,
+                          }
+                        : {}),
                     }}
                   >
                     <div className="flex items-baseline justify-between gap-2 text-[0.8rem]">
                       <span className="truncate font-medium">{b.customer.name}</span>
                       <span className="shrink-0 tabular-nums opacity-70">
-                        {dragging && ghost != null ? `→ ${minuteLabel(ghost)}` : minuteLabel(b.time)}
+                        {dragging && ghost != null
+                          ? `→ ${minuteLabel(ghost)}`
+                          : minuteLabel(b.time)}
                       </span>
                     </div>
-                    {b.minutes >= 30 ? <div className="truncate text-[0.72rem] opacity-70">{b.services.map((s) => s.name).join(" · ")}</div> : null}
+                    {b.minutes >= 30 ? (
+                      <div className="truncate text-[0.72rem] opacity-70">
+                        {b.services.map((s) => s.name).join(" · ")}
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
@@ -394,13 +551,16 @@ function DayView({
         </div>
       </div>
       <p className="mt-2 text-[0.75rem] text-muted-foreground">
-        Drag an appointment up or down to change its time, or sideways to another stylist · click empty time to book · every move is re-checked for clashes.
+        Drag an appointment up or down to change its time, or sideways to another stylist · click
+        empty time to book · every move is re-checked for clashes.
       </p>
 
       <Dialog open={Boolean(move)} onOpenChange={(o) => !o && setMove(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display text-[1.5rem] font-normal">Move appointment?</DialogTitle>
+            <DialogTitle className="font-display text-[1.5rem] font-normal">
+              Move appointment?
+            </DialogTitle>
             <DialogDescription>
               {move
                 ? `${move.b.customer.name}: ${minuteLabel(move.b.time)}${move.b.staffName ? ` with ${move.b.staffName}` : ""} → ${minuteLabel(move.to)}${move.staffName ? ` with ${move.staffName}` : ""}`
@@ -421,12 +581,24 @@ function DayView({
 
 /* ── week ─────────────────────────────────────────────────── */
 
-function WeekView({ from, onOpen, onDay }: { from: string; onOpen: (ref: string) => void; onDay: (d: string) => void }) {
+function WeekView({
+  from,
+  onOpen,
+  onDay,
+}: {
+  from: string;
+  onOpen: (ref: string) => void;
+  onDay: (d: string) => void;
+}) {
   const to = addDays(from, 6);
-  const { data, loading, error, reload } = useAdminData((p) => adminRange({ data: { pin: p, from, to } }), [from]);
+  const { data, loading, error, reload } = useAdminData(
+    (p) => adminRange({ data: { pin: p, from, to } }),
+    [from],
+  );
   const byDay = useMemo(() => {
     const m = new Map<string, AdminBooking[]>();
-    for (const b of data?.bookings ?? []) if (b.status !== "cancelled") m.set(b.date, [...(m.get(b.date) ?? []), b]);
+    for (const b of data?.bookings ?? [])
+      if (b.status !== "cancelled") m.set(b.date, [...(m.get(b.date) ?? []), b]);
     return m;
   }, [data]);
   if (!data) return <LoadState loading={loading} error={error} onRetry={reload} />;
@@ -437,10 +609,26 @@ function WeekView({ from, onOpen, onDay }: { from: string; onOpen: (ref: string)
         const list = byDay.get(d.date) ?? [];
         const h = hoursFor(d.date);
         return (
-          <div key={d.date} className={cn("min-h-40 rounded-md border border-hairline bg-card p-2", d.date === data.today && "border-bronze/50", d.closed && "bg-foreground/[0.03]")}>
-            <button onClick={() => onDay(d.date)} className="flex w-full items-baseline justify-between px-1 text-left">
-              <span className="text-[0.7rem] uppercase tracking-[0.16em] text-muted-foreground">{dateLabel(d.date, { weekday: "short" })}</span>
-              <span className={cn("font-display text-[1.3rem]", d.date === data.today && "text-bronze")}>{fromISO(d.date).getDate()}</span>
+          <div
+            key={d.date}
+            className={cn(
+              "min-h-40 rounded-md border border-hairline bg-card p-2",
+              d.date === data.today && "border-bronze/50",
+              d.closed && "bg-foreground/[0.03]",
+            )}
+          >
+            <button
+              onClick={() => onDay(d.date)}
+              className="flex w-full items-baseline justify-between px-1 text-left"
+            >
+              <span className="text-[0.7rem] uppercase tracking-[0.16em] text-muted-foreground">
+                {dateLabel(d.date, { weekday: "short" })}
+              </span>
+              <span
+                className={cn("font-display text-[1.3rem]", d.date === data.today && "text-bronze")}
+              >
+                {fromISO(d.date).getDate()}
+              </span>
             </button>
             {d.closed ? (
               <p className="mt-3 px-1 text-[0.75rem] text-muted-foreground">Closed</p>
@@ -454,12 +642,18 @@ function WeekView({ from, onOpen, onDay }: { from: string; onOpen: (ref: string)
                     <button
                       key={b.reference}
                       onClick={() => onOpen(b.reference)}
-                      className={cn("block w-full rounded border px-2 py-1 text-left text-[0.72rem]", BLOCK_TONE[b.status])}
+                      className={cn(
+                        "block w-full rounded border px-2 py-1 text-left text-[0.72rem]",
+                        BLOCK_TONE[b.status],
+                      )}
                     >
-                      <span className="tabular-nums opacity-70">{minuteLabel(b.time)}</span> <span className="truncate">{b.customer.name}</span>
+                      <span className="tabular-nums opacity-70">{minuteLabel(b.time)}</span>{" "}
+                      <span className="truncate">{b.customer.name}</span>
                     </button>
                   ))}
-                  {!list.length ? <p className="px-1 text-[0.72rem] text-muted-foreground/70">No bookings</p> : null}
+                  {!list.length ? (
+                    <p className="px-1 text-[0.72rem] text-muted-foreground/70">No bookings</p>
+                  ) : null}
                 </div>
               </>
             )}
@@ -476,10 +670,14 @@ function MonthView({ month, onDay }: { month: string; onDay: (d: string) => void
   const first = fromISO(month);
   const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
   const to = toISO(last);
-  const { data, loading, error, reload } = useAdminData((p) => adminRange({ data: { pin: p, from: month, to } }), [month]);
+  const { data, loading, error, reload } = useAdminData(
+    (p) => adminRange({ data: { pin: p, from: month, to } }),
+    [month],
+  );
   const counts = useMemo(() => {
     const m = new Map<string, number>();
-    for (const b of data?.bookings ?? []) if (b.status !== "cancelled") m.set(b.date, (m.get(b.date) ?? 0) + 1);
+    for (const b of data?.bookings ?? [])
+      if (b.status !== "cancelled") m.set(b.date, (m.get(b.date) ?? 0) + 1);
     return m;
   }, [data]);
   if (!data) return <LoadState loading={loading} error={error} onRetry={reload} />;
@@ -509,7 +707,14 @@ function MonthView({ month, onDay }: { month: string; onDay: (d: string) => void
                 closed && "bg-foreground/[0.03] text-muted-foreground",
               )}
             >
-              <span className={cn("font-display text-[1.1rem] leading-none sm:text-[1.35rem]", d.date === data.today && "text-bronze")}>{fromISO(d.date).getDate()}</span>
+              <span
+                className={cn(
+                  "font-display text-[1.1rem] leading-none sm:text-[1.35rem]",
+                  d.date === data.today && "text-bronze",
+                )}
+              >
+                {fromISO(d.date).getDate()}
+              </span>
               {closed ? (
                 <span className="text-[0.62rem]">Closed</span>
               ) : n ? (

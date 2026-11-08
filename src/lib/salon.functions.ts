@@ -79,8 +79,12 @@ const B = () => import("./bookings.server");
 /** `fresh` for anything that saves a booking (latest hours, closures, prices). */
 const engine = async (fresh = false) => (await B()).engine(fresh);
 type Sb = Awaited<ReturnType<typeof db>>;
-const insertBooking = async (...a: Parameters<Awaited<ReturnType<typeof B>>["insertBooking"]>) => (await B()).insertBooking(...a);
-const patchBooking = async (_sb: Sb, ...a: Parameters<Awaited<ReturnType<typeof B>>["patchBooking"]>) => (await B()).patchBooking(...a);
+const insertBooking = async (...a: Parameters<Awaited<ReturnType<typeof B>>["insertBooking"]>) =>
+  (await B()).insertBooking(...a);
+const patchBooking = async (
+  _sb: Sb,
+  ...a: Parameters<Awaited<ReturnType<typeof B>>["patchBooking"]>
+) => (await B()).patchBooking(...a);
 
 const bookingInput = z.object({
   // accepted for compatibility; the server issues the real booking ID
@@ -103,10 +107,12 @@ const bookingInput = z.object({
         // Legacy local drafts may still contain bare paths; they are ignored unless
         // accompanied by a server-issued proof below.
         z.string().regex(/^pending\/[0-9a-f-]{36}\/[a-z0-9]+\.(jpg|png|webp)$/),
-        z.object({
-          path: z.string().regex(/^pending\/[0-9a-f-]{36}\/[a-z0-9]+\.(jpg|png|webp)$/),
-          proof: z.string().max(100),
-        }).strict(),
+        z
+          .object({
+            path: z.string().regex(/^pending\/[0-9a-f-]{36}\/[a-z0-9]+\.(jpg|png|webp)$/),
+            proof: z.string().max(100),
+          })
+          .strict(),
       ]),
     )
     .max(3)
@@ -125,9 +131,16 @@ async function connectionCode(): Promise<string> {
   try {
     const { getRequest } = await import("@tanstack/react-start/server");
     const h = getRequest().headers;
-    const ip = (h.get("cf-connecting-ip") ?? h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0] ?? "").trim();
+    const ip = (
+      h.get("cf-connecting-ip") ??
+      h.get("x-real-ip") ??
+      h.get("x-forwarded-for")?.split(",")[0] ??
+      ""
+    ).trim();
     if (!ip) return "";
-    const d = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`hb-salon:${ip}`)));
+    const d = new Uint8Array(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`hb-salon:${ip}`)),
+    );
     return Array.from(d.slice(0, 8), (x) => x.toString(16).padStart(2, "0")).join("");
   } catch {
     return "";
@@ -164,18 +177,25 @@ const notify = async (...a: Parameters<typeof import("./notify/service.server").
         ]).catch(() => undefined)
       : Promise.resolve();
   // a freed time: tell guests waiting for that day (cancelled, or moved away)
-  const freed = event === "BOOKING_CANCELLED" || event === "BOOKING_RESCHEDULED"
-    ? Promise.race([
-        (async () => {
-          const W = await import("./waitlist.server");
-          const prev = (ctx as { previous?: { date: string } } | undefined)?.previous?.date;
-          if (event === "BOOKING_RESCHEDULED" && prev) return W.timeFreedOn(prev);
-          const { data: r } = await (await db()).from("bookings").select("date").eq("reference", reference).maybeSingle();
-          return r ? W.timeFreedOn((r as { date: string }).date) : 0;
-        })(),
-        new Promise((r) => setTimeout(r, 6000)),
-      ]).catch(() => undefined)
-    : Promise.resolve();
+  const freed =
+    event === "BOOKING_CANCELLED" || event === "BOOKING_RESCHEDULED"
+      ? Promise.race([
+          (async () => {
+            const W = await import("./waitlist.server");
+            const prev = (ctx as { previous?: { date: string } } | undefined)?.previous?.date;
+            if (event === "BOOKING_RESCHEDULED" && prev) return W.timeFreedOn(prev);
+            const { data: r } = await (
+              await db()
+            )
+              .from("bookings")
+              .select("date")
+              .eq("reference", reference)
+              .maybeSingle();
+            return r ? W.timeFreedOn((r as { date: string }).date) : 0;
+          })(),
+          new Promise((r) => setTimeout(r, 6000)),
+        ]).catch(() => undefined)
+      : Promise.resolve();
   await Promise.all([
     (await import("./notify/service.server")).notifySoon(...a).catch(() => undefined),
     phone,
@@ -244,24 +264,38 @@ export const getAvailability = createServerFn({ method: "POST" })
     const E = await engine();
     // rules load alongside the day's data instead of before it
     const rules = E.loadRules();
-    let q: { minutes: number; buffer: number } = E.quote(data.audience, data.serviceIds) ?? { minutes: 30, buffer: 0 };
+    let q: { minutes: number; buffer: number } = E.quote(data.audience, data.serviceIds) ?? {
+      minutes: 30,
+      buffer: 0,
+    };
     let ignore: string | undefined;
     let serviceIds = data.serviceIds;
     let choice = data.staffId ?? "any";
     if (data.reference && (data.phone || data.token)) {
       const sb = await db();
-      const { data: r } = await sb.from("bookings").select("*").eq("reference", data.reference).maybeSingle();
+      const { data: r } = await sb
+        .from("bookings")
+        .select("*")
+        .eq("reference", data.reference)
+        .maybeSingle();
       if (r && (await owns(r, data))) {
         ignore = r.reference;
         // a booking keeps the length it was made with
         const row = r as Record<string, unknown>;
-        q = { minutes: (row["duration_minutes"] as number | null) ?? r.slots * 30, buffer: (row["buffer_minutes"] as number | null) ?? 0 };
+        q = {
+          minutes: (row["duration_minutes"] as number | null) ?? r.slots * 30,
+          buffer: (row["buffer_minutes"] as number | null) ?? 0,
+        };
         // and its own services and stylist rule
         serviceIds = (r.service_ids as string[] | null) ?? serviceIds;
         choice = bookingChoice(row);
       }
     }
-    return E.availability(data.date, q, rules, { ...(ignore ? { ignoreReference: ignore } : {}), serviceIds, choice });
+    return E.availability(data.date, q, rules, {
+      ...(ignore ? { ignoreReference: ignore } : {}),
+      serviceIds,
+      choice,
+    });
   });
 
 /** Public booking rules the customer screens need (no internal settings). */
@@ -290,8 +324,12 @@ const lookup = z.object({
 });
 
 /** True when the caller proved ownership with the booking's phone or its manage key. */
-async function owns(r: { reference: string; customer: unknown }, auth: { phone?: string | undefined; token?: string | undefined }) {
-  if (auth.phone && last10((r.customer as { phone: string }).phone) === last10(auth.phone)) return true;
+async function owns(
+  r: { reference: string; customer: unknown },
+  auth: { phone?: string | undefined; token?: string | undefined },
+) {
+  if (auth.phone && last10((r.customer as { phone: string }).phone) === last10(auth.phone))
+    return true;
   if (auth.token) {
     const { checkManageToken } = await import("./admin-auth.server");
     return checkManageToken(r.reference, auth.token);
@@ -302,11 +340,17 @@ async function owns(r: { reference: string; customer: unknown }, auth: { phone?:
 /** The appointment has ended (or was cancelled): nothing left to change. */
 function visitOverRow(row: Record<string, unknown>) {
   const meta = (row["meta"] ?? {}) as Record<string, unknown>;
-  if (row["status"] === "cancelled" || ["cancelled", "no-show", "completed"].includes(meta["status"] as string)) return true;
+  if (
+    row["status"] === "cancelled" ||
+    ["cancelled", "no-show", "completed"].includes(meta["status"] as string)
+  )
+    return true;
   const now = new Date(Date.now() + 330 * 60_000);
   const today = now.toISOString().slice(0, 10);
   const minute = now.getUTCHours() * 60 + now.getUTCMinutes();
-  const end = (row["time"] as number) + ((row["duration_minutes"] as number | null) ?? ((row["slots"] as number) ?? 1) * 30);
+  const end =
+    (row["time"] as number) +
+    ((row["duration_minutes"] as number | null) ?? ((row["slots"] as number) ?? 1) * 30);
   return (row["date"] as string) < today || ((row["date"] as string) === today && end <= minute);
 }
 
@@ -314,12 +358,14 @@ function visitOverRow(row: Record<string, unknown>) {
 function rateable(row: Record<string, unknown>) {
   const meta = (row["meta"] ?? {}) as Record<string, unknown>;
   const st = meta["status"] as string | undefined;
-  if (row["status"] === "cancelled" || st === "cancelled" || st === "no-show" || meta["rating"]) return false;
+  if (row["status"] === "cancelled" || st === "cancelled" || st === "no-show" || meta["rating"])
+    return false;
   const now = new Date(Date.now() + 330 * 60_000);
   const today = now.toISOString().slice(0, 10);
   const minute = now.getUTCHours() * 60 + now.getUTCMinutes();
   const time = row["time"] as number;
-  const end = (row["ends_at_minute"] as number | null) ?? time + ((row["slots"] as number) ?? 1) * 30;
+  const end =
+    (row["ends_at_minute"] as number | null) ?? time + ((row["slots"] as number) ?? 1) * 30;
   const date = row["date"] as string;
   return st === "completed" || date < today || (date === today && end <= minute);
 }
@@ -342,23 +388,43 @@ export const rateMyVisit = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const sb = await db();
-    const { data: r } = await sb.from("bookings").select("*").eq("reference", data.reference.toUpperCase()).maybeSingle();
-    if (!r || !(await owns(r, data))) return { ok: false as const, error: "We couldn't find that booking." };
+    const { data: r } = await sb
+      .from("bookings")
+      .select("*")
+      .eq("reference", data.reference.toUpperCase())
+      .maybeSingle();
+    if (!r || !(await owns(r, data)))
+      return { ok: false as const, error: "We couldn't find that booking." };
     const row = r as Record<string, unknown>;
     if ((row["meta"] as Record<string, unknown> | null)?.["rating"])
       return { ok: false as const, error: "Thank you, this visit has already been rated." };
-    if (!rateable(row)) return { ok: false as const, error: "You can rate your visit once your appointment is over." };
+    if (!rateable(row))
+      return {
+        ok: false as const,
+        error: "You can rate your visit once your appointment is over.",
+      };
     const booked = new Set((r.service_ids as string[] | null) ?? []);
     const stars = new Map<string, number>();
     for (const x of data.ratings) if (booked.has(x.serviceId)) stars.set(x.serviceId, x.stars);
-    if (!stars.size) return { ok: false as const, error: "Please rate the services from this visit." };
+    if (!stars.size)
+      return { ok: false as const, error: "Please rate the services from this visit." };
     // on the booking first, so a visit can never be counted twice
-    const meta = { ...((row["meta"] as Record<string, unknown> | null) ?? {}), rating: { at: new Date().toISOString(), stars: Object.fromEntries(stars) } };
+    const meta = {
+      ...((row["meta"] as Record<string, unknown> | null) ?? {}),
+      rating: { at: new Date().toISOString(), stars: Object.fromEntries(stars) },
+    };
     const error = await patchBooking(sb, r.reference, { meta }, {});
     if (error) return { ok: false as const, error: "Couldn't save your rating. Please try again." };
-    const { data: cur } = await sb.from("site_settings").select("value").eq("key", "service_ratings").maybeSingle();
-    const totals = { ...((cur?.value as Record<string, { sum: number; count: number }> | null) ?? {}) };
-    for (const [id, n] of stars) totals[id] = { sum: (totals[id]?.sum ?? 0) + n, count: (totals[id]?.count ?? 0) + 1 };
+    const { data: cur } = await sb
+      .from("site_settings")
+      .select("value")
+      .eq("key", "service_ratings")
+      .maybeSingle();
+    const totals = {
+      ...((cur?.value as Record<string, { sum: number; count: number }> | null) ?? {}),
+    };
+    for (const [id, n] of stars)
+      totals[id] = { sum: (totals[id]?.sum ?? 0) + n, count: (totals[id]?.count ?? 0) + 1 };
     await sb.from("site_settings").upsert({ key: "service_ratings", value: totals as never });
     const E = await engine();
     await E.audit({
@@ -379,15 +445,22 @@ const maskPhone = (p: string) => {
 
 /** Manage booking requires the exact reference and the booking phone together. */
 export const findMyBookings = createServerFn({ method: "POST" })
-  .inputValidator(
-    (d) =>
-      z
-        .object({
-          reference: z.string().trim().regex(/^HB-[A-Z0-9]{6}$/i),
-          phone: z.string().trim().min(10).max(20).regex(/^[+\d\s().-]+$/),
-        })
-        .strict()
-        .parse(d),
+  .inputValidator((d) =>
+    z
+      .object({
+        reference: z
+          .string()
+          .trim()
+          .regex(/^HB-[A-Z0-9]{6}$/i),
+        phone: z
+          .string()
+          .trim()
+          .min(10)
+          .max(20)
+          .regex(/^[+\d\s().-]+$/),
+      })
+      .strict()
+      .parse(d),
   )
   .handler(async ({ data }) => {
     const sb = await db();
@@ -400,22 +473,34 @@ export const findMyBookings = createServerFn({ method: "POST" })
       .maybeSingle();
     const phoneKey = last10(data.phone);
     const rows: Record<string, unknown>[] =
-      row && phoneKey.length === 10 && last10((row.customer as { phone?: string })?.phone ?? "") === phoneKey
+      row &&
+      phoneKey.length === 10 &&
+      last10((row.customer as { phone?: string })?.phone ?? "") === phoneKey
         ? [row as Record<string, unknown>]
         : [];
     const bookings = await Promise.all(
       rows.map(async (r) => {
         const b = toRow(r);
         const row = r as Record<string, unknown>;
-        const snap = (row["services_snapshot"] as { id?: string; name: string; price: number; minutes?: number }[] | null) ?? [];
+        const snap =
+          (row["services_snapshot"] as
+            { id?: string; name: string; price: number; minutes?: number }[] | null) ?? [];
         return {
           ...b,
           rateable: rateable(row),
           snapshot: snap.length
             ? {
-                services: snap.map((x) => ({ ...(x.id ? { id: x.id } : {}), name: x.name, price: x.price, minutes: x.minutes ?? 30 })),
-                minutes: (row["duration_minutes"] as number | null) ?? snap.reduce((n, x) => n + (x.minutes ?? 30), 0),
-                price: (row["price_total"] as number | null) ?? snap.reduce((n, x) => n + x.price, 0),
+                services: snap.map((x) => ({
+                  ...(x.id ? { id: x.id } : {}),
+                  name: x.name,
+                  price: x.price,
+                  minutes: x.minutes ?? 30,
+                })),
+                minutes:
+                  (row["duration_minutes"] as number | null) ??
+                  snap.reduce((n, x) => n + (x.minutes ?? 30), 0),
+                price:
+                  (row["price_total"] as number | null) ?? snap.reduce((n, x) => n + x.price, 0),
               }
             : null,
           meta: {},
@@ -448,7 +533,10 @@ export const updateMyBooking = createServerFn({ method: "POST" })
     lookup
       .extend({
         action: z.enum(["cancel", "reschedule"]),
-        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        date: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
         time: z.number().int().min(0).max(1440).optional(),
       })
       .parse(d),
@@ -465,8 +553,10 @@ export const updateMyBooking = createServerFn({ method: "POST" })
     }
     const row = r as Record<string, unknown>;
     const status = (r.meta as { status?: string })?.status;
-    if (r.status === "cancelled" || status === "cancelled") return { ok: false, error: "This booking was cancelled." };
-    if (status === "completed" || status === "no-show") return { ok: false, error: "This appointment has already taken place." };
+    if (r.status === "cancelled" || status === "cancelled")
+      return { ok: false, error: "This booking was cancelled." };
+    if (status === "completed" || status === "no-show")
+      return { ok: false, error: "This appointment has already taken place." };
 
     const E = await engine(true);
     const rules = await E.loadRules();
@@ -474,15 +564,24 @@ export const updateMyBooking = createServerFn({ method: "POST" })
     const minutesUntil = E.dayDiff(now.iso, r.date) * 1440 + r.time - now.minute;
 
     if (data.action === "cancel") {
-      if (!rules.customerCancel) return { ok: false, error: "Online cancellation is off. Please call the studio." };
+      if (!rules.customerCancel)
+        return { ok: false, error: "Online cancellation is off. Please call the studio." };
       if (minutesUntil < rules.cancelDeadlineMinutes) {
-        return { ok: false, error: "It's too close to your appointment to cancel online. Please call the studio." };
+        return {
+          ok: false,
+          error: "It's too close to your appointment to cancel online. Please call the studio.",
+        };
       }
-      const error = await patchBooking(sb, r.reference, { status: "cancelled" }, {
-        cancelled_at: new Date().toISOString(),
-        cancel_reason: "Cancelled by guest online",
-        history: withHistory(row, { by: "guest", action: "cancelled" }),
-      });
+      const error = await patchBooking(
+        sb,
+        r.reference,
+        { status: "cancelled" },
+        {
+          cancelled_at: new Date().toISOString(),
+          cancel_reason: "Cancelled by guest online",
+          history: withHistory(row, { by: "guest", action: "cancelled" }),
+        },
+      );
       if (error) return { ok: false, error: "Couldn't cancel this booking. Please try again." };
       // a cancelled booking's reference photos are deleted straight away
       const { deleteBookingPhotos } = await import("./photos.server");
@@ -490,20 +589,39 @@ export const updateMyBooking = createServerFn({ method: "POST" })
       const cust = r.customer as Record<string, unknown> | null;
       if (cust?.["photos"]) {
         const { photos: _gone, ...rest } = cust;
-        await sb.from("bookings").update({ customer: rest as never }).eq("reference", r.reference);
+        await sb
+          .from("bookings")
+          .update({ customer: rest as never })
+          .eq("reference", r.reference);
       }
-      await E.audit({ actor: "guest", action: "booking.cancel", entity: "booking", entityId: r.reference, summary: `Guest cancelled ${r.reference}` });
+      await E.audit({
+        actor: "guest",
+        action: "booking.cancel",
+        entity: "booking",
+        entityId: r.reference,
+        summary: `Guest cancelled ${r.reference}`,
+      });
       await notify(r.reference, "BOOKING_CANCELLED", { actor: "guest" });
       return { ok: true };
     }
 
     if (!data.date || data.time == null) return { ok: false, error: "Pick a new date and time." };
-    if (!rules.customerReschedule) return { ok: false, error: "Online rescheduling is off. Please call the studio." };
+    if (!rules.customerReschedule)
+      return { ok: false, error: "Online rescheduling is off. Please call the studio." };
     if (minutesUntil < rules.rescheduleDeadlineMinutes) {
-      return { ok: false, error: "It's too close to your appointment to move it online. Please call the studio." };
+      return {
+        ok: false,
+        error: "It's too close to your appointment to move it online. Please call the studio.",
+      };
     }
-    const moves = ((row["history"] as HistoryEntry[] | undefined) ?? []).filter((h) => h.by === "guest" && h.action === "rescheduled").length;
-    if (moves >= rules.maxReschedules) return { ok: false, error: "This booking can't be moved online again. Please call the studio." };
+    const moves = ((row["history"] as HistoryEntry[] | undefined) ?? []).filter(
+      (h) => h.by === "guest" && h.action === "rescheduled",
+    ).length;
+    if (moves >= rules.maxReschedules)
+      return {
+        ok: false,
+        error: "This booking can't be moved online again. Please call the studio.",
+      };
     // the appointment keeps the length it was booked with
     const held = {
       minutes: (row["duration_minutes"] as number | null) ?? r.slots * 30,
@@ -515,12 +633,33 @@ export const updateMyBooking = createServerFn({ method: "POST" })
       choice: bookingChoice(row),
     });
     if (!check.ok) return check;
-    const error = await patchBooking(sb, r.reference, { date: data.date, time: data.time, ...(check.staffId !== undefined ? { meta: metaWithStaff(row["meta"], check.staffId, staffChoiceOf(row)) } : {}) }, {
-      ...(check.staffId !== undefined ? { staff_id: check.staffId } : {}),
-      history: withHistory(row, { by: "guest", action: "rescheduled", from: { date: r.date, time: r.time }, to: { date: data.date, time: data.time } }),
-    });
+    const error = await patchBooking(
+      sb,
+      r.reference,
+      {
+        date: data.date,
+        time: data.time,
+        ...(check.staffId !== undefined
+          ? { meta: metaWithStaff(row["meta"], check.staffId, staffChoiceOf(row)) }
+          : {}),
+      },
+      {
+        ...(check.staffId !== undefined ? { staff_id: check.staffId } : {}),
+        history: withHistory(row, {
+          by: "guest",
+          action: "rescheduled",
+          from: { date: r.date, time: r.time },
+          to: { date: data.date, time: data.time },
+        }),
+      },
+    );
     if (error) {
-      return { ok: false, error: E.isSlotTaken(error) ? "That time was just booked. Please choose another time." : "Couldn't move this booking. Please try again." };
+      return {
+        ok: false,
+        error: E.isSlotTaken(error)
+          ? "That time was just booked. Please choose another time."
+          : "Couldn't move this booking. Please try again.",
+      };
     }
     await E.audit({
       actor: "guest",
@@ -531,7 +670,10 @@ export const updateMyBooking = createServerFn({ method: "POST" })
       before: { date: r.date, time: r.time },
       after: { date: data.date, time: data.time },
     });
-    await notify(r.reference, "BOOKING_RESCHEDULED", { actor: "guest", previous: { date: r.date, time: r.time } });
+    await notify(r.reference, "BOOKING_RESCHEDULED", {
+      actor: "guest",
+      previous: { date: r.date, time: r.time },
+    });
     return { ok: true };
   });
 
@@ -579,13 +721,20 @@ export const adminUpsertBooking = createServerFn({ method: "POST" })
           .optional(),
         patch: z
           .object({
-            date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+            date: z
+              .string()
+              .regex(/^\d{4}-\d{2}-\d{2}$/)
+              .optional(),
             time: z.number().int().min(0).max(1440).optional(),
             status: z.enum(["confirmed", "cancelled"]).optional(),
             meta: z.record(z.string(), z.unknown()).optional(),
             cancelReason: z.string().max(200).optional(),
             customer: z
-              .object({ name: z.string().trim().min(1).max(100), phone: z.string().trim().max(20), email: z.string().trim().max(255) })
+              .object({
+                name: z.string().trim().min(1).max(100),
+                phone: z.string().trim().max(20),
+                email: z.string().trim().max(255),
+              })
               .optional(),
             /** reassign to a stylist ("any" = whoever is free) */
             staffId: z.union([z.string().uuid(), z.literal("any")]).optional(),
@@ -600,26 +749,48 @@ export const adminUpsertBooking = createServerFn({ method: "POST" })
     if (data.insert) {
       const i = data.insert;
       const r = await insertBooking(
-        { audience: i.audience, serviceIds: i.serviceIds, date: i.date, time: i.time, customer: i.customer, source: i.source, staffChoice: i.staffId ?? "any" },
+        {
+          audience: i.audience,
+          serviceIds: i.serviceIds,
+          date: i.date,
+          time: i.time,
+          customer: i.customer,
+          source: i.source,
+          staffChoice: i.staffId ?? "any",
+        },
         { staff: true },
       );
       if (!r.ok) throw new Error(r.error);
       // (stylist chosen or assigned by the engine)
-      await E.audit({ action: "booking.create", entity: "booking", entityId: r.reference, summary: `Added ${i.source} booking ${r.reference} for ${i.customer.name}`, after: { date: i.date, time: i.time, services: i.serviceIds } });
+      await E.audit({
+        action: "booking.create",
+        entity: "booking",
+        entityId: r.reference,
+        summary: `Added ${i.source} booking ${r.reference} for ${i.customer.name}`,
+        after: { date: i.date, time: i.time, services: i.serviceIds },
+      });
       // phone/WhatsApp bookings get a confirmation; walk-ins are already in the chair
-      if (i.source !== "walk-in") await notify(r.reference, "BOOKING_CONFIRMED", { actor: "admin" });
+      if (i.source !== "walk-in")
+        await notify(r.reference, "BOOKING_CONFIRMED", { actor: "admin" });
       return { ok: true, reference: r.reference };
     }
     if (!data.patch) return { ok: true, reference: data.reference };
 
-    const { data: current } = await sb.from("bookings").select("*").eq("reference", data.reference).maybeSingle();
+    const { data: current } = await sb
+      .from("bookings")
+      .select("*")
+      .eq("reference", data.reference)
+      .maybeSingle();
     if (!current) throw new Error("Booking not found");
     const row = current as Record<string, unknown>;
     const p = data.patch;
     const base: Record<string, unknown> = {};
     const extra: Record<string, unknown> = {};
-    const moved = (p.date && p.date !== current.date) || (p.time != null && p.time !== current.time);
-    const restaff = p.staffId !== undefined && (p.staffId === "any" ? staffChoiceOf(row) !== "any" : p.staffId !== staffIdOf(row));
+    const moved =
+      (p.date && p.date !== current.date) || (p.time != null && p.time !== current.time);
+    const restaff =
+      p.staffId !== undefined &&
+      (p.staffId === "any" ? staffChoiceOf(row) !== "any" : p.staffId !== staffIdOf(row));
 
     if (moved || restaff) {
       // admins can't create clashes either; the booking keeps its booked length
@@ -628,30 +799,49 @@ export const adminUpsertBooking = createServerFn({ method: "POST" })
         buffer: (row["buffer_minutes"] as number | null) ?? 0,
       };
       const choice = p.staffId ?? bookingChoice(row);
-      const check = await E.checkTime(p.date ?? current.date, p.time ?? current.time, held, await E.loadRules(), {
-        staff: true,
-        ignoreReference: current.reference,
-        serviceIds: (current.service_ids as string[] | null) ?? [],
-        choice,
-      });
+      const check = await E.checkTime(
+        p.date ?? current.date,
+        p.time ?? current.time,
+        held,
+        await E.loadRules(),
+        {
+          staff: true,
+          ignoreReference: current.reference,
+          serviceIds: (current.service_ids as string[] | null) ?? [],
+          choice,
+        },
+      );
       if (!check.ok) throw new Error(check.error.replace("just booked", "already booked"));
       if (check.staffId !== undefined) {
         extra["staff_id"] = check.staffId;
         extra["staff_choice"] = choice === "any" ? "any" : "specific";
         // kept in meta as well, which works on every database version
-        base["meta"] = metaWithStaff(base["meta"] ?? current.meta, check.staffId, choice === "any" ? "any" : "specific");
+        base["meta"] = metaWithStaff(
+          base["meta"] ?? current.meta,
+          check.staffId,
+          choice === "any" ? "any" : "specific",
+        );
         // and the stylist's name, so summaries and alerts name the new stylist
         if (check.staffId) {
           const { stable } = await import("./staff-store.server");
-          const { data: st } = await stable("staff").select("name").eq("id", check.staffId).maybeSingle();
+          const { data: st } = await stable("staff")
+            .select("name")
+            .eq("id", check.staffId)
+            .maybeSingle();
           const name = (st as { name?: string } | null)?.name;
-          if (name) base["meta"] = { ...(base["meta"] as Record<string, unknown>), staff_name: name };
+          if (name)
+            base["meta"] = { ...(base["meta"] as Record<string, unknown>), staff_name: name };
         }
       }
       if (moved) {
         base["date"] = p.date ?? current.date;
         base["time"] = p.time ?? current.time;
-        extra["history"] = withHistory(row, { by: "admin", action: "rescheduled", from: { date: current.date, time: current.time }, to: { date: base["date"], time: base["time"] } });
+        extra["history"] = withHistory(row, {
+          by: "admin",
+          action: "rescheduled",
+          from: { date: current.date, time: current.time },
+          to: { date: base["date"], time: base["time"] },
+        });
       } else {
         extra["history"] = withHistory(row, { by: "admin", action: "stylist changed" });
       }
@@ -661,40 +851,94 @@ export const adminUpsertBooking = createServerFn({ method: "POST" })
     const cancelling = p.status === "cancelled" || metaStatus === "cancelled";
     if (p.status) base["status"] = p.status;
     // merge, so a status change never wipes notes or payment details
-    if (p.meta) base["meta"] = { ...((base["meta"] ?? current.meta) as Record<string, unknown> | null ?? {}), ...p.meta };
-    if (p.customer) base["customer"] = { ...((current.customer as Record<string, unknown>) ?? {}), ...p.customer };
+    if (p.meta)
+      base["meta"] = {
+        ...(((base["meta"] ?? current.meta) as Record<string, unknown> | null) ?? {}),
+        ...p.meta,
+      };
+    if (p.customer)
+      base["customer"] = {
+        ...((current.customer as Record<string, unknown>) ?? {}),
+        ...p.customer,
+      };
     if (cancelling && current.status !== "cancelled") {
       base["status"] = "cancelled";
       extra["cancelled_at"] = new Date().toISOString();
       extra["cancel_reason"] = p.cancelReason ?? "";
-      extra["history"] = withHistory({ history: extra["history"] ?? row["history"] }, { by: "admin", action: "cancelled", ...(p.cancelReason ? { reason: p.cancelReason } : {}) });
+      extra["history"] = withHistory(
+        { history: extra["history"] ?? row["history"] },
+        { by: "admin", action: "cancelled", ...(p.cancelReason ? { reason: p.cancelReason } : {}) },
+      );
     } else if (metaStatus && metaStatus !== prevStatus) {
-      extra["history"] = withHistory({ history: extra["history"] ?? row["history"] }, { by: "admin", action: `status:${metaStatus}` });
-      if (current.status === "cancelled" && metaStatus !== "cancelled") base["status"] = "confirmed"; // restored
+      extra["history"] = withHistory(
+        { history: extra["history"] ?? row["history"] },
+        { by: "admin", action: `status:${metaStatus}` },
+      );
+      if (current.status === "cancelled" && metaStatus !== "cancelled")
+        base["status"] = "confirmed"; // restored
     }
 
     const error = await patchBooking(sb, data.reference, base, extra);
     if (error) {
-      throw new Error(E.isSlotTaken(error) ? "That time is no longer available." : "Couldn't update the appointment");
+      throw new Error(
+        E.isSlotTaken(error)
+          ? "That time is no longer available."
+          : "Couldn't update the appointment",
+      );
     }
     if (p.customer) {
-      await E.audit({ action: "booking.edit", entity: "booking", entityId: data.reference, summary: `Edited contact details on ${data.reference}`, before: current.customer, after: base["customer"] });
+      await E.audit({
+        action: "booking.edit",
+        entity: "booking",
+        entityId: data.reference,
+        summary: `Edited contact details on ${data.reference}`,
+        before: current.customer,
+        after: base["customer"],
+      });
     }
     if (moved) {
-      await E.audit({ action: "booking.reschedule", entity: "booking", entityId: data.reference, summary: `Moved ${data.reference}`, before: { date: current.date, time: current.time }, after: { date: base["date"], time: base["time"] } });
+      await E.audit({
+        action: "booking.reschedule",
+        entity: "booking",
+        entityId: data.reference,
+        summary: `Moved ${data.reference}`,
+        before: { date: current.date, time: current.time },
+        after: { date: base["date"], time: base["time"] },
+      });
     }
     if (cancelling && current.status !== "cancelled") {
-      await E.audit({ action: "booking.cancel", entity: "booking", entityId: data.reference, summary: `Cancelled ${data.reference}`, reason: p.cancelReason ?? "" });
+      await E.audit({
+        action: "booking.cancel",
+        entity: "booking",
+        entityId: data.reference,
+        summary: `Cancelled ${data.reference}`,
+        reason: p.cancelReason ?? "",
+      });
     } else if (metaStatus && metaStatus !== prevStatus) {
-      await E.audit({ action: "booking.status", entity: "booking", entityId: data.reference, summary: `${data.reference}: ${prevStatus ?? "upcoming"} → ${metaStatus}`, before: { status: prevStatus ?? "upcoming" }, after: { status: metaStatus } });
+      await E.audit({
+        action: "booking.status",
+        entity: "booking",
+        entityId: data.reference,
+        summary: `${data.reference}: ${prevStatus ?? "upcoming"} → ${metaStatus}`,
+        before: { status: prevStatus ?? "upcoming" },
+        after: { status: metaStatus },
+      });
     }
 
     // messages: guest is told about moves and cancellations; reminders follow the booking
-    if (cancelling && current.status !== "cancelled") await notify(data.reference, "BOOKING_CANCELLED", { actor: "admin" });
-    else if (moved) await notify(data.reference, "BOOKING_RESCHEDULED", { actor: "admin", previous: { date: current.date, time: current.time } });
-    else if (metaStatus === "upcoming" && prevStatus === "pending") await notify(data.reference, "BOOKING_CONFIRMED", { actor: "admin" });
-    else if (metaStatus === "completed" && prevStatus !== "completed") await notify(data.reference, "BOOKING_COMPLETED", { actor: "admin" });
-    else if (metaStatus === "no-show" && prevStatus !== "no-show") await notify(data.reference, "NO_SHOW", { actor: "admin" });
+    if (cancelling && current.status !== "cancelled")
+      await notify(data.reference, "BOOKING_CANCELLED", { actor: "admin" });
+    else if (moved)
+      await notify(data.reference, "BOOKING_RESCHEDULED", {
+        actor: "admin",
+        previous: { date: current.date, time: current.time },
+      });
+    else if (metaStatus === "upcoming" && prevStatus === "pending")
+      await notify(data.reference, "BOOKING_CONFIRMED", { actor: "admin" });
+    else if (metaStatus === "completed" && prevStatus !== "completed")
+      await notify(data.reference, "BOOKING_COMPLETED", { actor: "admin" });
+    else if (metaStatus === "no-show" && prevStatus !== "no-show")
+      await notify(data.reference, "NO_SHOW", { actor: "admin" });
 
     // Reference photos are only kept until the visit is over.
     if (cancelling || metaStatus === "completed" || metaStatus === "no-show") {
@@ -703,7 +947,10 @@ export const adminUpsertBooking = createServerFn({ method: "POST" })
       const c = current.customer as Record<string, unknown> | undefined;
       if (c?.["photos"]) {
         const { photos: _gone, ...rest } = c;
-        await sb.from("bookings").update({ customer: rest as never }).eq("reference", data.reference);
+        await sb
+          .from("bookings")
+          .update({ customer: rest as never })
+          .eq("reference", data.reference);
       }
     }
     return { ok: true, reference: data.reference };
@@ -738,18 +985,34 @@ export const adminSaveConfig = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sb = await assertPin(data.pin);
     // Merge, so saving one setting never wipes the others.
-    const { data: existing } = await sb.from("salon_config").select("data").eq("id", 1).maybeSingle();
+    const { data: existing } = await sb
+      .from("salon_config")
+      .select("data")
+      .eq("id", 1)
+      .maybeSingle();
     const merged = { ...((existing?.data as Record<string, unknown>) ?? {}), ...data.config };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await sb.from("salon_config").update({ data: merged as any }).eq("id", 1);
+    const { error } = await sb
+      .from("salon_config")
+      .update({ data: merged as any })
+      .eq("id", 1);
     if (error) throw new Error("Couldn't save settings");
     const c = data.config;
     const E = await import("./engine.server");
     if (c.accepting !== undefined) {
-      await E.audit({ action: c.accepting ? "bookings.resume" : "bookings.pause", entity: "settings", entityId: "booking", summary: c.accepting ? "Resumed online bookings" : "Paused online bookings" });
+      await E.audit({
+        action: c.accepting ? "bookings.resume" : "bookings.pause",
+        entity: "settings",
+        entityId: "booking",
+        summary: c.accepting ? "Resumed online bookings" : "Paused online bookings",
+      });
     }
     if (c.accepting !== undefined) {
-      const { data: cur } = await sb.from("site_settings").select("value").eq("key", "booking").maybeSingle();
+      const { data: cur } = await sb
+        .from("site_settings")
+        .select("value")
+        .eq("key", "booking")
+        .maybeSingle();
       const value = { ...((cur?.value as object) ?? {}), accepting: c.accepting };
       await sb.from("site_settings").upsert({ key: "booking", value });
     }
@@ -765,9 +1028,7 @@ const businessHourInput = z.object({
 });
 
 export const adminSaveBusinessHours = createServerFn({ method: "POST" })
-  .inputValidator((d) =>
-    pinOnly.extend({ hours: z.array(businessHourInput).length(7) }).parse(d),
-  )
+  .inputValidator((d) => pinOnly.extend({ hours: z.array(businessHourInput).length(7) }).parse(d))
   .handler(async ({ data }) => {
     const sb = await assertPin(data.pin);
     const sorted = [...data.hours].sort((a, b) => a.day - b.day);
@@ -797,8 +1058,12 @@ export const adminSaveBusinessHours = createServerFn({ method: "POST" })
       }
 
       breaksByDay[String(h.day)] = normalizedBreaks.map((b) => ({
-        start: hhmm(`${String(Math.floor(b.start / 60)).padStart(2, "0")}:${String(b.start % 60).padStart(2, "0")}`),
-        end: hhmm(`${String(Math.floor(b.end / 60)).padStart(2, "0")}:${String(b.end % 60).padStart(2, "0")}`),
+        start: hhmm(
+          `${String(Math.floor(b.start / 60)).padStart(2, "0")}:${String(b.start % 60).padStart(2, "0")}`,
+        ),
+        end: hhmm(
+          `${String(Math.floor(b.end / 60)).padStart(2, "0")}:${String(b.end % 60).padStart(2, "0")}`,
+        ),
       }));
     }
     if (seen.size !== 7) throw new Error("All 7 days are required");
@@ -824,7 +1089,12 @@ export const adminSaveBusinessHours = createServerFn({ method: "POST" })
       .upsert({ key: "business_hours", value });
     if (settingError) throw new Error("Couldn't save break periods");
     const E = await import("./engine.server");
-    await E.audit({ action: "hours.update", entity: "hours", summary: "Updated opening hours and breaks", after: { hours: sorted, breaksByDay } });
+    await E.audit({
+      action: "hours.update",
+      entity: "hours",
+      summary: "Updated opening hours and breaks",
+      after: { hours: sorted, breaksByDay },
+    });
 
     return { ok: true };
   });
@@ -839,7 +1109,11 @@ export const adminChangePin = createServerFn({ method: "POST" })
     const r = await changeCode(data.pin, data.current, data.next);
     if (r.ok) {
       const E = await import("./engine.server");
-      await E.audit({ action: "security.code_change", entity: "security", summary: "Changed the admin access code" });
+      await E.audit({
+        action: "security.code_change",
+        entity: "security",
+        summary: "Changed the admin access code",
+      });
     }
     return r;
   });
@@ -860,7 +1134,8 @@ export const getServicePopularity = createServerFn({ method: "GET" }).handler(as
     .limit(5000);
   const counts: Record<string, number> = {};
   if (error) return { counts };
-  for (const r of data ?? []) for (const id of (r.service_ids as string[] | null) ?? []) counts[id] = (counts[id] ?? 0) + 1;
+  for (const r of data ?? [])
+    for (const id of (r.service_ids as string[] | null) ?? []) counts[id] = (counts[id] ?? 0) + 1;
   return { counts };
 });
 
@@ -872,11 +1147,17 @@ export const myLookPhotos = createServerFn({ method: "POST" })
   .inputValidator((d) => lookup.parse(d))
   .handler(async ({ data }) => {
     const sb = await db();
-    const { data: r } = await sb.from("bookings").select("*").eq("reference", data.reference.toUpperCase()).maybeSingle();
+    const { data: r } = await sb
+      .from("bookings")
+      .select("*")
+      .eq("reference", data.reference.toUpperCase())
+      .maybeSingle();
     if (!r || !(await owns(r, data))) return { urls: [] as string[], over: true };
     const row = r as Record<string, unknown>;
-    const st = ((row["meta"] as Record<string, unknown> | null)?.["status"] as string | undefined) ?? "";
-    const minutes = (row["duration_minutes"] as number | null) ?? ((row["slots"] as number | null) ?? 1) * 30;
+    const st =
+      ((row["meta"] as Record<string, unknown> | null)?.["status"] as string | undefined) ?? "";
+    const minutes =
+      (row["duration_minutes"] as number | null) ?? ((row["slots"] as number | null) ?? 1) * 30;
     // salon time (UTC+5:30), minutes from the start of the day
     const now = new Date(Date.now() + 330 * 60_000);
     const today = now.toISOString().slice(0, 10);
@@ -899,8 +1180,15 @@ export const myLookPhotos = createServerFn({ method: "POST" })
     if (!paths.length) return { urls: [] as string[], over: false, ...when };
     // links last until the slot ends (at least 10 minutes, at most 6 hours)
     const left = date === today ? (end - nowMin) * 60 : 6 * 3600;
-    const { data: signed } = await bucket.createSignedUrls(paths, Math.max(600, Math.min(left, 6 * 3600)));
-    return { urls: (signed ?? []).map((s) => s.signedUrl).filter((u): u is string => Boolean(u)), over: false, ...when };
+    const { data: signed } = await bucket.createSignedUrls(
+      paths,
+      Math.max(600, Math.min(left, 6 * 3600)),
+    );
+    return {
+      urls: (signed ?? []).map((s) => s.signedUrl).filter((u): u is string => Boolean(u)),
+      over: false,
+      ...when,
+    };
   });
 
 /** The site's public key for phone notifications (safe to share). */
@@ -924,27 +1212,54 @@ export const remindMeOnPhone = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const sb = await db();
-    const { data: r } = await sb.from("bookings").select("*").eq("reference", data.reference.toUpperCase()).maybeSingle();
-    if (!r || !(await owns(r, data))) return { ok: false as const, error: "We couldn't find that booking." };
-    if (!/^https:\/\//.test(data.endpoint)) return { ok: false as const, error: "This browser can't receive reminders." };
+    const { data: r } = await sb
+      .from("bookings")
+      .select("*")
+      .eq("reference", data.reference.toUpperCase())
+      .maybeSingle();
+    if (!r || !(await owns(r, data)))
+      return { ok: false as const, error: "We couldn't find that booking." };
+    if (!/^https:\/\//.test(data.endpoint))
+      return { ok: false as const, error: "This browser can't receive reminders." };
     const meta = ((r as Record<string, unknown>)["meta"] ?? {}) as Record<string, unknown>;
-    const subs = ((meta["push"] as { endpoint: string }[] | undefined) ?? []).filter((x) => x.endpoint !== data.endpoint);
+    const subs = ((meta["push"] as { endpoint: string }[] | undefined) ?? []).filter(
+      (x) => x.endpoint !== data.endpoint,
+    );
     const next = data.off
       ? subs
-      : [...subs, { endpoint: data.endpoint, keys: { p256dh: data.p256dh, auth: data.auth }, origin: data.origin }].slice(-3);
-    const { error } = await sb.from("bookings").update({ meta: { ...meta, push: next } as never }).eq("reference", r.reference);
+      : [
+          ...subs,
+          {
+            endpoint: data.endpoint,
+            keys: { p256dh: data.p256dh, auth: data.auth },
+            origin: data.origin,
+          },
+        ].slice(-3);
+    const { error } = await sb
+      .from("bookings")
+      .update({ meta: { ...meta, push: next } as never })
+      .eq("reference", r.reference);
     if (error) return { ok: false as const, error: "Couldn't save that. Please try again." };
     return { ok: true as const, on: !data.off };
   });
 
 /** One step of the booking journey reached (counted once per visitor per day; no cookies). */
 export const trackStep = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ step: z.enum(["home", "book", "services", "time", "details", "review", "booked"]) }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({ step: z.enum(["home", "book", "services", "time", "details", "review", "booked"]) })
+      .parse(d),
+  )
   .handler(async ({ data }) => {
     try {
       const { getRequest } = await import("@tanstack/react-start/server");
       const h = getRequest().headers;
-      const ip = (h.get("cf-connecting-ip") ?? h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0] ?? "").trim();
+      const ip = (
+        h.get("cf-connecting-ip") ??
+        h.get("x-real-ip") ??
+        h.get("x-forwarded-for")?.split(",")[0] ??
+        ""
+      ).trim();
       const { recordVisit } = await import("./visits.server");
       await recordVisit(data.step, ip, h.get("user-agent") ?? "");
     } catch {

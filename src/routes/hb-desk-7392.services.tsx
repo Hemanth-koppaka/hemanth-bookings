@@ -390,12 +390,12 @@ function CatalogueScreen() {
                           {formatDuration(s.minutes)}
                           {s.buffer ? ` + ${s.buffer} min buffer` : ""}
                           {s.upcoming ? ` · ${s.upcoming} upcoming` : ""}
-                          {s.rating ? ` · ★ ${s.rating.avg.toFixed(1)} (${s.rating.count} ${s.rating.count === 1 ? "rating" : "ratings"})` : ""}
+                          {s.rating
+                            ? ` · ★ ${s.rating.avg.toFixed(1)} (${s.rating.count} ${s.rating.count === 1 ? "rating" : "ratings"})`
+                            : ""}
                         </span>
                       </button>
-                      <span className="shrink-0 text-[0.92rem] tabular-nums">
-                        {inr(s.price)}
-                      </span>
+                      <span className="shrink-0 text-[0.92rem] tabular-nums">{inr(s.price)}</span>
                       <div className="flex shrink-0 items-center gap-0.5">
                         {s.archived ? (
                           <IconBtn
@@ -615,13 +615,25 @@ function ServiceEditor({
   const [err, setErr] = useState("");
   const [confirmArchive, setConfirmArchive] = useState(false);
   // who performs this service: any qualified stylist, or one preferred stylist
-  const [rule, setRule] = useState<{ preferred: string; initial: string; stylists: { id: string; name: string }[] } | null>(null);
+  const [rule, setRule] = useState<{
+    preferred: string;
+    initial: string;
+    stylists: { id: string; name: string }[];
+  } | null>(null);
   useEffect(() => {
     setRule(null);
     if (!service || service === "new") return;
     let live = true;
     adminServiceRule({ data: { pin, id: service.id } })
-      .then((r) => live && setRule({ preferred: r.preferred ?? "any", initial: r.preferred ?? "any", stylists: r.stylists }))
+      .then(
+        (r) =>
+          live &&
+          setRule({
+            preferred: r.preferred ?? "any",
+            initial: r.preferred ?? "any",
+            stylists: r.stylists,
+          }),
+      )
       .catch(() => {});
     return () => {
       live = false;
@@ -675,7 +687,9 @@ function ServiceEditor({
         },
       });
       if (!isNew && rule && rule.preferred !== rule.initial) {
-        const r = await adminSetServiceRule({ data: { pin, id: (service as CatalogueService).id, preferred: rule.preferred } });
+        const r = await adminSetServiceRule({
+          data: { pin, id: (service as CatalogueService).id, preferred: rule.preferred },
+        });
         if (!r.ok) throw new Error(r.error);
       }
       toast.success(isNew ? `${f.name.trim()} added.` : "Saved.");
@@ -787,7 +801,11 @@ function ServiceEditor({
                   : "Booked with this stylist. If they're busy, guests can choose another available stylist themselves; it's never switched for them."
               }
             >
-              <select className={inputClass} value={rule.preferred} onChange={(e) => setRule({ ...rule, preferred: e.target.value })}>
+              <select
+                className={inputClass}
+                value={rule.preferred}
+                onChange={(e) => setRule({ ...rule, preferred: e.target.value })}
+              >
                 <option value="any">Any qualified stylist</option>
                 {rule.stylists.map((st) => (
                   <option key={st.id} value={st.id}>

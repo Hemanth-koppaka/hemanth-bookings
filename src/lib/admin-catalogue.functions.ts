@@ -63,7 +63,10 @@ export const adminCatalogue = createServerFn({ method: "POST" })
     const [c, s, st, bk] = await Promise.all([
       sb.from("service_categories").select("*").order("display_order"),
       sb.from("services").select("*").order("display_order"),
-      sb.from("site_settings").select("key, value").in("key", ["media", "service_icons", "service_ratings"]),
+      sb
+        .from("site_settings")
+        .select("key, value")
+        .in("key", ["media", "service_icons", "service_ratings"]),
       sb
         .from("bookings")
         .select("service_ids, status, meta")
@@ -75,7 +78,8 @@ export const adminCatalogue = createServerFn({ method: "POST" })
       string,
       string
     >;
-    const ratings = ((st.data ?? []).find((x) => x.key === "service_ratings")?.value ?? {}) as Record<string, { sum: number; count: number }>;
+    const ratings = ((st.data ?? []).find((x) => x.key === "service_ratings")?.value ??
+      {}) as Record<string, { sum: number; count: number }>;
     const { recordIcons } = await import("./service-icons.server");
     const icons = await recordIcons(
       sb as never,
@@ -127,7 +131,13 @@ export const adminCatalogue = createServerFn({ method: "POST" })
         photo: (r["image_url"] as string) || media[`svc:${r["id"]}`] || null,
         icon: icons[`svc:${r["id"]}`] ?? "",
         rating: ratings[r["id"] as string]?.count
-          ? { avg: Math.round((ratings[r["id"] as string]!.sum / ratings[r["id"] as string]!.count) * 10) / 10, count: ratings[r["id"] as string]!.count }
+          ? {
+              avg:
+                Math.round(
+                  (ratings[r["id"] as string]!.sum / ratings[r["id"] as string]!.count) * 10,
+                ) / 10,
+              count: ratings[r["id"] as string]!.count,
+            }
           : null,
         upcoming: upcoming[r["id"] as string] ?? 0,
       })),

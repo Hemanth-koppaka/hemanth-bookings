@@ -80,9 +80,23 @@ export function Screen({
   );
 }
 
-export function Page({ children, sky, night }: { children: ReactNode; sky?: boolean; night?: boolean }) {
+export function Page({
+  children,
+  sky,
+  night,
+}: {
+  children: ReactNode;
+  sky?: boolean;
+  night?: boolean;
+}) {
   return (
-    <div className={cn("isolate flex min-h-[100svh] flex-col bg-background", sky && "sky-on", night && "dark sky-night")}>
+    <div
+      className={cn(
+        "isolate flex min-h-[100svh] flex-col bg-background",
+        sky && "sky-on",
+        night && "dark sky-night",
+      )}
+    >
       {children}
     </div>
   );
@@ -151,7 +165,15 @@ export function Rule() {
   return <div className="h-px w-full bg-hairline" />;
 }
 
-export function EmptyState({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
+export function EmptyState({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body: string;
+  action?: ReactNode;
+}) {
   return (
     <div className="py-24 text-center">
       <h2 className="font-display text-3xl">{title}</h2>
@@ -162,7 +184,15 @@ export function EmptyState({ title, body, action }: { title: string; body: strin
 }
 
 /** Phone step header: back · wordmark · 02 / 05, with a progress hairline. */
-export function StepHeader({ back, step, total = 5 }: { back: string; step: number; total?: number }) {
+export function StepHeader({
+  back,
+  step,
+  total = 5,
+}: {
+  back: string;
+  step: number;
+  total?: number;
+}) {
   const pad = (n: number) => String(n).padStart(2, "0");
   const goBack = useRewindBack(back);
   return (
@@ -180,7 +210,10 @@ export function StepHeader({ back, step, total = 5 }: { back: string; step: numb
           <Wordmark className="h-8" />
         </Link>
         <span className="label-caps justify-self-end whitespace-nowrap pr-1 text-[0.6rem] tabular-nums text-foreground/60">
-          <span key={step} className="tick-in">{pad(step)}</span> / {pad(total)}
+          <span key={step} className="tick-in">
+            {pad(step)}
+          </span>{" "}
+          / {pad(total)}
         </span>
       </div>
       <ScissorsLine kind="header" step={step} total={total} />
@@ -189,14 +222,26 @@ export function StepHeader({ back, step, total = 5 }: { back: string; step: numb
 }
 
 /** Phone step title: small eyebrow + display heading. */
-export function StepIntro({ eyebrow, children, sub }: { eyebrow: string; children: ReactNode; sub?: ReactNode }) {
+export function StepIntro({
+  eyebrow,
+  children,
+  sub,
+}: {
+  eyebrow: string;
+  children: ReactNode;
+  sub?: ReactNode;
+}) {
   return (
     <div className="pt-6">
-      <div className="text-[0.62rem] uppercase tracking-[0.3em] text-muted-foreground">{eyebrow}</div>
+      <div className="text-[0.62rem] uppercase tracking-[0.3em] text-muted-foreground">
+        {eyebrow}
+      </div>
       <h1 className="mt-2 font-display text-[clamp(2.3rem,10.5vw,2.9rem)] leading-[1.02] tracking-[-0.01em]">
         {children}
       </h1>
-      {sub ? <p className="mt-2.5 text-[0.92rem] leading-relaxed text-muted-foreground">{sub}</p> : null}
+      {sub ? (
+        <p className="mt-2.5 text-[0.92rem] leading-relaxed text-muted-foreground">{sub}</p>
+      ) : null}
     </div>
   );
 }

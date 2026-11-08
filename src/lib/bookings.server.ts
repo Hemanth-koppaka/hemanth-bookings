@@ -39,7 +39,11 @@ async function nextReference(sb: Sb) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const bytes = crypto.getRandomValues(new Uint8Array(6));
     const reference = "HB-" + Array.from(bytes, (x) => chars[x % chars.length]).join("");
-    const { data: taken } = await sb.from("bookings").select("reference").eq("reference", reference).maybeSingle();
+    const { data: taken } = await sb
+      .from("bookings")
+      .select("reference")
+      .eq("reference", reference)
+      .maybeSingle();
     if (!taken) return { reference, bookingNo };
   }
   throw new Error("Couldn't issue a booking ID. Please try again.");
@@ -163,7 +167,10 @@ export async function insertBooking(
   };
   const insert = async (staffId: string | null | undefined) => {
     // newest columns first; older shapes if a migration isn't applied yet
-    const staffCols = staffId !== undefined ? { staff_id: staffId, staff_choice: choice === "any" ? "any" : "specific" } : {};
+    const staffCols =
+      staffId !== undefined
+        ? { staff_id: staffId, staff_choice: choice === "any" ? "any" : "specific" }
+        : {};
     // the stylist is also kept in meta, which every database version has
     // the stylist (id and name) is kept with the booking, so later changes to
     // the team or the service's stylist rule never rewrite history
@@ -175,18 +182,33 @@ export async function insertBooking(
     }
     const withMeta = <T extends Record<string, unknown>>(x: T) =>
       staffId !== undefined
-        ? { ...x, meta: { ...metaWithStaff(x["meta"], staffId, choice === "any" ? "any" : "specific"), ...(staffNameNow ? { staff_name: staffNameNow } : {}) } }
+        ? {
+            ...x,
+            meta: {
+              ...metaWithStaff(x["meta"], staffId, choice === "any" ? "any" : "specific"),
+              ...(staffNameNow ? { staff_name: staffNameNow } : {}),
+            },
+          }
         : x;
-    let r = await sb.from("bookings").insert(withMeta({ ...extended, ...notifyCols, ...staffCols }) as never);
-    if (r.error && !E.isSlotTaken(r.error) && /column/i.test(r.error.message)) r = await sb.from("bookings").insert(withMeta({ ...extended, ...notifyCols }) as never);
-    if (r.error && !E.isSlotTaken(r.error) && /column/i.test(r.error.message)) r = await sb.from("bookings").insert(withMeta(extended) as never);
-    if (r.error && !E.isSlotTaken(r.error) && /column/i.test(r.error.message)) r = await sb.from("bookings").insert(withMeta(row) as never);
+    let r = await sb
+      .from("bookings")
+      .insert(withMeta({ ...extended, ...notifyCols, ...staffCols }) as never);
+    if (r.error && !E.isSlotTaken(r.error) && /column/i.test(r.error.message))
+      r = await sb.from("bookings").insert(withMeta({ ...extended, ...notifyCols }) as never);
+    if (r.error && !E.isSlotTaken(r.error) && /column/i.test(r.error.message))
+      r = await sb.from("bookings").insert(withMeta(extended) as never);
+    if (r.error && !E.isSlotTaken(r.error) && /column/i.test(r.error.message))
+      r = await sb.from("bookings").insert(withMeta(row) as never);
     return r.error;
   };
   let error = await insert(check.staffId);
   // "any available": if that stylist was taken a moment ago, try the next free one
   const tried: string[] = [];
-  for (let n = 0; error && E.isSlotTaken(error) && choice === "any" && check.ok && check.staffId && n < 3; n++) {
+  for (
+    let n = 0;
+    error && E.isSlotTaken(error) && choice === "any" && check.ok && check.staffId && n < 3;
+    n++
+  ) {
     tried.push(check.staffId);
     const again = await E.checkTime(b.date, b.time, q, rules, { ...checkOpts, exclude: tried });
     if (!again.ok || !again.staffId) break;
@@ -255,7 +277,11 @@ type Booked = {
  *  • at most MAX_PER_HOUR_PER_CONNECTION bookings an hour from one connection.
  * Returns the response to send, or null to carry on.
  */
-async function guestGuard(sb: Sb, b: NewBooking, minutes: number): Promise<Booked | { ok: false; error: string } | null> {
+async function guestGuard(
+  sb: Sb,
+  b: NewBooking,
+  minutes: number,
+): Promise<Booked | { ok: false; error: string } | null> {
   const phone = last10(b.customer.phone);
   const now = new Date(Date.now() + 330 * 60_000);
   const today = now.toISOString().slice(0, 10);
@@ -267,25 +293,41 @@ async function guestGuard(sb: Sb, b: NewBooking, minutes: number): Promise<Booke
     .ilike("customer->>phone" as never, `%${phone.slice(-4)}%`);
   const mine = ((rows ?? []) as Record<string, unknown>[]).filter((r) => {
     const st = ((r["meta"] as Record<string, unknown> | null)?.["status"] as string) ?? "";
-    return last10(((r["customer"] as { phone?: string }) ?? {}).phone ?? "") === phone && !["cancelled", "no-show", "completed"].includes(st);
+    return (
+      last10(((r["customer"] as { phone?: string }) ?? {}).phone ?? "") === phone &&
+      !["cancelled", "no-show", "completed"].includes(st)
+    );
   });
   const sameIds = (r: Record<string, unknown>) =>
-    [...((r["service_ids"] as string[]) ?? [])].sort().join(",") === [...b.serviceIds].sort().join(",");
+    [...((r["service_ids"] as string[]) ?? [])].sort().join(",") ===
+    [...b.serviceIds].sort().join(",");
   for (const r of mine) {
     if (r["date"] !== b.date) continue;
     const start = r["time"] as number;
-    const end = (r["ends_at_minute"] as number | null) ?? start + ((r["duration_minutes"] as number | null) ?? 30);
-    if (start === b.time && sameIds(r) && Date.now() - Date.parse(r["created_at"] as string) < 15 * 60_000) {
+    const end =
+      (r["ends_at_minute"] as number | null) ??
+      start + ((r["duration_minutes"] as number | null) ?? 30);
+    if (
+      start === b.time &&
+      sameIds(r) &&
+      Date.now() - Date.parse(r["created_at"] as string) < 15 * 60_000
+    ) {
       // the same booking again: answer with the one already made
-      const snap = (r["services_snapshot"] as { name: string; price: number; minutes?: number }[] | null) ?? [];
+      const snap =
+        (r["services_snapshot"] as { name: string; price: number; minutes?: number }[] | null) ??
+        [];
       return {
         ok: true,
         reference: r["reference"] as string,
         price: (r["price_total"] as number | null) ?? snap.reduce((n, x) => n + x.price, 0),
         minutes: (r["duration_minutes"] as number | null) ?? minutes,
         services: snap.map((x) => ({ name: x.name, price: x.price, minutes: x.minutes ?? 30 })),
-        staffId: (r["staff_id"] as string | null) ?? ((r["meta"] as Record<string, unknown> | null)?.["staff_id"] as string | null) ?? null,
-        staffName: ((r["meta"] as Record<string, unknown> | null)?.["staff_name"] as string | null) ?? null,
+        staffId:
+          (r["staff_id"] as string | null) ??
+          ((r["meta"] as Record<string, unknown> | null)?.["staff_id"] as string | null) ??
+          null,
+        staffName:
+          ((r["meta"] as Record<string, unknown> | null)?.["staff_name"] as string | null) ?? null,
       };
     }
     if (start < b.time + minutes && b.time < end)
@@ -329,7 +371,10 @@ async function guestGuard(sb: Sb, b: NewBooking, minutes: number): Promise<Booke
       .eq("meta->>ip" as never, ip)
       .gte("created_at", since);
     if ((recent ?? []).length >= MAX_PER_HOUR_PER_CONNECTION)
-      return { ok: false, error: "Too many bookings from this connection. Please try again later, or call us." };
+      return {
+        ok: false,
+        error: "Too many bookings from this connection. Please try again later, or call us.",
+      };
   }
   return null;
 }

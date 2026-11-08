@@ -72,7 +72,10 @@ function ContactScreen() {
       }
       panelSub={BUSINESS.locationShort}
     >
-      <InfoTitle eyebrow="Contact" sub="Call, message or drop by — or book online in under a minute.">
+      <InfoTitle
+        eyebrow="Contact"
+        sub="Call, message or drop by — or book online in under a minute."
+      >
         Say <span className="italic text-bronze">hello.</span>
       </InfoTitle>
 
@@ -89,7 +92,9 @@ function ContactScreen() {
                 <Icon className="h-[18px] w-[18px]" strokeWidth={1.25} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[0.62rem] uppercase tracking-[0.26em] text-muted-foreground">{label}</span>
+                <span className="block text-[0.62rem] uppercase tracking-[0.26em] text-muted-foreground">
+                  {label}
+                </span>
                 <span className="mt-1 block text-[0.98rem] leading-snug">{value}</span>
               </span>
               <ArrowUpRight

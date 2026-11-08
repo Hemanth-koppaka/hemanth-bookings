@@ -5,7 +5,8 @@
 import { BUSINESS, type SalonConfig, type WeekDay } from "./salon";
 import { SALON_LAT, SALON_LON } from "./sun";
 
-const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+const hhmm = (m: number) =>
+  `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
 /** "Plot 1143, …, Kukatpally, Hyderabad – 500072" → schema.org PostalAddress. */
 function postalAddress(address: string) {
@@ -62,7 +63,9 @@ export function salonJsonLd(configJson: string, origin: string) {
     name: b.name,
     alternateName: b.brand,
     description: `Hair, beauty and makeover by ${b.founder} at ${b.locationShort}. Book online in under a minute.`,
-    ...(origin ? { url: origin, image: abs("/brand/hb-emblem.webp"), logo: abs("/icons/app-512.png") } : {}),
+    ...(origin
+      ? { url: origin, image: abs("/brand/hb-emblem.webp"), logo: abs("/icons/app-512.png") }
+      : {}),
     telephone: b.phones?.[0],
     address: postalAddress(b.address),
     geo: { "@type": "GeoCoordinates", latitude: SALON_LAT, longitude: SALON_LON },
@@ -72,8 +75,18 @@ export function salonJsonLd(configJson: string, origin: string) {
     currenciesAccepted: "INR",
     founder: { "@type": "Person", name: b.founder },
     sameAs: [b.instagram?.salon?.url, b.instagram?.bhargav?.url].filter(Boolean),
-    ...(offers.length ? { hasOfferCatalog: { "@type": "OfferCatalog", name: "Services", itemListElement: offers } } : {}),
-    ...(origin ? { potentialAction: { "@type": "ReserveAction", target: abs("/book"), name: "Book an appointment" } } : {}),
+    ...(offers.length
+      ? { hasOfferCatalog: { "@type": "OfferCatalog", name: "Services", itemListElement: offers } }
+      : {}),
+    ...(origin
+      ? {
+          potentialAction: {
+            "@type": "ReserveAction",
+            target: abs("/book"),
+            name: "Book an appointment",
+          },
+        }
+      : {}),
   };
   // safe inside a <script> tag
   return JSON.stringify(data).replace(/</g, "\\u003c");

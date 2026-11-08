@@ -53,11 +53,11 @@ export function YourAppointment({
           <li key={x.id} className="flex items-center gap-3 py-2.5">
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[0.95rem]">{x.name}</span>
-              <span className="block text-[0.74rem] text-muted-foreground">{formatDuration(x.minutes ?? x.slots * 30)}</span>
+              <span className="block text-[0.74rem] text-muted-foreground">
+                {formatDuration(x.minutes ?? x.slots * 30)}
+              </span>
             </span>
-            <span className="shrink-0 tabular-nums">
-              {inr(x.price)}
-            </span>
+            <span className="shrink-0 tabular-nums">{inr(x.price)}</span>
             <button
               type="button"
               onClick={() => {
@@ -74,7 +74,8 @@ export function YourAppointment({
       </ul>
       <div className="mx-4 flex items-baseline justify-between border-t border-hairline py-2.5 lg:mx-5">
         <span className="text-[0.84rem] text-muted-foreground">
-          {selected.length} {selected.length === 1 ? "service" : "services"} · {formatDuration(totalMinutes)}
+          {selected.length} {selected.length === 1 ? "service" : "services"} ·{" "}
+          {formatDuration(totalMinutes)}
         </span>
         <span key={totalPrice} className="tick-in font-display text-[1.35rem] leading-none">
           {inr(totalPrice)}
@@ -168,7 +169,11 @@ export function BookingDock({
               className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
             >
               <span className="tap-icon relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-foreground/12">
-                <CalendarCheck2 key={`icon-${selected.length}`} className="icon-tap h-[18px] w-[18px]" strokeWidth={1.1} />
+                <CalendarCheck2
+                  key={`icon-${selected.length}`}
+                  className="icon-tap h-[18px] w-[18px]"
+                  strokeWidth={1.1}
+                />
                 <span
                   key={selected.length}
                   className="pop-in absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-bronze px-1 text-[0.62rem] text-ivory tabular-nums"
@@ -180,15 +185,21 @@ export function BookingDock({
                 <span className="block truncate text-[0.78rem] text-muted-foreground">
                   {sub ?? (
                     <>
-                      {selected.length} {selected.length === 1 ? "service" : "services"} · {formatDuration(totalMinutes)}
+                      {selected.length} {selected.length === 1 ? "service" : "services"} ·{" "}
+                      {formatDuration(totalMinutes)}
                     </>
                   )}
                 </span>
-                <span key={totalPrice} className="tick-in block font-display text-[1.25rem] leading-tight">
+                <span
+                  key={totalPrice}
+                  className="tick-in block font-display text-[1.25rem] leading-tight"
+                >
                   {inr(totalPrice)}
                 </span>
               </span>
-              {onToggle ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} /> : null}
+              {onToggle ? (
+                <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+              ) : null}
             </button>
           )}
           <button

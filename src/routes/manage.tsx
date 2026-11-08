@@ -11,14 +11,24 @@ import { BookingLook } from "@/components/my-look";
 import { auth, useBooking, servicesOf, type Booking, type ChangeResult } from "@/lib/booking-store";
 import { getAvailability, getPublicRules } from "@/lib/salon.functions";
 import type { DayAvailability } from "@/lib/engine.server";
-import { BUSINESS, calendarDays, findService, formatDuration, fromISO, inr, minuteLabel } from "@/lib/salon";
+import {
+  BUSINESS,
+  calendarDays,
+  findService,
+  formatDuration,
+  fromISO,
+  inr,
+  minuteLabel,
+} from "@/lib/salon";
 import { haptic } from "@/lib/utils";
 import portrait from "@/assets/portrait.jpg.asset.json";
 
 export const Route = createFileRoute("/manage")({
   // links in booking messages carry the booking ID: /manage?ref=HB-7KQ2MX
   validateSearch: (s: Record<string, unknown>): { ref?: string } =>
-    typeof s["ref"] === "string" && /^[A-Z0-9-]{4,20}$/i.test(s["ref"]) ? { ref: s["ref"].toUpperCase() } : {},
+    typeof s["ref"] === "string" && /^[A-Z0-9-]{4,20}$/i.test(s["ref"])
+      ? { ref: s["ref"].toUpperCase() }
+      : {},
   head: () => ({
     meta: [
       { title: "Manage your booking — Hair by Bhargav" },
@@ -51,7 +61,9 @@ function ManageScreen() {
   const [foundRef, setFoundRef] = useState<string | null>(null);
   const [matches, setMatches] = useState<Booking[] | null>(null);
 
-  const booking: Booking | undefined = foundRef ? bookings.find((b) => b.reference === foundRef) : undefined;
+  const booking: Booking | undefined = foundRef
+    ? bookings.find((b) => b.reference === foundRef)
+    : undefined;
   const recent = bookings.filter((b) => b.status === "confirmed").slice(0, 3);
 
   const q = query.trim();
@@ -72,7 +84,9 @@ function ManageScreen() {
     }
     if (!list.length) {
       haptic(20);
-      setError("We couldn't verify that booking. Check the booking ID and mobile number from your confirmation.");
+      setError(
+        "We couldn't verify that booking. Check the booking ID and mobile number from your confirmation.",
+      );
       setMatches(null);
       return;
     }
@@ -135,7 +149,10 @@ function ManageScreen() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => setMatches(null)} className="mt-4 text-[0.85rem] text-muted-foreground underline underline-offset-4">
+              <button
+                onClick={() => setMatches(null)}
+                className="mt-4 text-[0.85rem] text-muted-foreground underline underline-offset-4"
+              >
                 Search again
               </button>
             </div>
@@ -144,7 +161,10 @@ function ManageScreen() {
               {recent.length ? <SectionLabel>Or look it up</SectionLabel> : null}
               <div className={recent.length ? "mt-5 space-y-5" : "space-y-5"}>
                 <div>
-                  <label className="mb-3 block text-[0.68rem] uppercase tracking-[0.28em] text-foreground/75" htmlFor="lookup">
+                  <label
+                    className="mb-3 block text-[0.68rem] uppercase tracking-[0.28em] text-foreground/75"
+                    htmlFor="lookup"
+                  >
                     Booking ID
                   </label>
                   <input
@@ -160,10 +180,15 @@ function ManageScreen() {
                     autoComplete="off"
                     spellCheck={false}
                   />
-                  <p className="mt-2 text-[0.78rem] text-muted-foreground">Both your booking ID and mobile number are required.</p>
+                  <p className="mt-2 text-[0.78rem] text-muted-foreground">
+                    Both your booking ID and mobile number are required.
+                  </p>
                 </div>
                 <div>
-                  <label className="mb-3 block text-[0.68rem] uppercase tracking-[0.28em] text-foreground/75" htmlFor="lookup-phone">
+                  <label
+                    className="mb-3 block text-[0.68rem] uppercase tracking-[0.28em] text-foreground/75"
+                    htmlFor="lookup-phone"
+                  >
                     Mobile number used to book
                   </label>
                   <input
@@ -210,7 +235,8 @@ function ManageScreen() {
 type PublicRules = Awaited<ReturnType<typeof getPublicRules>>;
 let rulesCache: PublicRules | null = null;
 
-const hoursText = (m: number) => (m % 60 === 0 ? `${m / 60} hour${m === 60 ? "" : "s"}` : `${m} minutes`);
+const hoursText = (m: number) =>
+  m % 60 === 0 ? `${m / 60} hour${m === 60 ? "" : "s"}` : `${m} minutes`;
 
 /**
  * Shows cancel / reschedule only while the salon's rules allow them (by default
@@ -238,14 +264,17 @@ function ChangeWindow({
   const todayIso = salon.toISOString().slice(0, 10);
   const nowMin = salon.getUTCHours() * 60 + salon.getUTCMinutes();
   const until =
-    Math.round((Date.parse(booking.date) - Date.parse(todayIso)) / 86_400_000) * 1440 + booking.time - nowMin;
+    Math.round((Date.parse(booking.date) - Date.parse(todayIso)) / 86_400_000) * 1440 +
+    booking.time -
+    nowMin;
   const cancelBy = rules?.cancelDeadlineMinutes ?? 120;
   const moveBy = rules?.rescheduleDeadlineMinutes ?? 120;
   const canCancel = (rules?.customerCancel ?? true) && until >= cancelBy;
   const canMove = (rules?.customerReschedule ?? true) && until >= moveBy;
   const call = BUSINESS.phones[0];
 
-  if (until < 0) return <p className="mt-6 text-[0.9rem] text-muted-foreground">This appointment has passed.</p>;
+  if (until < 0)
+    return <p className="mt-6 text-[0.9rem] text-muted-foreground">This appointment has passed.</p>;
   return (
     <>
       {canMove || canCancel ? children(canMove, canCancel) : null}
@@ -280,18 +309,29 @@ function BookingRow({ b, onOpen }: { b: Booking; onOpen: () => void }) {
         <span className="text-[0.55rem] uppercase tracking-[0.16em]">
           {fromISO(b.date).toLocaleDateString("en-GB", { month: "short" })}
         </span>
-        <span className="font-display text-[1.35rem] leading-none">{fromISO(b.date).getDate()}</span>
+        <span className="font-display text-[1.35rem] leading-none">
+          {fromISO(b.date).getDate()}
+        </span>
       </span>
       <span className="min-w-0 flex-1">
-        <span className={"block truncate text-[0.98rem] " + (cancelled ? "text-foreground/45 line-through" : "")}>
-          {servicesOf(b).map((x) => x.name).join(", ") || "Appointment"}
+        <span
+          className={
+            "block truncate text-[0.98rem] " + (cancelled ? "text-foreground/45 line-through" : "")
+          }
+        >
+          {servicesOf(b)
+            .map((x) => x.name)
+            .join(", ") || "Appointment"}
         </span>
         <span className="mt-0.5 block text-[0.8rem] text-muted-foreground">
           {minuteLabel(b.time)} · {b.reference}
           {cancelled ? " · Cancelled" : ""}
         </span>
       </span>
-      <ChevronRight className="h-4 w-4 text-foreground/40 transition-transform group-hover:translate-x-0.5" strokeWidth={1.25} />
+      <ChevronRight
+        className="h-4 w-4 text-foreground/40 transition-transform group-hover:translate-x-0.5"
+        strokeWidth={1.25}
+      />
     </button>
   );
 }
@@ -346,7 +386,13 @@ function BookingPanel({
     setLoadingDay(true);
     // the server keeps this booking's own time free and uses its booked length
     getAvailability({
-      data: { date, audience: booking.audience, serviceIds: booking.serviceIds, reference: booking.reference, ...auth(booking) },
+      data: {
+        date,
+        audience: booking.audience,
+        serviceIds: booking.serviceIds,
+        reference: booking.reference,
+        ...auth(booking),
+      },
     })
       .then((r) => live && setDay(r))
       .catch(() => live && setDay(null))
@@ -355,7 +401,15 @@ function BookingPanel({
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, mode, booking.audience, booking.serviceIds, booking.reference, booking.customer.phone, booking.token]);
+  }, [
+    date,
+    mode,
+    booking.audience,
+    booking.serviceIds,
+    booking.reference,
+    booking.customer.phone,
+    booking.token,
+  ]);
 
   const slots = (day?.date === date ? day.slots : []).filter(
     (x) => !(day?.breaks ?? []).some((b) => x.minute >= b.start && x.minute < b.end),
@@ -367,24 +421,40 @@ function BookingPanel({
         <span
           className={
             "inline-flex items-center gap-2 rounded-full px-3 py-1 text-[0.68rem] uppercase tracking-[0.2em] " +
-            (cancelled ? "bg-foreground/8 text-foreground/55" : "bg-emerald-600/10 text-emerald-800")
+            (cancelled
+              ? "bg-foreground/8 text-foreground/55"
+              : "bg-emerald-600/10 text-emerald-800")
           }
         >
-          <span className={"h-1.5 w-1.5 rounded-full " + (cancelled ? "bg-foreground/40" : "bg-emerald-600")} />
+          <span
+            className={
+              "h-1.5 w-1.5 rounded-full " + (cancelled ? "bg-foreground/40" : "bg-emerald-600")
+            }
+          />
           {cancelled ? "Cancelled" : "Confirmed"}
         </span>
-        <button onClick={onBack} className="press text-[0.85rem] text-bronze underline underline-offset-4">
+        <button
+          onClick={onBack}
+          className="press text-[0.85rem] text-bronze underline underline-offset-4"
+        >
           Search again
         </button>
       </div>
 
       {notice ? (
-        <p role="status" className="pop-in mt-5 rounded-md bg-emerald-600/10 px-4 py-3 text-[0.9rem] text-emerald-900">
+        <p
+          role="status"
+          className="pop-in mt-5 rounded-md bg-emerald-600/10 px-4 py-3 text-[0.9rem] text-emerald-900"
+        >
           {notice}
         </p>
       ) : null}
       {problem ? (
-        <p key={problem} role="alert" className="shake mt-5 rounded-md bg-destructive/[0.06] px-4 py-3 text-[0.9rem] text-destructive">
+        <p
+          key={problem}
+          role="alert"
+          className="shake mt-5 rounded-md bg-destructive/[0.06] px-4 py-3 text-[0.9rem] text-destructive"
+        >
           {problem}
         </p>
       ) : null}
@@ -408,9 +478,7 @@ function BookingPanel({
           {(booking.snapshot?.services ?? services).map((x, i) => (
             <li key={`${x.name}-${i}`} className="flex items-baseline justify-between gap-4">
               <span className="text-[1rem]">{x.name}</span>
-              <span className="text-[0.9rem] text-muted-foreground">
-                {inr(x.price)}
-              </span>
+              <span className="text-[0.9rem] text-muted-foreground">{inr(x.price)}</span>
             </li>
           ))}
         </ul>
@@ -424,7 +492,9 @@ function BookingPanel({
           </span>
         </div>
         <div className="mt-4 flex items-baseline justify-between hairline-t pt-4">
-          <span className="text-[0.62rem] uppercase tracking-[0.28em] text-foreground/65">Estimated total</span>
+          <span className="text-[0.62rem] uppercase tracking-[0.28em] text-foreground/65">
+            Estimated total
+          </span>
           <span className="font-display text-[1.8rem] leading-none">{inr(total)}</span>
         </div>
       </div>
@@ -439,15 +509,26 @@ function BookingPanel({
       {mode === "view" ? <RateVisit booking={booking} className="mt-6" /> : null}
 
       {/* free reminders through the guest's own calendar; offered again after any change */}
-      {mode === "view" && !visitOver(booking, minutesNeeded) ? <AddToCalendar booking={booking} tone="light" className="mt-6" /> : null}
-      {mode === "view" && !visitOver(booking, minutesNeeded) ? <RemindMe booking={booking} className="mt-3" /> : null}
+      {mode === "view" && !visitOver(booking, minutesNeeded) ? (
+        <AddToCalendar booking={booking} tone="light" className="mt-6" />
+      ) : null}
+      {mode === "view" && !visitOver(booking, minutesNeeded) ? (
+        <RemindMe booking={booking} className="mt-3" />
+      ) : null}
 
-      {cancelled ? null : mode === "view" && booking.readOnly && !visitOver(booking, minutesNeeded) ? (
+      {cancelled ? null : mode === "view" &&
+        booking.readOnly &&
+        !visitOver(booking, minutesNeeded) ? (
         // found by phone number only: changes need the booking ID
         <p className="mt-6 rounded-md border border-hairline bg-card px-4 py-3.5 text-[0.88rem] leading-relaxed text-muted-foreground">
-          For your security, a phone number alone can't change a booking. To reschedule or cancel, look it up with the
-          booking ID from your confirmation (it starts <b className="font-medium text-foreground">{booking.reference.slice(0, 5)}</b>), or call us on{" "}
-          <a href={`tel:${BUSINESS.phones[0]}`} className="text-bronze underline underline-offset-4">
+          For your security, a phone number alone can't change a booking. To reschedule or cancel,
+          look it up with the booking ID from your confirmation (it starts{" "}
+          <b className="font-medium text-foreground">{booking.reference.slice(0, 5)}</b>), or call
+          us on{" "}
+          <a
+            href={`tel:${BUSINESS.phones[0]}`}
+            className="text-bronze underline underline-offset-4"
+          >
             {BUSINESS.phones[0]}
           </a>
           .
@@ -456,7 +537,9 @@ function BookingPanel({
         <ChangeWindow booking={booking}>
           {(canMove, canCancel) => (
             <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
-              {canMove ? <PrimaryAction onClick={() => setMode("reschedule")}>Reschedule</PrimaryAction> : null}
+              {canMove ? (
+                <PrimaryAction onClick={() => setMode("reschedule")}>Reschedule</PrimaryAction>
+              ) : null}
               {canCancel ? (
                 <GhostAction
                   onClick={() => setMode("confirm-cancel")}
@@ -470,7 +553,9 @@ function BookingPanel({
         </ChangeWindow>
       ) : mode === "confirm-cancel" ? (
         <div className="page-in mt-6 rounded-md border border-destructive/25 bg-destructive/[0.03] p-5">
-          <p className="text-[0.95rem] leading-relaxed">Cancel this appointment? Your slot will be released immediately.</p>
+          <p className="text-[0.95rem] leading-relaxed">
+            Cancel this appointment? Your slot will be released immediately.
+          </p>
           <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
             <GhostAction
               onClick={() => void run(onCancel, "Your booking has been cancelled.")}
@@ -512,11 +597,18 @@ function BookingPanel({
                     <span className="text-[0.62rem] uppercase tracking-[0.16em]">
                       {d.date.toLocaleDateString("en-GB", { weekday: "short" })}
                     </span>
-                    <span className={"mt-1 font-display text-2xl leading-none " + (d.selectable ? "" : "line-through")}>
+                    <span
+                      className={
+                        "mt-1 font-display text-2xl leading-none " +
+                        (d.selectable ? "" : "line-through")
+                      }
+                    >
                       {d.date.getDate()}
                     </span>
                     <span className="mt-1 text-[0.6rem] uppercase tracking-[0.16em]">
-                      {d.selectable ? d.date.toLocaleDateString("en-GB", { month: "short" }) : "Closed"}
+                      {d.selectable
+                        ? d.date.toLocaleDateString("en-GB", { month: "short" })
+                        : "Closed"}
                     </span>
                   </button>
                 );
@@ -555,7 +647,9 @@ function BookingPanel({
           ) : day?.message ? (
             <p className="mt-4 text-[0.9rem] text-muted-foreground">{day.message}</p>
           ) : slots.length === 0 ? (
-            <p className="mt-4 text-[0.9rem] text-muted-foreground">The salon is closed on this day.</p>
+            <p className="mt-4 text-[0.9rem] text-muted-foreground">
+              The salon is closed on this day.
+            </p>
           ) : null}
 
           <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
@@ -614,7 +708,10 @@ function BookAgain({ booking, className }: { booking: Booking; className?: strin
         (className ?? "")
       }
     >
-      <RotateCcw className="h-4 w-4 shrink-0 text-bronze transition-transform duration-500 group-hover:-rotate-180" strokeWidth={1.5} />
+      <RotateCcw
+        className="h-4 w-4 shrink-0 text-bronze transition-transform duration-500 group-hover:-rotate-180"
+        strokeWidth={1.5}
+      />
       <span className="min-w-0 flex-1">
         <span className="block text-[0.95rem]">Book the same again</span>
         <span className="block truncate text-[0.75rem] text-muted-foreground">

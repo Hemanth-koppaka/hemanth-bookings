@@ -53,7 +53,9 @@ function ArtistScreen() {
       </div>
 
       <div className="stagger mt-8 lg:mt-0">
-        <div className="text-[0.62rem] uppercase tracking-[0.3em] text-bronze lg:text-[0.72rem]">Founder · Chief Stylist</div>
+        <div className="text-[0.62rem] uppercase tracking-[0.3em] text-bronze lg:text-[0.72rem]">
+          Founder · Chief Stylist
+        </div>
         <h1 className="mt-3 font-display text-[clamp(3rem,13vw,3.6rem)] leading-[0.95] lg:text-[4.5rem]">
           B. <span className="italic text-bronze">Bhargav</span>
         </h1>
@@ -64,12 +66,13 @@ function ArtistScreen() {
 
       <div className="mt-8 space-y-5 text-[0.98rem] leading-relaxed text-muted-foreground lg:text-[1.05rem]">
         <p>
-          Every appointment begins with a proper walkthrough — your hair, your routine, and what you actually want to
-          live with for the next six weeks.
+          Every appointment begins with a proper walkthrough — your hair, your routine, and what you
+          actually want to live with for the next six weeks.
         </p>
         <p>
-          Trained across cutting, colorimetry and makeover work, he leads a small team at {BUSINESS.locationShort}. The
-          room is deliberately unhurried: four chairs, never overbooked, so nobody is rushed out of the seat.
+          Trained across cutting, colorimetry and makeover work, he leads a small team at{" "}
+          {BUSINESS.locationShort}. The room is deliberately unhurried: four chairs, never
+          overbooked, so nobody is rushed out of the seat.
         </p>
       </div>
 
@@ -92,10 +95,17 @@ function ArtistScreen() {
           <Instagram className="h-[18px] w-[18px]" strokeWidth={1.6} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[0.62rem] uppercase tracking-[0.26em] text-muted-foreground">See his work</span>
-          <span className="mt-1 block text-[0.98rem] leading-snug">@{BUSINESS.instagram.bhargav.handle}</span>
+          <span className="block text-[0.62rem] uppercase tracking-[0.26em] text-muted-foreground">
+            See his work
+          </span>
+          <span className="mt-1 block text-[0.98rem] leading-snug">
+            @{BUSINESS.instagram.bhargav.handle}
+          </span>
         </span>
-        <ArrowUpRight className="h-4 w-4 shrink-0 text-foreground/40 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={1.25} />
+        <ArrowUpRight
+          className="h-4 w-4 shrink-0 text-foreground/40 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          strokeWidth={1.25}
+        />
       </a>
 
       <BookCTA className="mt-10">Book with Bhargav</BookCTA>

@@ -83,7 +83,8 @@ function TimeScreen() {
   // the guest sees real times straight away (never replaces a chosen date).
   const opening = useRef(false);
   useEffect(() => {
-    if (!hydrated || draft.date || opening.current || !draft.audience || !draft.serviceIds.length) return;
+    if (!hydrated || draft.date || opening.current || !draft.audience || !draft.serviceIds.length)
+      return;
     opening.current = true;
     const open = days.filter((d) => d.selectable).slice(0, 14);
     const key = draft.serviceIds.join(",");
@@ -119,7 +120,11 @@ function TimeScreen() {
   }, [days, draft.date]);
   const rawDay = useDayAvailability(draft.date, draft.audience, draft.serviceIds, ahead);
   // a service with a preferred stylist (Bhargav's Signature) shows that stylist's times
-  const day = forStylist(rawDay, draft.staffId ?? rawDay.data?.preferred?.id, Boolean(rawDay.data?.preferred) && !draft.staffId);
+  const day = forStylist(
+    rawDay,
+    draft.staffId ?? rawDay.data?.preferred?.id,
+    Boolean(rawDay.data?.preferred) && !draft.staffId,
+  );
   const slots = day.data?.slots ?? [];
   const selectedBreaks = day.data?.breaks ?? [];
   // the page takes the colour of the part of the day being chosen (after a solar dial)
@@ -131,13 +136,22 @@ function TimeScreen() {
   // to do); only if it no longer fits, say so and clear it.
   const [timeNote, setTimeNote] = useState("");
   useEffect(() => {
-    if (!draft.timeStale || draft.time == null || !day.data || day.loading || day.data.date !== draft.date) return;
+    if (
+      !draft.timeStale ||
+      draft.time == null ||
+      !day.data ||
+      day.loading ||
+      day.data.date !== draft.date
+    )
+      return;
     const slot = day.data.slots.find((x) => x.minute === draft.time);
     if (slot?.available) {
       update({ timeStale: false });
     } else {
       update({ time: null, timeStale: false });
-      setTimeNote("Your services have changed, so the previously selected time is no longer available. Please choose a new time.");
+      setTimeNote(
+        "Your services have changed, so the previously selected time is no longer available. Please choose a new time.",
+      );
     }
   }, [draft.timeStale, draft.time, draft.date, day.data, day.loading, update]);
 
@@ -187,7 +201,7 @@ function TimeScreen() {
                 </div>
                 {!day.data?.closed ? <StylistPicker day={rawDay} /> : null}
                 {timeNote ? <TimeNote text={timeNote} /> : null}
-              <SlotGroups day={day} />
+                <SlotGroups day={day} />
               </div>
             ) : (
               <p className="mt-8 text-sm text-muted-foreground">Select a date to see free slots.</p>
@@ -231,7 +245,11 @@ type DayState = { data: DayAvailability | null; loading: boolean; error: string 
  * is free for the whole service ("any" keeps the salon-wide picture, where a
  * time is free if at least one qualified stylist is).
  */
-function forStylist(day: DayState, staffId: string | null | undefined, offerOthers = false): DayState {
+function forStylist(
+  day: DayState,
+  staffId: string | null | undefined,
+  offerOthers = false,
+): DayState {
   if (!staffId || !day.data) return day;
   return {
     ...day,
@@ -240,7 +258,12 @@ function forStylist(day: DayState, staffId: string | null | undefined, offerOthe
       slots: day.data.slots.map((x) =>
         x.available && x.staff && !x.staff.includes(staffId)
           ? // the preferred stylist is busy; others are free for the whole service
-            { ...x, available: false, reason: "booked" as const, ...(offerOthers && x.staff.length ? { others: x.staff } : {}) }
+            {
+              ...x,
+              available: false,
+              reason: "booked" as const,
+              ...(offerOthers && x.staff.length ? { others: x.staff } : {}),
+            }
           : x,
       ),
     },
@@ -319,7 +342,11 @@ function StylistPicker({ day }: { day: DayState }) {
               "text-[0.72rem] " + (!chosen ? "text-background/65" : "text-muted-foreground")
             }
           >
-            {slot ? (slot.available ? `Available at ${at}` : `Unavailable at ${at}`) : "First free stylist"}
+            {slot
+              ? slot.available
+                ? `Available at ${at}`
+                : `Unavailable at ${at}`
+              : "First free stylist"}
           </span>
         </button>
         {team.map((t) => {
@@ -498,7 +525,10 @@ function useDayAvailability(
 /** A calm line about the chosen time after the services changed. */
 function TimeNote({ text }: { text: string }) {
   return (
-    <p role="status" className="fade-rise mt-5 rounded-md border border-bronze/30 bg-champagne/20 px-4 py-3 text-[0.88rem] leading-relaxed">
+    <p
+      role="status"
+      className="fade-rise mt-5 rounded-md border border-bronze/30 bg-champagne/20 px-4 py-3 text-[0.88rem] leading-relaxed"
+    >
       {text}
     </p>
   );
@@ -595,16 +625,20 @@ function BreakDivider({ start, end }: { start: number; end: number }) {
 function PreferredStylist({ day }: { day: DayState }) {
   const { draft, update } = useBooking();
   const pref = day.data!.preferred!;
-  const other = draft.staffId && draft.staffId !== pref.id ? stylistLabel(draft.staffId, day) : null;
+  const other =
+    draft.staffId && draft.staffId !== pref.id ? stylistLabel(draft.staffId, day) : null;
   const back = () => {
-    const slot = draft.time != null ? day.data?.slots.find((x) => x.minute === draft.time) : undefined;
+    const slot =
+      draft.time != null ? day.data?.slots.find((x) => x.minute === draft.time) : undefined;
     // keep the time only if the preferred stylist is free then
     update({ staffId: null, ...(slot && slot.staff?.includes(pref.id) ? {} : { time: null }) });
   };
   return (
     <section data-stylist-picker className="mt-6 scroll-mt-28" aria-label="Stylist">
       <div className="flex items-center gap-4">
-        <h2 className="shrink-0 font-sans text-[0.72rem] font-normal uppercase tracking-[0.3em] lg:text-[0.78rem]">Stylist</h2>
+        <h2 className="shrink-0 font-sans text-[0.72rem] font-normal uppercase tracking-[0.3em] lg:text-[0.78rem]">
+          Stylist
+        </h2>
         <span className="h-px flex-1 bg-hairline" />
       </div>
       <div className="mt-3 flex items-baseline justify-between gap-4">
@@ -613,13 +647,19 @@ function PreferredStylist({ day }: { day: DayState }) {
           {other ?? pref.name}
         </p>
         {other ? (
-          <button type="button" onClick={back} className="shrink-0 text-[0.8rem] text-bronze underline underline-offset-4">
+          <button
+            type="button"
+            onClick={back}
+            className="shrink-0 text-[0.8rem] text-bronze underline underline-offset-4"
+          >
             Back to {pref.name}
           </button>
         ) : null}
       </div>
       <p className="mt-1 text-[0.8rem] text-muted-foreground">
-        {other ? `You chose to continue with ${other}.` : `This signature service is performed by ${pref.name}.`}
+        {other
+          ? `You chose to continue with ${other}.`
+          : `This signature service is performed by ${pref.name}.`}
       </p>
     </section>
   );
@@ -655,11 +695,17 @@ function OtherStylistChoice({
         className="fade-rise w-full max-w-md rounded-md border border-hairline bg-card p-6 shadow-[0_24px_60px_-28px_rgba(30,20,10,0.55)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-[0.66rem] uppercase tracking-[0.28em] text-bronze">{minuteLabel(minute)}</div>
-        <p className="mt-2 font-display text-[1.45rem] leading-snug">{pref.name} isn't available at this time.</p>
+        <div className="text-[0.66rem] uppercase tracking-[0.28em] text-bronze">
+          {minuteLabel(minute)}
+        </div>
+        <p className="mt-2 font-display text-[1.45rem] leading-snug">
+          {pref.name} isn't available at this time.
+        </p>
         {!listing ? (
           <>
-            <p className="mt-2 text-[0.92rem] text-muted-foreground">Would you like to continue with one of our available stylists?</p>
+            <p className="mt-2 text-[0.92rem] text-muted-foreground">
+              Would you like to continue with one of our available stylists?
+            </p>
             <div className="mt-5 grid gap-2">
               <button
                 type="button"
@@ -681,7 +727,9 @@ function OtherStylistChoice({
           </>
         ) : (
           <>
-            <p className="mt-2 text-[0.92rem] text-muted-foreground">Free for your whole appointment at {minuteLabel(minute)}:</p>
+            <p className="mt-2 text-[0.92rem] text-muted-foreground">
+              Free for your whole appointment at {minuteLabel(minute)}:
+            </p>
             <ul className="mt-4 grid gap-2">
               {names.map((s) => (
                 <li key={s.id}>
@@ -703,7 +751,11 @@ function OtherStylistChoice({
                 </li>
               ))}
             </ul>
-            <button type="button" onClick={onClose} className="mt-4 text-[0.8rem] text-muted-foreground underline underline-offset-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-4 text-[0.8rem] text-muted-foreground underline underline-offset-4"
+            >
               Choose another time with {pref.name}
             </button>
           </>
@@ -715,7 +767,15 @@ function OtherStylistChoice({
 }
 
 /** A calm message in place of the times (closed, or nothing that fits). */
-function EmptyDay({ title, sub, children }: { title: string; sub: string; children?: React.ReactNode }) {
+function EmptyDay({
+  title,
+  sub,
+  children,
+}: {
+  title: string;
+  sub: string;
+  children?: React.ReactNode;
+}) {
   return (
     <div className="mt-6 rounded-md border border-dashed border-foreground/15 px-5 py-8 text-center">
       <p className="font-display text-[1.35rem] leading-snug">{title}</p>
@@ -757,7 +817,10 @@ function WaitForTime({ date }: { date: string }) {
       const { publicKey } = await pushPublicKey();
       const sub =
         (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) as BufferSource }));
+        (await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: keyBytes(publicKey) as BufferSource,
+        }));
       const j = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
       const r = await joinWaitlist({
         data: {
@@ -826,7 +889,9 @@ function SlotGroups({ day }: { day: DayState }) {
     if (!off?.length || x.available) return false;
     return who ? off.includes(who) : x.reason === "break";
   };
-  const visible = slots.filter((x) => !breaks.some((b) => x.minute >= b.start && x.minute < b.end) && !resting(x));
+  const visible = slots.filter(
+    (x) => !breaks.some((b) => x.minute >= b.start && x.minute < b.end) && !resting(x),
+  );
   const groups = PERIODS.map((p) => ({ p, items: visible.filter((x) => p.test(x.minute)) })).filter(
     (g) => g.items.length > 0,
   );
@@ -848,16 +913,21 @@ function SlotGroups({ day }: { day: DayState }) {
       </EmptyDay>
     );
 
-
   return (
     <>
       {pref && !draft.staffId && !prefFree && othersFree ? (
         <p className="mt-5 text-[0.9rem] text-muted-foreground">
-          {pref.name} isn't available on this day. Pick a time to continue with another stylist, or choose another date.
+          {pref.name} isn't available on this day. Pick a time to continue with another stylist, or
+          choose another date.
         </p>
       ) : null}
       {ask && pref ? (
-        <OtherStylistChoice minute={ask.minute} others={ask.others} day={day} onClose={() => setAsk(null)} />
+        <OtherStylistChoice
+          minute={ask.minute}
+          others={ask.others}
+          day={day}
+          onClose={() => setAsk(null)}
+        />
       ) : null}
       {groups.map(({ p, items }) => {
         const firstMin = items[0]!.minute;
@@ -914,13 +984,24 @@ function SlotGroups({ day }: { day: DayState }) {
                     }
                   >
                     {/* the chosen time: a soft bubble spreads from its centre */}
-                    {on ? <span key={`bubble-${x.minute}`} aria-hidden className="slot-bubble" /> : null}
-                    <span className={"relative " + (x.available || others ? "" : "line-through decoration-foreground/25")}>
+                    {on ? (
+                      <span key={`bubble-${x.minute}`} aria-hidden className="slot-bubble" />
+                    ) : null}
+                    <span
+                      className={
+                        "relative " +
+                        (x.available || others ? "" : "line-through decoration-foreground/25")
+                      }
+                    >
                       {minuteLabel(x.minute)}
                     </span>
                     {!x.available ? (
                       <span className="relative text-[0.66rem] lg:text-[0.72rem]">
-                        {others ? "Other stylists" : x.reason === "booked" ? "Booked" : "Unavailable"}
+                        {others
+                          ? "Other stylists"
+                          : x.reason === "booked"
+                            ? "Booked"
+                            : "Unavailable"}
                       </span>
                     ) : null}
                   </button>
@@ -1009,7 +1090,12 @@ function MonthCalendar({
     setSeeking(true);
     setSoonestNote("");
     try {
-      const found = await findSoonest(days, draft.audience, draft.serviceIds, draft.staffId ?? null);
+      const found = await findSoonest(
+        days,
+        draft.audience,
+        draft.serviceIds,
+        draft.staffId ?? null,
+      );
       if (!found) {
         setSoonestNote("No free times in the coming weeks. Please call us and we'll fit you in.");
         return;
@@ -1071,7 +1157,9 @@ function MonthCalendar({
           {seeking ? "Finding…" : "Soonest"}
         </button>
       </div>
-      {soonestNote ? <p className="mt-3 text-[0.85rem] text-muted-foreground">{soonestNote}</p> : null}
+      {soonestNote ? (
+        <p className="mt-3 text-[0.85rem] text-muted-foreground">{soonestNote}</p>
+      ) : null}
 
       <div className="mt-4 grid grid-cols-7 gap-2 text-center text-[0.62rem] uppercase tracking-[0.18em] text-muted-foreground">
         {WEEKDAYS.map((w) => (

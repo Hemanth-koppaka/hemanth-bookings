@@ -34,10 +34,23 @@ const now = () => new Date().toISOString();
 
 /** Column defaults the old tables had. */
 const DEFAULTS: Partial<Record<StaffTable, () => Row>> = {
-  staff: () => ({ gender: "", specialties: "", active: true, bookable: true, display_order: 0, archived_at: null }),
+  staff: () => ({
+    gender: "",
+    specialties: "",
+    active: true,
+    bookable: true,
+    display_order: 0,
+    archived_at: null,
+  }),
   staff_leave: () => ({ reason: "", archived_at: null }),
   staff_unavailability: () => ({ reason: "", archived_at: null }),
-  salon_closures: () => ({ end_date: null, start_minute: null, end_minute: null, reason: "", reopened_at: null }),
+  salon_closures: () => ({
+    end_date: null,
+    start_minute: null,
+    end_minute: null,
+    reason: "",
+    reopened_at: null,
+  }),
   staff_breaks: () => ({ day_of_week: null, label: "Break" }),
 };
 
@@ -49,13 +62,25 @@ async function seed(): Promise<Store> {
     sb.from("opening_hours").select("*"),
   ]);
   const toMin = (t: unknown) => {
-    const [h, m] = String(t ?? "10:00").split(":").map(Number);
+    const [h, m] = String(t ?? "10:00")
+      .split(":")
+      .map(Number);
     return (h ?? 10) * 60 + (m ?? 0);
   };
   const team = [
     { name: "Bhargav", gender: "male", specialties: "Founder · Chief Stylist", display_order: 0 },
-    { name: "Male Stylist", gender: "male", specialties: "Men's hair & grooming", display_order: 1 },
-    { name: "Female Stylist", gender: "female", specialties: "Women's hair & beauty", display_order: 2 },
+    {
+      name: "Male Stylist",
+      gender: "male",
+      specialties: "Men's hair & grooming",
+      display_order: 1,
+    },
+    {
+      name: "Female Stylist",
+      gender: "female",
+      specialties: "Women's hair & beauty",
+      display_order: 2,
+    },
   ].map((t) => ({ ...DEFAULTS.staff!(), ...t, id: uuid(), created_at: now() }));
   const [b, m, f] = team as unknown as [Row, Row, Row];
   s.staff = team;
@@ -63,8 +88,10 @@ async function seed(): Promise<Store> {
   for (const x of (svcs ?? []) as { id: string; name: string; gender: string }[]) {
     // Bhargav takes men's and women's guests (and his Signature)
     s.staff_services.push({ staff_id: b["id"], service_id: x.id });
-    if (x.gender === "men" && !sig(x.name)) s.staff_services.push({ staff_id: m["id"], service_id: x.id });
-    if (x.gender === "women" && !sig(x.name)) s.staff_services.push({ staff_id: f["id"], service_id: x.id });
+    if (x.gender === "men" && !sig(x.name))
+      s.staff_services.push({ staff_id: m["id"], service_id: x.id });
+    if (x.gender === "women" && !sig(x.name))
+      s.staff_services.push({ staff_id: f["id"], service_id: x.id });
   }
   const week = (hours ?? []) as Row[];
   for (const st of team) {
@@ -72,9 +99,22 @@ async function seed(): Promise<Store> {
       const h = week.find((r) => r["day_of_week"] === d);
       const start = h ? toMin(h["opening_time"]) : 600;
       const end = h ? Math.max(toMin(h["closing_time"]), start + 30) : 1200;
-      s.staff_working_hours.push({ staff_id: st["id"], day_of_week: d, is_working: h ? Boolean(h["is_open"]) : d !== 2, start_minute: start, end_minute: end });
+      s.staff_working_hours.push({
+        staff_id: st["id"],
+        day_of_week: d,
+        is_working: h ? Boolean(h["is_open"]) : d !== 2,
+        start_minute: start,
+        end_minute: end,
+      });
     }
-    s.staff_breaks.push({ id: uuid(), staff_id: st["id"], day_of_week: null, start_minute: 780, end_minute: 840, label: "Lunch" });
+    s.staff_breaks.push({
+      id: uuid(),
+      staff_id: st["id"],
+      day_of_week: null,
+      start_minute: 780,
+      end_minute: 840,
+      label: "Lunch",
+    });
   }
   return s;
 }
@@ -89,7 +129,10 @@ let tables: { value: boolean; at: number } | null = null;
 /** True when the staff tables exist (database update 0008 applied): then they are used directly. */
 export async function staffTablesExist(): Promise<boolean> {
   if (tables && (tables.value || Date.now() - tables.at < 5 * 60_000)) return tables.value;
-  const { error } = await sb.from("staff" as never).select("id").limit(1);
+  const { error } = await sb
+    .from("staff" as never)
+    .select("id")
+    .limit(1);
   tables = { value: !error, at: Date.now() };
   return !error;
 }
@@ -98,7 +141,9 @@ export async function staffTablesExist(): Promise<boolean> {
 export async function loadStore(): Promise<Store> {
   if (await staffTablesExist()) {
     const res = await Promise.all(TABLES.map((n) => sb.from(n as never).select("*")));
-    return Object.fromEntries(TABLES.map((n, i) => [n, (res[i]!.data ?? []) as Row[]])) as unknown as Store;
+    return Object.fromEntries(
+      TABLES.map((n, i) => [n, (res[i]!.data ?? []) as Row[]]),
+    ) as unknown as Store;
   }
   const { data } = await sb.from("site_settings").select("value").eq("key", KEY).maybeSingle();
   const v = data?.value as Partial<Store> | undefined;
@@ -201,8 +246,17 @@ class Query implements PromiseLike<Result> {
   private async run(): Promise<Result> {
     if (await staffTablesExist()) {
       // database update applied: same query against the real table
-      let q = sb.from(this.table as never) as unknown as Record<string, (...a: unknown[]) => unknown>;
-      q = (this.op === "select" ? q["select"]!("*") : this.op === "delete" ? q["delete"]!() : q[this.op]!(this.payload)) as typeof q;
+      let q = sb.from(this.table as never) as unknown as Record<
+        string,
+        (...a: unknown[]) => unknown
+      >;
+      q = (
+        this.op === "select"
+          ? q["select"]!("*")
+          : this.op === "delete"
+            ? q["delete"]!()
+            : q[this.op]!(this.payload)
+      ) as typeof q;
       for (const [name, args] of this.calls) {
         if (name === "select" && this.op === "select") continue;
         q = q[name]!(...args) as typeof q;
@@ -248,14 +302,18 @@ class Query implements PromiseLike<Result> {
     }
     if (this.max != null) out = out.slice(0, this.max);
     if (this.one) {
-      if (this.one === "single" && out.length !== 1) return { data: null, error: { message: "Expected one row" } };
+      if (this.one === "single" && out.length !== 1)
+        return { data: null, error: { message: "Expected one row" } };
       return { data: out[0] ?? null, error: null };
     }
     if (this.op !== "select" && !this.returning) return { data: null, error: null };
     return { data: structuredClone(out), error: null };
   }
 
-  then<A = Result, B = never>(ok?: ((v: Result) => A | PromiseLike<A>) | null, bad?: ((e: unknown) => B | PromiseLike<B>) | null) {
+  then<A = Result, B = never>(
+    ok?: ((v: Result) => A | PromiseLike<A>) | null,
+    bad?: ((e: unknown) => B | PromiseLike<B>) | null,
+  ) {
     return this.run().then(ok, bad);
   }
 }
@@ -281,7 +339,10 @@ let perStylistGuard: { value: boolean; at: number } | null = null;
 export async function hasPerStylistGuard(): Promise<boolean> {
   if (perStylistGuard && (perStylistGuard.value || Date.now() - perStylistGuard.at < 5 * 60_000))
     return perStylistGuard.value;
-  const { error } = await sb.from("bookings").select("staff_id" as never).limit(1);
+  const { error } = await sb
+    .from("bookings")
+    .select("staff_id" as never)
+    .limit(1);
   perStylistGuard = { value: !error, at: Date.now() };
   return !error;
 }

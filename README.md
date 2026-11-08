@@ -432,13 +432,13 @@ Duration
 
 Price
 
-+
+-
 
 Example structure only:
 
 Haircut
 
-45 min                                      ₹XXX
+45 min ₹XXX
 
                                       [+]
 
@@ -590,11 +590,11 @@ Time buttons should be clean, spacious and easy to tap.
 
 Example:
 
-9:00 AM      9:30 AM
+9:00 AM 9:30 AM
 
-10:00 AM     10:30 AM
+10:00 AM 10:30 AM
 
-11:00 AM     11:30 AM
+11:00 AM 11:30 AM
 
 Do not show unavailable times as normal available options.
 
@@ -692,13 +692,13 @@ Allow editing individual sections without restarting the entire booking.
 
 Example:
 
-SERVICES                         EDIT
+SERVICES EDIT
 
-DATE                             EDIT
+DATE EDIT
 
-TIME                             EDIT
+TIME EDIT
 
-DETAILS                          EDIT
+DETAILS EDIT
 
 Then a strong final action:
 

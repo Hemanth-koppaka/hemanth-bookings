@@ -292,7 +292,13 @@ function TileIcon({
         className,
       )}
     >
-      <span key={plays} className={cn("sm-host absolute inset-0 flex items-center justify-center", plays > 0 && "sm-play")}>
+      <span
+        key={plays}
+        className={cn(
+          "sm-host absolute inset-0 flex items-center justify-center",
+          plays > 0 && "sm-play",
+        )}
+      >
         <img
           src={icon}
           alt=""
@@ -339,9 +345,7 @@ export function ServiceIconTile({
           ? "h-16 w-16"
           : "h-[4.5rem] w-24";
   if (!photo && icon) {
-    return (
-      <TileIcon icon={icon} active={active} box={box} className={className} />
-    );
+    return <TileIcon icon={icon} active={active} box={box} className={className} />;
   }
   // No icon set for this record: a neutral, obviously-empty placeholder (never
   // another record's or the other gender's icon), so a missing one is easy to spot.

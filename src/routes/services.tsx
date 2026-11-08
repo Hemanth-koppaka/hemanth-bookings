@@ -55,8 +55,16 @@ export const Route = createFileRoute("/services")({
 });
 
 function ServicesScreen() {
-  const { draft, hydrated, toggleService, selected, totalMinutes, totalPrice, hasFromPricing, update } =
-    useBooking();
+  const {
+    draft,
+    hydrated,
+    toggleService,
+    selected,
+    totalMinutes,
+    totalPrice,
+    hasFromPricing,
+    update,
+  } = useBooking();
   const navigate = useNavigate();
   const [active, setActive] = useState<string | null>(null);
   // "Your appointment" opens only when the guest taps it (never by itself).
@@ -73,7 +81,10 @@ function ServicesScreen() {
   const menu = draft.audience ? menuFor(draft.audience) : [];
   const popular = useMemo(() => popularIn(menu, popularity), [menu, popularity]);
   // the category the guest was last browsing (by id), else the first
-  const remembered = draft.lastCategoryId && menu.some((c) => c.id === draft.lastCategoryId) ? draft.lastCategoryId : null;
+  const remembered =
+    draft.lastCategoryId && menu.some((c) => c.id === draft.lastCategoryId)
+      ? draft.lastCategoryId
+      : null;
   const activeId = active ?? remembered ?? menu[0]?.id ?? null;
   const category = menu.find((c) => c.id === activeId) ?? menu[0];
   const [query, setQuery] = useState("");
@@ -273,10 +284,17 @@ function ServicesScreen() {
                               {x.note}
                             </span>
                           ) : null}
-                          <ServiceMeta rating={x.rating} popular={popular.has(x.id)} minutes={x.minutes} className="mt-1 text-[0.74rem]" />
+                          <ServiceMeta
+                            rating={x.rating}
+                            popular={popular.has(x.id)}
+                            minutes={x.minutes}
+                            className="mt-1 text-[0.74rem]"
+                          />
                         </span>
                         <span className="flex items-center gap-2.5 self-center">
-                          <span className="whitespace-nowrap text-[0.98rem] tabular-nums">{inr(x.price)}</span>
+                          <span className="whitespace-nowrap text-[0.98rem] tabular-nums">
+                            {inr(x.price)}
+                          </span>
                           <ActionDot on={on} className="h-9 w-9" />
                         </span>
                       </button>
@@ -338,7 +356,13 @@ function useMultiHint(count: number) {
   return { show, hide: () => setShow(false) };
 }
 
-function MultiHint({ hint, className }: { hint: { show: boolean; hide: () => void }; className?: string }) {
+function MultiHint({
+  hint,
+  className,
+}: {
+  hint: { show: boolean; hide: () => void };
+  className?: string;
+}) {
   if (!hint.show) return null;
   return (
     <button
@@ -351,7 +375,8 @@ function MultiHint({ hint, className }: { hint: { show: boolean; hide: () => voi
     >
       <Plus className="h-4 w-4 shrink-0 text-bronze" strokeWidth={1.5} />
       <span>
-        <span className="font-medium">Added.</span> You can choose more than one service. Add as many as you like.
+        <span className="font-medium">Added.</span> You can choose more than one service. Add as
+        many as you like.
       </span>
     </button>
   );
@@ -470,7 +495,9 @@ function DesktopServices({
             <h1 className="mt-2 font-display text-[clamp(2.4rem,4.4vw,3.2rem)] leading-[1.02]">
               Select your <span className="italic text-bronze">services.</span>
             </h1>
-            <p className="mt-2 text-[0.9rem] text-muted-foreground">Choose one or more. Add as many services as you like.</p>
+            <p className="mt-2 text-[0.9rem] text-muted-foreground">
+              Choose one or more. Add as many services as you like.
+            </p>
             <div
               role="tablist"
               aria-label="Service categories"
@@ -652,7 +679,10 @@ function DesktopServices({
       {basket.open && selected.length ? (
         <div className="relative z-30">
           <div className="absolute bottom-3 left-6 w-[min(26rem,calc(100vw-3rem))] shadow-[0_24px_50px_-28px_rgba(40,25,10,0.55)] lg:left-10 xl:left-16">
-            <YourAppointment onAddMore={() => basket.setOpen(false)} onContinue={() => navigate({ to: "/time" })} />
+            <YourAppointment
+              onAddMore={() => basket.setOpen(false)}
+              onContinue={() => navigate({ to: "/time" })}
+            />
           </div>
         </div>
       ) : null}
@@ -682,7 +712,12 @@ function DesktopServices({
                 className="flex max-w-full items-center gap-2 truncate text-left font-display text-[1.35rem] leading-tight hover:text-bronze"
               >
                 {selected.length} {selected.length === 1 ? "service" : "services"} selected
-                <ChevronDown className={"h-4 w-4 shrink-0 transition-transform " + (basket.open ? "" : "rotate-180")} strokeWidth={1.5} />
+                <ChevronDown
+                  className={
+                    "h-4 w-4 shrink-0 transition-transform " + (basket.open ? "" : "rotate-180")
+                  }
+                  strokeWidth={1.5}
+                />
               </button>
               <div className="mt-0.5 truncate text-[0.88rem] text-muted-foreground">
                 {formatDuration(totalMinutes)} · {selected.map((x) => x.name).join(", ")}
@@ -815,11 +850,14 @@ const SORTS: { key: SortKey; label: string }[] = [
 ];
 
 /** "Popular" follows what guests actually book (recent bookings); ties keep the salon's own order. */
-function sortServices<T extends { id: string; price: number; minutes: number; rating?: { avg: number; count: number } | undefined }>(
-  list: T[],
-  key: SortKey,
-  popularity: Record<string, number> = {},
-) {
+function sortServices<
+  T extends {
+    id: string;
+    price: number;
+    minutes: number;
+    rating?: { avg: number; count: number } | undefined;
+  },
+>(list: T[], key: SortKey, popularity: Record<string, number> = {}) {
   const out = list.map((x, i) => ({ x, i }));
   out.sort((a, b) => {
     if (key === "price-asc") return a.x.price - b.x.price || a.i - b.i;
@@ -870,10 +908,17 @@ function ServiceMeta({
   );
   const rated = rating && rating.count >= MIN_RATINGS;
   return (
-    <span className={"flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground " + (className ?? "")}>
+    <span
+      className={
+        "flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground " + (className ?? "")
+      }
+    >
       {rated ? (
         <>
-          <span className="flex items-center gap-1" aria-label={`Rated ${rating.avg.toFixed(1)} out of 5 by ${rating.count} guests`}>
+          <span
+            className="flex items-center gap-1"
+            aria-label={`Rated ${rating.avg.toFixed(1)} out of 5 by ${rating.count} guests`}
+          >
             <span className="text-bronze" aria-hidden>
               ★
             </span>
@@ -903,12 +948,18 @@ function ActionDot({ on, className }: { on: boolean; className?: string }) {
     <span
       className={
         "flex shrink-0 items-center justify-center rounded-full border transition-colors duration-300 " +
-        (on ? "ring-pulse border-foreground bg-foreground text-background" : "border-foreground/30 text-foreground/70") +
+        (on
+          ? "ring-pulse border-foreground bg-foreground text-background"
+          : "border-foreground/30 text-foreground/70") +
         " " +
         (className ?? "")
       }
     >
-      {on ? <Check className="pop-in h-4 w-4" strokeWidth={1.75} /> : <Plus className="h-4 w-4" strokeWidth={1.25} />}
+      {on ? (
+        <Check className="pop-in h-4 w-4" strokeWidth={1.75} />
+      ) : (
+        <Plus className="h-4 w-4" strokeWidth={1.25} />
+      )}
     </span>
   );
 }
@@ -954,7 +1005,15 @@ function SortMenu({ value, onChange }: { value: SortKey; onChange: (k: SortKey) 
  * native picker): on phones a small ivory sheet from the bottom, on laptops a
  * menu under the "Sort by" pill. Closes on choosing, outside tap or Esc.
  */
-function SortPicker({ value, onChange, variant }: { value: SortKey; onChange: (k: SortKey) => void; variant: "icon" | "pill" }) {
+function SortPicker({
+  value,
+  onChange,
+  variant,
+}: {
+  value: SortKey;
+  onChange: (k: SortKey) => void;
+  variant: "icon" | "pill";
+}) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const current = SORTS.find((o) => o.key === value) ?? SORTS[0]!;
@@ -967,7 +1026,8 @@ function SortPicker({ value, onChange, variant }: { value: SortKey; onChange: (k
   useEffect(() => {
     if (!open) return;
     const away = (e: PointerEvent) => {
-      if (variant === "pill" && box.current && !box.current.contains(e.target as Node)) setOpen(false);
+      if (variant === "pill" && box.current && !box.current.contains(e.target as Node))
+        setOpen(false);
     };
     const key = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("pointerdown", away);
@@ -1032,13 +1092,33 @@ function SortPicker({ value, onChange, variant }: { value: SortKey; onChange: (k
         </button>
         {open
           ? createPortal(
-              <div className="fixed inset-0 z-[70] flex items-end" role="dialog" aria-modal aria-label="Sort services">
-                <button type="button" aria-label="Close" className="soft-fade absolute inset-0 bg-ink/35" onClick={() => setOpen(false)} />
+              <div
+                className="fixed inset-0 z-[70] flex items-end"
+                role="dialog"
+                aria-modal
+                aria-label="Sort services"
+              >
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="soft-fade absolute inset-0 bg-ink/35"
+                  onClick={() => setOpen(false)}
+                />
                 <div className="slide-in relative w-full rounded-t-2xl border-t border-hairline bg-background pt-2 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-18px_40px_-20px_rgba(30,20,10,0.45)]">
-                  <span aria-hidden className="mx-auto mb-2 block h-1 w-10 rounded-full bg-foreground/15" />
+                  <span
+                    aria-hidden
+                    className="mx-auto mb-2 block h-1 w-10 rounded-full bg-foreground/15"
+                  />
                   <div className="flex items-center justify-between px-5 pb-1">
-                    <span className="text-[0.66rem] uppercase tracking-[0.28em] text-muted-foreground">Sort services</span>
-                    <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="press -mr-2 flex h-9 w-9 items-center justify-center rounded-full hover:bg-foreground/5">
+                    <span className="text-[0.66rem] uppercase tracking-[0.28em] text-muted-foreground">
+                      Sort services
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      aria-label="Close"
+                      className="press -mr-2 flex h-9 w-9 items-center justify-center rounded-full hover:bg-foreground/5"
+                    >
                       <X className="h-4 w-4" strokeWidth={1.5} />
                     </button>
                   </div>
@@ -1063,7 +1143,10 @@ function SortPicker({ value, onChange, variant }: { value: SortKey; onChange: (k
         <span className="text-[0.62rem] leading-none text-muted-foreground">Sort by</span>
         <span className="mt-1 text-[0.9rem] leading-none">{current.label}</span>
         <ChevronDown
-          className={"pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-foreground/60 transition-transform " + (open ? "rotate-180" : "")}
+          className={
+            "pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-foreground/60 transition-transform " +
+            (open ? "rotate-180" : "")
+          }
           strokeWidth={1.5}
         />
       </button>
