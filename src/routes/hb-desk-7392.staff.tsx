@@ -692,7 +692,6 @@ function TimeOff({ member, onChanged }: { member: StaffMember; onChanged: () => 
   );
 }
 
-
 /** The stylist's own code for "My day" on their phone (/stylist). */
 function StylistCode({ staffId, name }: { staffId: string; name: string }) {
   const { pin } = useAdmin();
@@ -714,7 +713,9 @@ function StylistCode({ staffId, name }: { staffId: string; name: string }) {
       }
       setHas(Boolean(value));
       setCode("");
-      toast.success(value ? `${name} can now open My day with this code.` : `${name}'s code removed.`);
+      toast.success(
+        value ? `${name} can now open My day with this code.` : `${name}'s code removed.`,
+      );
     } finally {
       setBusy(false);
     }
@@ -734,7 +735,11 @@ function StylistCode({ staffId, name }: { staffId: string; name: string }) {
           placeholder={has ? "New code" : "Set a code (6+ characters)"}
           aria-label="Stylist code"
         />
-        <TinyButton tone="primary" disabled={busy || code.trim().length < 6} onClick={() => void save(code)}>
+        <TinyButton
+          tone="primary"
+          disabled={busy || code.trim().length < 6}
+          onClick={() => void save(code)}
+        >
           {has ? "Change code" : "Set code"}
         </TinyButton>
         {has ? (
@@ -742,7 +747,9 @@ function StylistCode({ staffId, name }: { staffId: string; name: string }) {
             Remove
           </TinyButton>
         ) : null}
-        <span className="text-[0.78rem] text-muted-foreground">{has == null ? "" : has ? "Code set" : "No code yet"}</span>
+        <span className="text-[0.78rem] text-muted-foreground">
+          {has == null ? "" : has ? "Code set" : "No code yet"}
+        </span>
       </div>
     </Section>
   );

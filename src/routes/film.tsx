@@ -4,10 +4,7 @@ import { CinematicKit } from "@/components/cinematic-kit";
 // Preview of the barber-kit film (not linked from the site yet).
 export const Route = createFileRoute("/film")({
   head: () => ({
-    meta: [
-      { title: "The kit — Hair by Bhargav" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "The kit — Hair by Bhargav" }, { name: "robots", content: "noindex" }],
   }),
   component: Film,
 });

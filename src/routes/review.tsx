@@ -20,7 +20,15 @@ import { useChangeDeadline } from "@/lib/change-deadline";
 import { BookingDock } from "@/components/booking-dock";
 import { sfx } from "@/lib/sfx";
 import { ServiceIconTile, serviceKind } from "@/components/service-icons";
-import { BUSINESS, SERVICE_RULES, STYLISTS, formatDuration, fromISO, inr, minuteLabel } from "@/lib/salon";
+import {
+  BUSINESS,
+  SERVICE_RULES,
+  STYLISTS,
+  formatDuration,
+  fromISO,
+  inr,
+  minuteLabel,
+} from "@/lib/salon";
 import { preferredFor } from "@/lib/service-rules";
 import { primeBookingFilm, warmBookingFilm } from "@/components/booking-film";
 
@@ -30,7 +38,8 @@ export const Route = createFileRoute("/review")({
       { title: "Review your appointment — Hair by Bhargav" },
       {
         name: "description",
-        content: "Check your services, date, time and details before confirming with Hair by Bhargav.",
+        content:
+          "Check your services, date, time and details before confirming with Hair by Bhargav.",
       },
       { property: "og:title", content: "Review your appointment — Hair by Bhargav" },
       { property: "og:description", content: "One last look before you confirm." },
@@ -86,9 +95,13 @@ function ReviewScreen() {
       // the phone and laptop layouts each have the box: scroll to the one on screen,
       // after the nudge re-renders it
       window.requestAnimationFrame(() => {
-        const box = [...document.querySelectorAll<HTMLElement>("[data-attendance]")].find((el) => el.offsetParent !== null);
+        const box = [...document.querySelectorAll<HTMLElement>("[data-attendance]")].find(
+          (el) => el.offsetParent !== null,
+        );
         box?.scrollIntoView({ behavior: "smooth", block: "center" });
-        box?.querySelector<HTMLInputElement>("input[type=checkbox]")?.focus({ preventScroll: true });
+        box
+          ?.querySelector<HTMLInputElement>("input[type=checkbox]")
+          ?.focus({ preventScroll: true });
       });
       return;
     }
@@ -117,7 +130,14 @@ function ReviewScreen() {
         confirm={confirm}
         saving={saving}
         saveError={saveError}
-        pledge={<AttendancePledge checked={pledged} onChange={setPledged} nudge={nudge} fromPricing={hasFromPricing} />}
+        pledge={
+          <AttendancePledge
+            checked={pledged}
+            onChange={setPledged}
+            nudge={nudge}
+            fromPricing={hasFromPricing}
+          />
+        }
       />
       <div className="md:hidden">
         <Page>
@@ -130,13 +150,24 @@ function ReviewScreen() {
             <div className="stagger mt-6 space-y-3">
               <Card title="Appointment" action={<EditLink to="/services" />}>
                 <div className="flex gap-4">
-                  {selected.length === 1 ? <SelectionThumb selected={selected} className="h-20 w-20" /> : null}
+                  {selected.length === 1 ? (
+                    <SelectionThumb selected={selected} className="h-20 w-20" />
+                  ) : null}
                   <div className="min-w-0 flex-1">
                     <ul className="space-y-1">
                       {selected.map((x) => (
                         <li key={x.id} className="flex items-baseline justify-between gap-3">
                           <span className="flex items-center gap-2.5 font-display text-[1.35rem] leading-tight">
-                            {selected.length > 1 ? <ServiceIconTile kind={serviceKind(x)} icon={x.icon} photo={x.photo} framed size="sm" className="!h-7 !w-7 shrink-0 self-center" /> : null}
+                            {selected.length > 1 ? (
+                              <ServiceIconTile
+                                kind={serviceKind(x)}
+                                icon={x.icon}
+                                photo={x.photo}
+                                framed
+                                size="sm"
+                                className="!h-7 !w-7 shrink-0 self-center"
+                              />
+                            ) : null}
                             {x.name}
                           </span>
                           {selected.length > 1 ? (
@@ -155,14 +186,23 @@ function ReviewScreen() {
                       ))}
                     </ul>
                     <div className="mt-1.5 text-[0.88rem] text-muted-foreground">
-                      {fromISO(draft.date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+                      {fromISO(draft.date).toLocaleDateString("en-GB", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      })}
                     </div>
                     <div className="mt-0.5 flex items-center justify-between gap-3 text-[0.88rem] text-muted-foreground">
                       <span>
                         {minuteLabel(draft.time)} · {formatDuration(totalMinutes)}
-                        {STYLISTS.length ? ` · ${stylistLabel(draft.staffId, draft.serviceIds)}` : ""}
+                        {STYLISTS.length
+                          ? ` · ${stylistLabel(draft.staffId, draft.serviceIds)}`
+                          : ""}
                       </span>
-                      <Link to="/time" className="shrink-0 whitespace-nowrap text-[0.8rem] text-bronze underline underline-offset-4">
+                      <Link
+                        to="/time"
+                        className="shrink-0 whitespace-nowrap text-[0.8rem] text-bronze underline underline-offset-4"
+                      >
                         Change time
                       </Link>
                     </div>
@@ -179,8 +219,12 @@ function ReviewScreen() {
                     ...(c.notes ? [["Note", c.notes]] : []),
                   ].map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-6">
-                      <dt className="shrink-0 text-[0.62rem] uppercase tracking-[0.24em] text-muted-foreground">{k}</dt>
-                      <dd className="min-w-0 text-right text-[0.95rem] [overflow-wrap:anywhere]">{v}</dd>
+                      <dt className="shrink-0 text-[0.62rem] uppercase tracking-[0.24em] text-muted-foreground">
+                        {k}
+                      </dt>
+                      <dd className="min-w-0 text-right text-[0.95rem] [overflow-wrap:anywhere]">
+                        {v}
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -203,12 +247,19 @@ function ReviewScreen() {
               >
                 <div className="flex gap-3">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-bronze" strokeWidth={1.25} />
-                  <address className="text-[0.9rem] not-italic leading-relaxed">{BUSINESS.address}</address>
+                  <address className="text-[0.9rem] not-italic leading-relaxed">
+                    {BUSINESS.address}
+                  </address>
                 </div>
               </Card>
 
               {draft.timeStale ? <StaleTime /> : null}
-              <AttendancePledge checked={pledged} onChange={setPledged} nudge={nudge} fromPricing={hasFromPricing} />
+              <AttendancePledge
+                checked={pledged}
+                onChange={setPledged}
+                nudge={nudge}
+                fromPricing={hasFromPricing}
+              />
             </div>
           </Screen>
 
@@ -224,9 +275,13 @@ function ReviewScreen() {
             summary={
               <div className="min-w-0 flex-1 pl-1">
                 <span className="flex items-center gap-1.5 text-[0.72rem] text-muted-foreground">
-                  <Lock className="h-3 w-3" strokeWidth={1.4} /> {hasFromPricing ? "Estimated total" : "Total"}
+                  <Lock className="h-3 w-3" strokeWidth={1.4} />{" "}
+                  {hasFromPricing ? "Estimated total" : "Total"}
                 </span>
-                <span key={totalPrice} className="tick-in block font-display text-[1.3rem] leading-tight">
+                <span
+                  key={totalPrice}
+                  className="tick-in block font-display text-[1.3rem] leading-tight"
+                >
                   {inr(totalPrice)}
                 </span>
               </div>
@@ -244,10 +299,17 @@ function PhotoStrip() {
   if (!photos.length) return null;
   return (
     <div className="mt-4 hairline-t pt-4">
-      <div className="text-[0.62rem] uppercase tracking-[0.24em] text-muted-foreground">Reference photos</div>
+      <div className="text-[0.62rem] uppercase tracking-[0.24em] text-muted-foreground">
+        Reference photos
+      </div>
       <div className="mt-2.5 flex gap-2.5">
         {photos.map((p) => (
-          <img key={p.path} src={p.thumb} alt="Your reference photo" className="h-16 w-16 rounded-md object-cover lg:h-20 lg:w-20" />
+          <img
+            key={p.path}
+            src={p.thumb}
+            alt="Your reference photo"
+            className="h-16 w-16 rounded-md object-cover lg:h-20 lg:w-20"
+          />
         ))}
       </div>
     </div>
@@ -278,7 +340,9 @@ function Card({
   return (
     <section className={cn("rounded-md border border-hairline bg-card", className)}>
       <div className="mx-4 flex items-center justify-between hairline-b py-3.5 lg:mx-7 lg:py-4">
-        <h2 className="font-sans text-[0.68rem] font-normal uppercase tracking-[0.3em] lg:text-[0.78rem]">{title}</h2>
+        <h2 className="font-sans text-[0.68rem] font-normal uppercase tracking-[0.3em] lg:text-[0.78rem]">
+          {title}
+        </h2>
         {action}
       </div>
       <div className={cn("px-4 py-4 lg:px-7", bodyClassName)}>{children}</div>
@@ -288,7 +352,10 @@ function Card({
 
 function EditLink({ to }: { to: "/services" | "/time" | "/details" }) {
   return (
-    <Link to={to} className="press inline-flex items-center gap-2 text-[0.85rem] text-bronze lg:text-[0.95rem]">
+    <Link
+      to={to}
+      className="press inline-flex items-center gap-2 text-[0.85rem] text-bronze lg:text-[0.95rem]"
+    >
       <span className="underline underline-offset-4">Edit</span>
       <Pencil className="h-4 w-4" strokeWidth={1.25} />
     </Link>
@@ -332,13 +399,26 @@ function DesktopReview({
             <div className="grid gap-5 [@media(min-width:1024px)_and_(max-height:800px)]:gap-4">
               <Card title="Appointment details" action={<EditLink to="/services" />}>
                 <div className="flex gap-5">
-                  {selected.length === 1 ? <SelectionThumb selected={selected} className="h-20 w-20 shrink-0" /> : null}
+                  {selected.length === 1 ? (
+                    <SelectionThumb selected={selected} className="h-20 w-20 shrink-0" />
+                  ) : null}
                   <div className="min-w-0 flex-1">
                     <ul className="space-y-0.5">
                       {selected.map((x) => (
                         <li key={x.id} className="group flex items-center gap-2.5">
-                          {selected.length > 1 ? <ServiceIconTile kind={serviceKind(x)} icon={x.icon} photo={x.photo} framed size="sm" className="!h-7 !w-7 shrink-0 self-center" /> : null}
-                          <span className="min-w-0 truncate font-display text-[1.45rem] leading-tight">{x.name}</span>
+                          {selected.length > 1 ? (
+                            <ServiceIconTile
+                              kind={serviceKind(x)}
+                              icon={x.icon}
+                              photo={x.photo}
+                              framed
+                              size="sm"
+                              className="!h-7 !w-7 shrink-0 self-center"
+                            />
+                          ) : null}
+                          <span className="min-w-0 truncate font-display text-[1.45rem] leading-tight">
+                            {x.name}
+                          </span>
                           {selected.length > 1 ? (
                             <button
                               onClick={() => removeService(x.id)}
@@ -352,7 +432,11 @@ function DesktopReview({
                       ))}
                     </ul>
                     <div className="mt-1.5 text-[1rem] text-muted-foreground">
-                      {fromISO(draft.date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+                      {fromISO(draft.date).toLocaleDateString("en-GB", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      })}
                     </div>
                     <div className="text-[1rem] text-muted-foreground">
                       {minuteLabel(draft.time)} – {minuteLabel(draft.time + totalMinutes)}
@@ -361,7 +445,10 @@ function DesktopReview({
                       {formatDuration(totalMinutes)}
                       {STYLISTS.length ? ` · ${stylistLabel(draft.staffId, draft.serviceIds)}` : ""}
                     </div>
-                    <Link to="/time" className="mt-1 inline-block whitespace-nowrap text-[0.88rem] text-bronze underline underline-offset-4">
+                    <Link
+                      to="/time"
+                      className="mt-1 inline-block whitespace-nowrap text-[0.88rem] text-bronze underline underline-offset-4"
+                    >
                       Change time
                     </Link>
                   </div>
@@ -373,7 +460,9 @@ function DesktopReview({
                       {inr(totalPrice)}
                     </div>
                     {selected.length > 1 ? (
-                      <div className="mt-1.5 text-[0.78rem] text-muted-foreground">{selected.length} services</div>
+                      <div className="mt-1.5 text-[0.78rem] text-muted-foreground">
+                        {selected.length} services
+                      </div>
                     ) : null}
                   </div>
                 </div>
@@ -387,7 +476,9 @@ function DesktopReview({
                     ["Email", c.email || "—"],
                   ].map(([k, v]) => (
                     <div key={k} className="min-w-0 px-4 first:pl-0 last:pr-0">
-                      <dt className="text-[0.64rem] uppercase tracking-[0.24em] text-muted-foreground">{k}</dt>
+                      <dt className="text-[0.64rem] uppercase tracking-[0.24em] text-muted-foreground">
+                        {k}
+                      </dt>
                       <dd className="mt-2 truncate text-[1rem]" title={v}>
                         {v}
                       </dd>
@@ -413,20 +504,27 @@ function DesktopReview({
                 className="flex flex-1 flex-col"
                 bodyClassName="flex flex-1 flex-col gap-5"
                 action={
-                  <a href={mapsUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-[0.85rem] text-bronze lg:text-[0.95rem]">
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-[0.85rem] text-bronze lg:text-[0.95rem]"
+                  >
                     <span className="underline underline-offset-4">Directions</span>
                     <ArrowUpRight className="h-4 w-4" strokeWidth={1.25} />
                   </a>
                 }
               >
                 <address className="text-[0.98rem] not-italic leading-relaxed">
-                    <span className="block font-display text-[1.2rem] leading-tight">{BUSINESS.name || "Hair by Bhargav"}</span>
-                    <span className="mt-1 block text-muted-foreground">
-                      {line1},
-                      <br />
-                      KPHB{line2.join(", KPHB")}
-                    </span>
-                  </address>
+                  <span className="block font-display text-[1.2rem] leading-tight">
+                    {BUSINESS.name || "Hair by Bhargav"}
+                  </span>
+                  <span className="mt-1 block text-muted-foreground">
+                    {line1},
+                    <br />
+                    KPHB{line2.join(", KPHB")}
+                  </span>
+                </address>
                 {/* the map sits under the address and fills the rest of the column */}
                 <iframe
                   title="Map to the studio"
@@ -444,7 +542,9 @@ function DesktopReview({
       <DesktopBar>
         <div className="flex-1">
           {saveError ? (
-            <p role="alert" className="text-[0.95rem] text-destructive">{saveError}</p>
+            <p role="alert" className="text-[0.95rem] text-destructive">
+              {saveError}
+            </p>
           ) : (
             <p className="flex items-center gap-3 text-[0.95rem] text-muted-foreground">
               <Lock className="h-4 w-4" strokeWidth={1.25} />
@@ -452,7 +552,11 @@ function DesktopReview({
             </p>
           )}
         </div>
-        <DesktopCTA onClick={confirm} disabled={saving} className="justify-between md:min-w-[16rem] lg:min-w-[30rem]">
+        <DesktopCTA
+          onClick={confirm}
+          disabled={saving}
+          className="justify-between md:min-w-[16rem] lg:min-w-[30rem]"
+        >
           {saving ? "Confirming…" : "Confirm appointment"}
         </DesktopCTA>
       </DesktopBar>
@@ -485,14 +589,20 @@ function AttendancePledge({
       key={nudge}
       className={cn(
         "scroll-mt-24 rounded-md border px-5 py-5 transition-colors lg:px-7 lg:py-6",
-        nudge && !checked ? "shake border-bronze/70 bg-champagne/25" : "border-bronze/25 bg-champagne/10",
+        nudge && !checked
+          ? "shake border-bronze/70 bg-champagne/25"
+          : "border-bronze/25 bg-champagne/10",
       )}
     >
-      <div className="text-[0.62rem] uppercase tracking-[0.28em] text-bronze lg:text-[0.68rem]">Before you confirm</div>
-      <h2 className="mt-2 font-display text-[1.35rem] leading-snug lg:text-[1.6rem]">Please keep your appointment.</h2>
+      <div className="text-[0.62rem] uppercase tracking-[0.28em] text-bronze lg:text-[0.68rem]">
+        Before you confirm
+      </div>
+      <h2 className="mt-2 font-display text-[1.35rem] leading-snug lg:text-[1.6rem]">
+        Please keep your appointment.
+      </h2>
       <p className="mt-2 text-[0.88rem] leading-relaxed text-muted-foreground lg:text-[0.95rem]">
-        Every booking holds a chair another guest could have had. If you can't make it, let us know in advance, so we can
-        give your time to someone who genuinely wants to come.
+        Every booking holds a chair another guest could have had. If you can't make it, let us know
+        in advance, so we can give your time to someone who genuinely wants to come.
       </p>
       <p className="mt-3 text-[0.88rem] leading-relaxed lg:text-[0.95rem]">
         You can change or cancel your booking yourself in{" "}
@@ -501,7 +611,8 @@ function AttendancePledge({
         </Link>{" "}
         up to <strong className="font-medium">{deadline} before</strong> your appointment.{" "}
         {payment.replace(/\.$/, "")}
-        {fromPricing ? "; prices marked + are confirmed in the chair" : ""}.{lateness ? ` ${lateness}` : ""}
+        {fromPricing ? "; prices marked + are confirmed in the chair" : ""}.
+        {lateness ? ` ${lateness}` : ""}
       </p>
       <label className="mt-4 flex cursor-pointer items-start gap-3">
         <input
@@ -515,7 +626,8 @@ function AttendancePledge({
         </span>
       </label>
       <p className="mt-4 text-[0.8rem] italic text-muted-foreground">
-        Thank you for respecting each other's time. <span className="not-italic text-bronze">Hair by Bhargav</span>
+        Thank you for respecting each other's time.{" "}
+        <span className="not-italic text-bronze">Hair by Bhargav</span>
       </p>
     </section>
   );
@@ -524,7 +636,10 @@ function AttendancePledge({
 /** The services changed after the time was picked: the time needs a fresh check. */
 function StaleTime() {
   return (
-    <div role="status" className="rounded-md border border-bronze/35 bg-champagne/20 px-5 py-4 text-[0.9rem] leading-relaxed">
+    <div
+      role="status"
+      className="rounded-md border border-bronze/35 bg-champagne/20 px-5 py-4 text-[0.9rem] leading-relaxed"
+    >
       Your services have changed, so the previously selected time may no longer be available.{" "}
       <Link to="/time" className="whitespace-nowrap text-bronze underline underline-offset-4">
         Choose a new time

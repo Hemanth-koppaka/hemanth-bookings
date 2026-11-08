@@ -81,18 +81,32 @@ function timeline(
   interval: number,
 ): Row[] {
   const taken: Row[] = [
-    ...bookings.filter(isActive).map((b) => ({ kind: "booking" as const, start: b.time, end: b.end, b })),
-    ...breaks.map((r) => ({ kind: "break" as const, start: r.start, end: r.end, label: r.label || "Break" })),
-    ...blocks.map((r) => ({ kind: "block" as const, start: r.start, end: r.end, label: r.label || "Blocked" })),
+    ...bookings
+      .filter(isActive)
+      .map((b) => ({ kind: "booking" as const, start: b.time, end: b.end, b })),
+    ...breaks.map((r) => ({
+      kind: "break" as const,
+      start: r.start,
+      end: r.end,
+      label: r.label || "Break",
+    })),
+    ...blocks.map((r) => ({
+      kind: "block" as const,
+      start: r.start,
+      end: r.end,
+      label: r.label || "Blocked",
+    })),
   ].sort((a, b) => a.start - b.start);
   const out: Row[] = [];
   let cursor = open;
   for (const r of taken) {
-    if (r.start - cursor >= interval) out.push({ kind: "free", start: cursor, end: r.start, label: "Available" });
+    if (r.start - cursor >= interval)
+      out.push({ kind: "free", start: cursor, end: r.start, label: "Available" });
     out.push(r);
     cursor = Math.max(cursor, r.end);
   }
-  if (close - cursor >= interval) out.push({ kind: "free", start: cursor, end: close, label: "Available" });
+  if (close - cursor >= interval)
+    out.push({ kind: "free", start: cursor, end: close, label: "Available" });
   return out;
 }
 
@@ -102,7 +116,10 @@ function greeting(minute: number) {
 
 function TodayScreen() {
   const { pin } = useAdmin();
-  const { data, loading, error, reload } = useAdminData((p) => adminDashboard({ data: { pin: p } }), []);
+  const { data, loading, error, reload } = useAdminData(
+    (p) => adminDashboard({ data: { pin: p } }),
+    [],
+  );
   const [drawer, setDrawer] = useState<string | null>(null);
   const [newOpen, setNewOpen] = useState<{ time: number | null } | null>(null);
   const [blockOpen, setBlockOpen] = useState(false);
@@ -118,7 +135,14 @@ function TodayScreen() {
   const rows = useMemo(
     () =>
       data && !data.plan.closed
-        ? timeline(data.plan.open, data.plan.close, data.bookings, data.plan.breaks, data.plan.blocks, data.interval)
+        ? timeline(
+            data.plan.open,
+            data.plan.close,
+            data.bookings,
+            data.plan.breaks,
+            data.plan.blocks,
+            data.interval,
+          )
         : [],
     [data],
   );
@@ -129,7 +153,9 @@ function TodayScreen() {
     if (!step) return;
     setBusy(b.reference);
     try {
-      await adminUpsertBooking({ data: { pin, reference: b.reference, patch: { meta: { status: step.to } } } });
+      await adminUpsertBooking({
+        data: { pin, reference: b.reference, patch: { meta: { status: step.to } } },
+      });
       toast.success(`${b.customer.name}: ${STATUS_LABEL[step.to]}.`);
       reload();
     } catch {
@@ -144,7 +170,9 @@ function TodayScreen() {
   return (
     <AdminShell
       title={data ? greeting(now) : "Today"}
-      subtitle={data ? dateLabel(data.today, { weekday: "long", day: "numeric", month: "long" }) : undefined}
+      subtitle={
+        data ? dateLabel(data.today, { weekday: "long", day: "numeric", month: "long" }) : undefined
+      }
       right={
         <div className="flex gap-2">
           <TinyButton tone="primary" onClick={() => setNewOpen({ time: null })}>
@@ -242,7 +270,9 @@ function TodayScreen() {
               <AreaTrend
                 label="Revenue per day, last 30 days"
                 color={DASH.blue}
-                points={data.days.filter((d) => d.date <= data.today).map((d) => ({ date: d.date, value: d.revenue }))}
+                points={data.days
+                  .filter((d) => d.date <= data.today)
+                  .map((d) => ({ date: d.date, value: d.revenue }))}
                 format={(n) => (n >= 1000 ? `₹${Math.round(n / 100) / 10}k` : `₹${Math.round(n)}`)}
               />
             </ChartCard>
@@ -266,21 +296,34 @@ function TodayScreen() {
               {data.next ? (
                 <Panel className="rounded-2xl border-0 bg-[linear-gradient(120deg,#1c1611_0%,#3a2a1c_100%)] text-ivory shadow-[0_18px_40px_-26px_rgba(30,20,10,0.8)] [&_.text-muted-foreground]:text-ivory/70">
                   <div className="flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.2em] text-champagne">
-                    <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: data.next.time <= now ? DASH.orange : DASH.aqua }} />
+                    <span
+                      className="h-2 w-2 animate-pulse rounded-full"
+                      style={{ background: data.next.time <= now ? DASH.orange : DASH.aqua }}
+                    />
                     {data.next.time <= now ? "In progress" : "Up next"}
                   </div>
                   <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-                    <button onClick={() => setDrawer(data.next!.reference)} className="min-w-0 text-left">
-                      <div className="font-display text-[2rem] leading-none">{data.next.customer.name}</div>
+                    <button
+                      onClick={() => setDrawer(data.next!.reference)}
+                      className="min-w-0 text-left"
+                    >
+                      <div className="font-display text-[2rem] leading-none">
+                        {data.next.customer.name}
+                      </div>
                       <div className="mt-1.5 truncate text-[0.85rem] text-muted-foreground">
-                        {data.next.services.map((s) => s.name).join(" · ")} · {formatDuration(data.next.minutes)}
+                        {data.next.services.map((s) => s.name).join(" · ")} ·{" "}
+                        {formatDuration(data.next.minutes)}
                       </div>
                     </button>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <div className="font-display text-[2rem] leading-none">{minuteLabel(data.next.time)}</div>
+                        <div className="font-display text-[2rem] leading-none">
+                          {minuteLabel(data.next.time)}
+                        </div>
                         <div className="mt-1 text-[0.75rem] text-muted-foreground">
-                          {data.next.time > now ? `in ${formatDuration(data.next.time - now)}` : `until ${minuteLabel(data.next.end)}`}
+                          {data.next.time > now
+                            ? `in ${formatDuration(data.next.time - now)}`
+                            : `until ${minuteLabel(data.next.end)}`}
                         </div>
                       </div>
                       {NEXT[data.next.status] ? (
@@ -300,7 +343,9 @@ function TodayScreen() {
 
               <Panel className="p-0 lg:p-0">
                 <div className="flex items-center justify-between border-b border-hairline px-4 py-3 lg:px-5">
-                  <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">Today's schedule</div>
+                  <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
+                    Today's schedule
+                  </div>
                   {!data.plan.closed ? (
                     <div className="text-[0.75rem] text-muted-foreground">
                       {minuteLabel(data.plan.open)} – {minuteLabel(data.plan.close)}
@@ -308,7 +353,9 @@ function TodayScreen() {
                   ) : null}
                 </div>
                 {data.plan.closed ? (
-                  <p className="px-5 py-12 text-center text-[0.9rem] text-muted-foreground">The studio is closed today.</p>
+                  <p className="px-5 py-12 text-center text-[0.9rem] text-muted-foreground">
+                    The studio is closed today.
+                  </p>
                 ) : (
                   <ol>
                     {rows.map((r) => (
@@ -326,7 +373,9 @@ function TodayScreen() {
                 )}
                 {inactive.length ? (
                   <div className="border-t border-hairline px-4 py-3 lg:px-5">
-                    <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">Cancelled & no-shows</div>
+                    <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
+                      Cancelled & no-shows
+                    </div>
                     {inactive.map((b) => (
                       <button
                         key={b.reference}
@@ -334,7 +383,9 @@ function TodayScreen() {
                         className="mt-2 flex w-full items-center gap-3 text-left text-[0.85rem] text-muted-foreground"
                       >
                         <span className="w-16 tabular-nums">{minuteLabel(b.time)}</span>
-                        <span className="min-w-0 flex-1 truncate line-through decoration-foreground/30">{b.customer.name}</span>
+                        <span className="min-w-0 flex-1 truncate line-through decoration-foreground/30">
+                          {b.customer.name}
+                        </span>
                         <StatusPill status={b.status} />
                       </button>
                     ))}
@@ -345,15 +396,25 @@ function TodayScreen() {
 
             <div className="space-y-5">
               <Panel>
-                <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">Needs attention</div>
+                <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
+                  Needs attention
+                </div>
                 <ul className="mt-3 space-y-2.5">
                   {data.alerts.map((a, i) => {
                     const Icon = a.level === "warn" ? AlertTriangle : Info;
                     const body = (
                       <span className="flex items-start gap-2.5 text-[0.85rem]">
-                        <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", a.level === "warn" ? "text-amber-600" : "text-muted-foreground")} strokeWidth={1.6} />
+                        <Icon
+                          className={cn(
+                            "mt-0.5 h-4 w-4 shrink-0",
+                            a.level === "warn" ? "text-amber-600" : "text-muted-foreground",
+                          )}
+                          strokeWidth={1.6}
+                        />
                         <span className="flex-1">{a.text}</span>
-                        {a.to ? <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" /> : null}
+                        {a.to ? (
+                          <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : null}
                       </span>
                     );
                     return <li key={i}>{a.to ? <Link to={a.to as never}>{body}</Link> : body}</li>;
@@ -373,11 +434,20 @@ function TodayScreen() {
                   items={data.topServices.map((x, i) => ({
                     label: x.name,
                     value: x.count,
-                    color: [DASH.blue, DASH.orange, DASH.aqua, DASH.yellow, DASH.magenta, DASH.violet][i]!,
+                    color: [
+                      DASH.blue,
+                      DASH.orange,
+                      DASH.aqua,
+                      DASH.yellow,
+                      DASH.magenta,
+                      DASH.violet,
+                    ][i]!,
                   }))}
                 />
               ) : (
-                <p className="py-10 text-center text-[0.88rem] text-muted-foreground">No bookings in the last 30 days yet.</p>
+                <p className="py-10 text-center text-[0.88rem] text-muted-foreground">
+                  No bookings in the last 30 days yet.
+                </p>
               )}
             </ChartCard>
             <ChartCard title="Who did what" hint="Last 30 days">
@@ -401,7 +471,15 @@ function TodayScreen() {
                               <span className="flex items-center gap-2.5">
                                 <span
                                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.72rem] font-medium text-white"
-                                  style={{ background: [DASH.violet, DASH.orange, DASH.aqua, DASH.blue, DASH.magenta][i % 5] }}
+                                  style={{
+                                    background: [
+                                      DASH.violet,
+                                      DASH.orange,
+                                      DASH.aqua,
+                                      DASH.blue,
+                                      DASH.magenta,
+                                    ][i % 5],
+                                  }}
                                 >
                                   {t.name.slice(0, 1).toUpperCase()}
                                 </span>
@@ -410,15 +488,25 @@ function TodayScreen() {
                                   <span className="mt-1 block h-1 w-24 overflow-hidden rounded-full bg-foreground/[0.06]">
                                     <span
                                       className="block h-full rounded-full"
-                                      style={{ width: `${(t.revenue / top) * 100}%`, background: DASH.aqua }}
+                                      style={{
+                                        width: `${(t.revenue / top) * 100}%`,
+                                        background: DASH.aqua,
+                                      }}
                                     />
                                   </span>
                                 </span>
                               </span>
                             </td>
                             <td className="px-1 py-2.5 text-right tabular-nums">{t.services}</td>
-                            <td className="px-1 py-2.5 text-right font-medium tabular-nums">{inr(t.revenue)}</td>
-                            <td className={cn("px-1 py-2.5 text-right tabular-nums", t.noShows ? "text-destructive" : "text-muted-foreground")}>
+                            <td className="px-1 py-2.5 text-right font-medium tabular-nums">
+                              {inr(t.revenue)}
+                            </td>
+                            <td
+                              className={cn(
+                                "px-1 py-2.5 text-right tabular-nums",
+                                t.noShows ? "text-destructive" : "text-muted-foreground",
+                              )}
+                            >
                               {t.noShows}
                             </td>
                           </tr>
@@ -428,7 +516,9 @@ function TodayScreen() {
                   </table>
                 </div>
               ) : (
-                <p className="py-10 text-center text-[0.88rem] text-muted-foreground">Nothing yet.</p>
+                <p className="py-10 text-center text-[0.88rem] text-muted-foreground">
+                  Nothing yet.
+                </p>
               )}
             </ChartCard>
           </div>
@@ -443,7 +533,12 @@ function TodayScreen() {
         onCreated={reload}
         {...(data ? { initialDate: data.today } : {})}
       />
-      <BlockTimeDialog open={blockOpen} onOpenChange={setBlockOpen} onSaved={reload} {...(data ? { initialDate: data.today } : {})} />
+      <BlockTimeDialog
+        open={blockOpen}
+        onOpenChange={setBlockOpen}
+        onSaved={reload}
+        {...(data ? { initialDate: data.today } : {})}
+      />
       <CloseDayDialog open={closeOpen} onOpenChange={setCloseOpen} onSaved={reload} />
     </AdminShell>
   );
@@ -477,13 +572,25 @@ function TimelineRow({
     const step = NEXT[b.status];
     const live = row.start <= now && now < row.end;
     return (
-      <li className={cn("relative flex items-center gap-3 border-b border-hairline px-4 py-3 last:border-0 lg:px-5", live && "bg-champagne/10")}>
-        <span className={cn("absolute inset-y-2 left-1 rounded-full", live ? "w-1" : "w-[3px]")} style={{ background: STATUS_COLOR[b.status] }} />
+      <li
+        className={cn(
+          "relative flex items-center gap-3 border-b border-hairline px-4 py-3 last:border-0 lg:px-5",
+          live && "bg-champagne/10",
+        )}
+      >
+        <span
+          className={cn("absolute inset-y-2 left-1 rounded-full", live ? "w-1" : "w-[3px]")}
+          style={{ background: STATUS_COLOR[b.status] }}
+        />
         {time}
         <button onClick={() => onOpen(b.reference)} className="min-w-0 flex-1 text-left">
           <div className="flex items-center gap-2">
             <span className="truncate text-[0.95rem]">{b.customer.name}</span>
-            {b.source !== "online" ? <span className="text-[0.62rem] uppercase tracking-[0.14em] text-muted-foreground">{b.source}</span> : null}
+            {b.source !== "online" ? (
+              <span className="text-[0.62rem] uppercase tracking-[0.14em] text-muted-foreground">
+                {b.source}
+              </span>
+            ) : null}
           </div>
           <div className="truncate text-[0.8rem] text-muted-foreground">
             {b.services.map((s) => s.name).join(" · ")} · {inr(b.price)}
@@ -504,11 +611,21 @@ function TimelineRow({
     return (
       <li className="flex items-center gap-3 border-b border-hairline px-4 py-2.5 last:border-0 lg:px-5">
         {time}
-        <span className={cn("flex-1 text-[0.85rem]", past ? "text-muted-foreground/60" : "text-emerald-700")}>
-          {past ? "Free (passed)" : `Available · ${formatDuration(row.end - Math.max(row.start, now))}`}
+        <span
+          className={cn(
+            "flex-1 text-[0.85rem]",
+            past ? "text-muted-foreground/60" : "text-emerald-700",
+          )}
+        >
+          {past
+            ? "Free (passed)"
+            : `Available · ${formatDuration(row.end - Math.max(row.start, now))}`}
         </span>
         {bookable ? (
-          <button onClick={() => onBook(row.start)} className="press text-[0.8rem] text-bronze underline underline-offset-4">
+          <button
+            onClick={() => onBook(row.start)}
+            className="press text-[0.8rem] text-bronze underline underline-offset-4"
+          >
             Book
           </button>
         ) : null}
@@ -562,26 +679,41 @@ function Tile({
       <span className="dash-tile-icon relative flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
         <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
       </span>
-      <div className="relative mt-3 truncate text-[clamp(1.35rem,6vw,1.75rem)] font-semibold leading-none tracking-tight tabular-nums">{value}</div>
+      <div className="relative mt-3 truncate text-[clamp(1.35rem,6vw,1.75rem)] font-semibold leading-none tracking-tight tabular-nums">
+        {value}
+      </div>
       <div className="relative mt-1.5 text-[0.8rem] font-medium opacity-95">{label}</div>
       <div className="relative mt-0.5 truncate text-[0.72rem] opacity-80">{hint}</div>
     </div>
   );
 }
 
-function ChartCard({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function ChartCard({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-2xl border border-hairline bg-card p-4 shadow-[0_10px_30px_-24px_rgba(30,20,10,0.4)] lg:p-5">
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h2 className="text-[1rem] font-medium">{title}</h2>
-        {hint ? <span className="truncate text-[0.75rem] text-muted-foreground">{hint}</span> : null}
+        {hint ? (
+          <span className="truncate text-[0.75rem] text-muted-foreground">{hint}</span>
+        ) : null}
       </div>
       {children}
     </section>
   );
 }
 
-const JOURNEY: { key: "home" | "book" | "services" | "time" | "details" | "review" | "booked"; label: string }[] = [
+const JOURNEY: {
+  key: "home" | "book" | "services" | "time" | "details" | "review" | "booked";
+  label: string;
+}[] = [
   { key: "home", label: "Visited the site" },
   { key: "book", label: "Started booking" },
   { key: "services", label: "Chose services" },
@@ -610,17 +742,26 @@ function JourneyCard({ visits }: { visits: Record<string, number> }) {
             const prev = i ? (visits[JOURNEY[i - 1]!.key] ?? 0) : 0;
             const pct = i && prev ? Math.round((n / prev) * 100) : null;
             return (
-              <li key={j.key} className="grid grid-cols-[8.5rem_minmax(0,1fr)_4.5rem] items-center gap-3 text-[0.82rem] sm:grid-cols-[10rem_minmax(0,1fr)_5rem]">
+              <li
+                key={j.key}
+                className="grid grid-cols-[8.5rem_minmax(0,1fr)_4.5rem] items-center gap-3 text-[0.82rem] sm:grid-cols-[10rem_minmax(0,1fr)_5rem]"
+              >
                 <span className="truncate text-muted-foreground">{j.label}</span>
                 <span className="h-5 overflow-hidden rounded bg-foreground/[0.05]">
                   <span
                     className="dash-bar block h-full rounded"
-                    style={{ width: `${(n / top) * 100}%`, background: i === biggest.at ? DASH.orange : j.key === "booked" ? DASH.aqua : DASH.blue }}
+                    style={{
+                      width: `${(n / top) * 100}%`,
+                      background:
+                        i === biggest.at ? DASH.orange : j.key === "booked" ? DASH.aqua : DASH.blue,
+                    }}
                   />
                 </span>
                 <span className="text-right tabular-nums">
                   {n}
-                  {pct != null ? <span className="ml-1.5 text-[0.72rem] text-muted-foreground">{pct}%</span> : null}
+                  {pct != null ? (
+                    <span className="ml-1.5 text-[0.72rem] text-muted-foreground">{pct}%</span>
+                  ) : null}
                 </span>
               </li>
             );
@@ -628,11 +769,20 @@ function JourneyCard({ visits }: { visits: Record<string, number> }) {
         </ol>
         {biggest.at > 0 ? (
           <p className="mt-3 text-[0.8rem] text-muted-foreground">
-            Most people leave between <b className="font-medium text-foreground">{JOURNEY[biggest.at - 1]!.label.toLowerCase()}</b> and{" "}
-            <b className="font-medium text-foreground">{JOURNEY[biggest.at]!.label.toLowerCase()}</b> ({Math.round(biggest.drop * 100)}% stop there).
+            Most people leave between{" "}
+            <b className="font-medium text-foreground">
+              {JOURNEY[biggest.at - 1]!.label.toLowerCase()}
+            </b>{" "}
+            and{" "}
+            <b className="font-medium text-foreground">
+              {JOURNEY[biggest.at]!.label.toLowerCase()}
+            </b>{" "}
+            ({Math.round(biggest.drop * 100)}% stop there).
           </p>
         ) : (
-          <p className="mt-3 text-[0.8rem] text-muted-foreground">Counts build up as people visit. No cookies, no personal data.</p>
+          <p className="mt-3 text-[0.8rem] text-muted-foreground">
+            Counts build up as people visit. No cookies, no personal data.
+          </p>
         )}
       </ChartCard>
     </div>

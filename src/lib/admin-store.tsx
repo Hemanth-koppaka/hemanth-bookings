@@ -2,19 +2,19 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { findService, toISO, type Audience, type Service } from "./salon";
 import { type Booking, type Customer } from "./booking-store";
 import { toast } from "sonner";
-import { adminSignIn, adminListBookings, adminUpsertBooking, adminChangePin,
-  adminSaveConfig, type BookingRow } from "./salon.functions";
+import {
+  adminSignIn,
+  adminListBookings,
+  adminUpsertBooking,
+  adminChangePin,
+  adminSaveConfig,
+  type BookingRow,
+} from "./salon.functions";
 
 /* ── Types ───────────────────────────────────────────────────── */
 
 export type ApptStatus =
-  | "pending"
-  | "upcoming"
-  | "arrived"
-  | "in-chair"
-  | "completed"
-  | "no-show"
-  | "cancelled";
+  "pending" | "upcoming" | "arrived" | "in-chair" | "completed" | "no-show" | "cancelled";
 
 export type PaymentMethod = "cash" | "upi" | "card" | "unpaid";
 
@@ -149,7 +149,9 @@ type StoredSession = { token: string; expiresAt: number; weak: boolean };
 
 function readSession(): StoredSession | null {
   try {
-    const s = JSON.parse(window.sessionStorage.getItem(SESSION_KEY) ?? "null") as StoredSession | null;
+    const s = JSON.parse(
+      window.sessionStorage.getItem(SESSION_KEY) ?? "null",
+    ) as StoredSession | null;
     return s && s.token && s.expiresAt > Date.now() ? s : null;
   } catch {
     return null;
@@ -249,7 +251,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<Ctx>(() => {
     const build = (
-      b: Pick<Booking, "reference" | "audience" | "serviceIds" | "date" | "time" | "customer" | "createdAt">,
+      b: Pick<
+        Booking,
+        "reference" | "audience" | "serviceIds" | "date" | "time" | "customer" | "createdAt"
+      >,
       source: Appointment["source"],
       cancelled: boolean,
     ): Appointment => {
@@ -274,23 +279,53 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       ...rows.map((r) => {
         const a = build(r, r.source, r.status === "cancelled");
         const m = r.meta as Partial<ApptMeta>;
-        a.meta = r.status === "cancelled" ? { ...DEFAULT_META, ...m, status: "cancelled" } : { ...DEFAULT_META, ...m };
+        a.meta =
+          r.status === "cancelled"
+            ? { ...DEFAULT_META, ...m, status: "cancelled" }
+            : { ...DEFAULT_META, ...m };
         return a;
       }),
-      ...walkIns.filter((w) => !rows.some((r) => r.reference === w.reference)).map((w) => build(w, "walk-in", false)),
+      ...walkIns
+        .filter((w) => !rows.some((r) => r.reference === w.reference))
+        .map((w) => build(w, "walk-in", false)),
     ].sort((a, z) => (a.date === z.date ? a.time - z.time : a.date < z.date ? -1 : 1));
 
     const patchMeta = (reference: string, patch: Partial<ApptMeta>) => {
       const row = rows.find((r) => r.reference === reference);
-      const next = { ...DEFAULT_META, ...metas[reference], ...(row?.meta as Partial<ApptMeta>), ...patch };
+      const next = {
+        ...DEFAULT_META,
+        ...metas[reference],
+        ...(row?.meta as Partial<ApptMeta>),
+        ...patch,
+      };
       setMetas((m) => ({ ...m, [reference]: next }));
-      setRows((rs) => rs.map((r) => (r.reference === reference ? { ...r, meta: next, status: patch.status === "cancelled" ? "cancelled" : patch.status ? "confirmed" : r.status } : r)));
+      setRows((rs) =>
+        rs.map((r) =>
+          r.reference === reference
+            ? {
+                ...r,
+                meta: next,
+                status:
+                  patch.status === "cancelled"
+                    ? "cancelled"
+                    : patch.status
+                      ? "confirmed"
+                      : r.status,
+              }
+            : r,
+        ),
+      );
       void guard(
         adminUpsertBooking({
           data: {
             pin: pinCode,
             reference,
-            patch: { meta: next, ...(patch.status ? { status: patch.status === "cancelled" ? "cancelled" : "confirmed" } : {}) },
+            patch: {
+              meta: next,
+              ...(patch.status
+                ? { status: patch.status === "cancelled" ? "cancelled" : "confirmed" }
+                : {}),
+            },
           },
         }),
         "Couldn't save that change. The appointment has been reloaded.",
@@ -317,7 +352,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           startSession({ token: r.token, expiresAt: r.expiresAt, weak: r.weak });
           return { ok: true };
         }
-        if (r.lockedFor) return { ok: false, message: `Too many attempts. Try again in ${fmtWait(r.lockedFor)}.` };
+        if (r.lockedFor)
+          return { ok: false, message: `Too many attempts. Try again in ${fmtWait(r.lockedFor)}.` };
         return {
           ok: false,
           message:
@@ -361,21 +397,24 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           { ...entry, slots: appt.slots, status: "confirmed", source: "walk-in", meta: {} },
           ...rs,
         ]);
-        void guard(adminUpsertBooking({
-          data: {
-            pin: pinCode,
-            reference: entry.reference,
-            insert: {
-              audience: entry.audience,
-              serviceIds: entry.serviceIds,
-              date: entry.date,
-              time: entry.time,
-              slots: appt.slots,
-              customer: { ...entry.customer, email: entry.customer.email ?? "" },
-              source: "walk-in",
+        void guard(
+          adminUpsertBooking({
+            data: {
+              pin: pinCode,
+              reference: entry.reference,
+              insert: {
+                audience: entry.audience,
+                serviceIds: entry.serviceIds,
+                date: entry.date,
+                time: entry.time,
+                slots: appt.slots,
+                customer: { ...entry.customer, email: entry.customer.email ?? "" },
+                source: "walk-in",
+              },
             },
-          },
-        }), "Couldn't save the walk-in. Please add it again.").then(() => {
+          }),
+          "Couldn't save the walk-in. Please add it again.",
+        ).then(() => {
           // the server issues the real booking ID; drop the local placeholder and reload
           setWalkIns((w) => w.filter((x) => x.reference !== entry.reference));
           setRows((rs) => rs.filter((r) => r.reference !== entry.reference));
@@ -386,8 +425,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
       staff,
       addStaff: (name, role) =>
-        saveStaff([...staff, { id: "st-" + Math.random().toString(36).slice(2, 8), name, role, active: true }]),
-      toggleStaff: (id) => saveStaff(staff.map((x) => (x.id === id ? { ...x, active: !x.active } : x))),
+        saveStaff([
+          ...staff,
+          { id: "st-" + Math.random().toString(36).slice(2, 8), name, role, active: true },
+        ]),
+      toggleStaff: (id) =>
+        saveStaff(staff.map((x) => (x.id === id ? { ...x, active: !x.active } : x))),
       removeStaff: (id) => saveStaff(staff.filter((x) => x.id !== id)),
 
       pin: pinCode,
@@ -395,7 +438,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       updateSettings: (patch) => {
         if (patch.acceptingBookings !== undefined) {
           void guard(
-            adminSaveConfig({ data: { pin: pinCode, config: { accepting: patch.acceptingBookings } } }),
+            adminSaveConfig({
+              data: { pin: pinCode, config: { accepting: patch.acceptingBookings } },
+            }),
             "Couldn't change online booking. Please try again.",
           );
         }

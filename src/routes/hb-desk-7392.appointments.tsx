@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { AdminShell, Empty, StatusPill, TinyButton } from "@/components/admin";
-import { BookingDrawer, LoadState, NewBookingDialog, dateLabel, salonToday } from "@/components/admin-ops";
+import {
+  BookingDrawer,
+  LoadState,
+  NewBookingDialog,
+  dateLabel,
+  salonToday,
+} from "@/components/admin-ops";
 import { useAdmin, STATUS_LABEL, type ApptStatus } from "@/lib/admin-store";
 import { adminBookings, type AdminBooking } from "@/lib/admin-data.functions";
 import { fromISO, inr, minuteLabel, toISO } from "@/lib/salon";
@@ -30,7 +36,15 @@ const PRESETS: { key: Preset; label: string }[] = [
   { key: "past", label: "Past" },
   { key: "all", label: "All" },
 ];
-const STATUSES: ApptStatus[] = ["pending", "upcoming", "arrived", "in-chair", "completed", "no-show", "cancelled"];
+const STATUSES: ApptStatus[] = [
+  "pending",
+  "upcoming",
+  "arrived",
+  "in-chair",
+  "completed",
+  "no-show",
+  "cancelled",
+];
 const SOURCES = ["online", "walk-in", "phone", "whatsapp", "admin"];
 
 const shift = (iso: string, n: number) => {
@@ -97,14 +111,16 @@ function BookingsScreen() {
       .then((res) => {
         if (!live) return;
         // upcoming lists read soonest first
-        const rows = preset === "past" || preset === "all" ? res.bookings : [...res.bookings].reverse();
+        const rows =
+          preset === "past" || preset === "all" ? res.bookings : [...res.bookings].reverse();
         setList((prev) => (page === 0 ? rows : [...prev, ...rows]));
         setMore(res.more);
         setError("");
       })
       .catch((e: unknown) => {
         if (!live) return;
-        if (e instanceof Error && /session/i.test(e.message)) return signOut("Your session ended. Please sign in again.");
+        if (e instanceof Error && /session/i.test(e.message))
+          return signOut("Your session ended. Please sign in again.");
         setError("Couldn't load bookings.");
       })
       .finally(() => live && setLoading(false));
@@ -115,7 +131,12 @@ function BookingsScreen() {
 
   const refresh = () => setVersion((v) => v + 1);
   const chip = (on: boolean) =>
-    cn("press shrink-0 rounded-full border px-3 py-1 text-[0.78rem]", on ? "border-foreground bg-foreground text-background" : "border-foreground/15 hover:border-foreground/40");
+    cn(
+      "press shrink-0 rounded-full border px-3 py-1 text-[0.78rem]",
+      on
+        ? "border-foreground bg-foreground text-background"
+        : "border-foreground/15 hover:border-foreground/40",
+    );
 
   return (
     <AdminShell
@@ -144,7 +165,12 @@ function BookingsScreen() {
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-md border border-foreground/15 bg-background px-3 py-1.5 text-[0.82rem]" aria-label="Status">
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="rounded-md border border-foreground/15 bg-background px-3 py-1.5 text-[0.82rem]"
+            aria-label="Status"
+          >
             <option value="">Any status</option>
             {STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -152,7 +178,12 @@ function BookingsScreen() {
               </option>
             ))}
           </select>
-          <select value={source} onChange={(e) => setSource(e.target.value)} className="rounded-md border border-foreground/15 bg-background px-3 py-1.5 text-[0.82rem] capitalize" aria-label="Source">
+          <select
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            className="rounded-md border border-foreground/15 bg-background px-3 py-1.5 text-[0.82rem] capitalize"
+            aria-label="Source"
+          >
             <option value="">Any source</option>
             {SOURCES.map((s) => (
               <option key={s} value={s}>
@@ -164,12 +195,21 @@ function BookingsScreen() {
       </div>
 
       <div className="mt-4">
-        <LoadState loading={loading && page === 0 && !list.length} error={error} onRetry={refresh} />
+        <LoadState
+          loading={loading && page === 0 && !list.length}
+          error={error}
+          onRetry={refresh}
+        />
         {!loading && !error && !list.length ? (
           <Empty title={term ? `No bookings match “${term}”.` : "No bookings here yet."} />
         ) : null}
         {list.length ? (
-          <div className={cn("overflow-hidden rounded-md border border-hairline bg-card transition-opacity", loading && page === 0 && "opacity-60")}>
+          <div
+            className={cn(
+              "overflow-hidden rounded-md border border-hairline bg-card transition-opacity",
+              loading && page === 0 && "opacity-60",
+            )}
+          >
             {list.map((b, i) => {
               const newDay = i === 0 || list[i - 1]!.date !== b.date;
               return (
@@ -184,16 +224,24 @@ function BookingsScreen() {
                     onClick={() => setDrawer(b.reference)}
                     className="flex w-full items-center gap-3 border-b border-hairline px-4 py-3 text-left last:border-0 hover:bg-foreground/[0.02]"
                   >
-                    <span className="w-16 shrink-0 text-[0.9rem] tabular-nums">{minuteLabel(b.time)}</span>
+                    <span className="w-16 shrink-0 text-[0.9rem] tabular-nums">
+                      {minuteLabel(b.time)}
+                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[0.92rem]">{b.customer.name}</span>
                       <span className="block truncate text-[0.78rem] text-muted-foreground">
                         {b.services.map((s) => s.name).join(" · ")}
                       </span>
                     </span>
-                    <span className="hidden w-28 shrink-0 text-[0.75rem] tabular-nums text-muted-foreground md:block">{b.customer.phone}</span>
-                    <span className="hidden w-24 shrink-0 text-[0.72rem] text-muted-foreground lg:block">{b.reference}</span>
-                    <span className="hidden w-16 shrink-0 text-right text-[0.85rem] tabular-nums sm:block">{inr(b.price)}</span>
+                    <span className="hidden w-28 shrink-0 text-[0.75rem] tabular-nums text-muted-foreground md:block">
+                      {b.customer.phone}
+                    </span>
+                    <span className="hidden w-24 shrink-0 text-[0.72rem] text-muted-foreground lg:block">
+                      {b.reference}
+                    </span>
+                    <span className="hidden w-16 shrink-0 text-right text-[0.85rem] tabular-nums sm:block">
+                      {inr(b.price)}
+                    </span>
                     <StatusPill status={b.status} />
                   </button>
                 </div>

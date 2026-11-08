@@ -75,9 +75,12 @@ export const isWeakCode = (raw: string) => {
   const code = raw.trim().toLowerCase();
   if (code.length < 6) return true;
   if (/^(.)\1+$/.test(code) || /^(..)\1+$/.test(code) || /^(...)\1+$/.test(code)) return true;
-  if (/^\d+$/.test(code) && ("01234567890".includes(code) || "09876543210".includes(code))) return true;
+  if (/^\d+$/.test(code) && ("01234567890".includes(code) || "09876543210".includes(code)))
+    return true;
   const digits = code.replace(/\D/g, "");
-  return SALON_NUMBERS.some((n) => digits.includes(n) || (digits.length >= 6 && n.includes(digits)));
+  return SALON_NUMBERS.some(
+    (n) => digits.includes(n) || (digits.length >= 6 && n.includes(digits)),
+  );
 };
 export const WEAK_CODE_HINT =
   "Use at least 6 characters. Avoid repeats (111111, 121212), runs (123456) and the salon's phone, plot or PIN code numbers.";
@@ -128,7 +131,9 @@ async function codeVersion(stored: string) {
 async function issueToken(stored: string, weak: boolean) {
   const exp = Date.now() + SESSION_HOURS * 3600_000;
   const body = b64(
-    enc.encode(JSON.stringify({ exp, iat: Date.now(), v: await codeVersion(stored), w: weak ? 1 : 0 })),
+    enc.encode(
+      JSON.stringify({ exp, iat: Date.now(), v: await codeVersion(stored), w: weak ? 1 : 0 }),
+    ),
   );
   return { token: `${body}.${await hmac(body)}`, expiresAt: exp };
 }
@@ -158,14 +163,20 @@ export async function assertAdmin(token: string) {
 }
 
 async function readEpoch(): Promise<number> {
-  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", EPOCH_KEY).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("site_settings")
+    .select("value")
+    .eq("key", EPOCH_KEY)
+    .maybeSingle();
   return Number((data?.value as { at?: number } | null)?.at ?? 0);
 }
 
 /** Signs out every admin session, on every device (including this one). */
 export async function signOutEverywhere(token: string) {
   await assertAdmin(token);
-  const { error } = await supabaseAdmin.from("site_settings").upsert({ key: EPOCH_KEY, value: { at: Date.now() } as never });
+  const { error } = await supabaseAdmin
+    .from("site_settings")
+    .upsert({ key: EPOCH_KEY, value: { at: Date.now() } as never });
   return { ok: !error };
 }
 
@@ -211,7 +222,12 @@ async function deviceKey(): Promise<string> {
   try {
     const { getRequest } = await import("@tanstack/react-start/server");
     const h = getRequest().headers;
-    const ip = (h.get("cf-connecting-ip") ?? h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0] ?? "").trim();
+    const ip = (
+      h.get("cf-connecting-ip") ??
+      h.get("x-real-ip") ??
+      h.get("x-forwarded-for")?.split(",")[0] ??
+      ""
+    ).trim();
     if (!ip) return "unknown";
     const d = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(`hb-guard:${ip}`)));
     return Array.from(d.slice(0, 10), (x) => x.toString(16).padStart(2, "0")).join("");
@@ -221,7 +237,11 @@ async function deviceKey(): Promise<string> {
 }
 
 async function readGuards(key: string): Promise<Guards> {
-  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", key).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("site_settings")
+    .select("value")
+    .eq("key", key)
+    .maybeSingle();
   const v = (data?.value ?? {}) as Partial<Guards>;
   // an older salon-wide lock ({fails, lockedUntil}) is simply dropped
   return {
@@ -245,7 +265,12 @@ function prune(g: Guards, now: number): Guards {
       .sort((x, y) => y[1] - x[1])
       .slice(0, 50),
   );
-  return { devices, trusted, misses: g.misses.filter((t) => now - t < 3600_000).slice(-200), backstopUntil: g.backstopUntil };
+  return {
+    devices,
+    trusted,
+    misses: g.misses.filter((t) => now - t < 3600_000).slice(-200),
+    backstopUntil: g.backstopUntil,
+  };
 }
 
 const writeGuards = (key: string, g: Guards) =>
@@ -313,14 +338,12 @@ export async function changeCode(token: string, current: string, next: string) {
   const stored = await readSecret();
   if (!(await matches(current, stored)))
     return { ok: false as const, error: "Current code doesn't match." };
-  if (isWeakCode(next))
-    return { ok: false as const, error: WEAK_CODE_HINT };
+  if (isWeakCode(next)) return { ok: false as const, error: WEAK_CODE_HINT };
   const hashed = await hashCode(next);
   const { error } = await supabaseAdmin.from("admin_secret").update({ pin: hashed }).eq("id", 1);
   if (error) return { ok: false as const, error: "Couldn't save the new code." };
   return { ok: true as const, ...(await issueToken(hashed, false)) };
 }
-
 
 /* ── stylists: their own code, their own day ─────────────────── */
 
@@ -328,7 +351,11 @@ const STYLIST_CODES = "stylist_codes";
 const STYLIST_GUARD = "stylist_guard";
 
 async function stylistCodes(): Promise<Record<string, string>> {
-  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", STYLIST_CODES).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("site_settings")
+    .select("value")
+    .eq("key", STYLIST_CODES)
+    .maybeSingle();
   const value = data?.value;
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, string>)
@@ -345,13 +372,18 @@ export async function setStylistCode(staffId: string, code: string) {
   const codes = await stylistCodes();
   if (code) codes[staffId] = await hashCode(code);
   else delete codes[staffId];
-  const { error } = await supabaseAdmin.from("site_settings").upsert({ key: STYLIST_CODES, value: codes as never });
+  const { error } = await supabaseAdmin
+    .from("site_settings")
+    .upsert({ key: STYLIST_CODES, value: codes as never });
   return !error;
 }
 
 /** A stylist's code → a session for their own day only (same per-device lockout as the console, counted separately). */
-export async function stylistSignIn(code: string): Promise<
-  { ok: true; token: string; expiresAt: number; staffId: string } | { ok: false; lockedFor?: number; attemptsLeft?: number }
+export async function stylistSignIn(
+  code: string,
+): Promise<
+  | { ok: true; token: string; expiresAt: number; staffId: string }
+  | { ok: false; lockedFor?: number; attemptsLeft?: number }
 > {
   const now = Date.now();
   const [g, dev] = await Promise.all([readGuards(STYLIST_GUARD), deviceKey()]);
@@ -363,7 +395,17 @@ export async function stylistSignIn(code: string): Promise<
   if (!staffId) return recordMiss(STYLIST_GUARD, g, dev, now);
   await recordSuccess(STYLIST_GUARD, g, dev, now);
   const exp = now + 14 * 3600_000;
-  const body = b64(enc.encode(JSON.stringify({ kind: "stylist", sid: staffId, exp, iat: now, v: await codeVersion(codes[staffId]!) })));
+  const body = b64(
+    enc.encode(
+      JSON.stringify({
+        kind: "stylist",
+        sid: staffId,
+        exp,
+        iat: now,
+        v: await codeVersion(codes[staffId]!),
+      }),
+    ),
+  );
   return { ok: true, token: `${body}.${await hmac(body)}`, expiresAt: exp, staffId };
 }
 

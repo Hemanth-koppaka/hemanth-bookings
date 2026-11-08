@@ -23,8 +23,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Hair by Bhargav — Reserve your chair" },
       {
         property: "og:description",
-        content:
-          "Hair, beauty and makeover by B. Bhargav. A calm, private booking experience.",
+        content: "Hair, beauty and makeover by B. Bhargav. A calm, private booking experience.",
       },
     ],
   }),
@@ -53,7 +52,8 @@ function useTodayStatus() {
     const h = hoursFor(iso);
     const mins = now.getHours() * 60 + now.getMinutes();
     if (mins >= h.close) setStatus({ open: false, text: "Closed for today" });
-    else if (mins < h.open) setStatus({ open: true, text: `Opens today at ${minuteLabel(h.open)}` });
+    else if (mins < h.open)
+      setStatus({ open: true, text: `Opens today at ${minuteLabel(h.open)}` });
     else setStatus({ open: true, text: `Open now · until ${minuteLabel(h.close)}` });
   }, []);
   return status;
@@ -74,7 +74,10 @@ function StatusPill({ className }: { className?: string }) {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500/60" />
         ) : null}
         <span
-          className={"relative inline-flex h-2 w-2 rounded-full " + (status.open ? "bg-emerald-600" : "bg-foreground/35")}
+          className={
+            "relative inline-flex h-2 w-2 rounded-full " +
+            (status.open ? "bg-emerald-600" : "bg-foreground/35")
+          }
         />
       </span>
       {status.text}
@@ -86,7 +89,12 @@ function StatusPill({ className }: { className?: string }) {
 function Announcement({ className }: { className?: string }) {
   if (!CONTENT.announcement.enabled || !CONTENT.announcement.text) return null;
   return (
-    <p className={"border-l-2 border-bronze/60 pl-3 text-[0.85rem] leading-relaxed text-foreground/80 " + (className ?? "")}>
+    <p
+      className={
+        "border-l-2 border-bronze/60 pl-3 text-[0.85rem] leading-relaxed text-foreground/80 " +
+        (className ?? "")
+      }
+    >
       {CONTENT.announcement.text}
     </p>
   );
@@ -100,11 +108,19 @@ function StatusLine() {
   const [lead, ...rest] = status.text.split(" · ");
   return (
     <div className="-mt-1.5 flex h-4 items-center md:hidden gap-2 text-[0.64rem] font-medium uppercase tracking-[0.2em] text-foreground/80">
-      <span className={"h-1.5 w-1.5 shrink-0 rounded-full " + (status.open ? "bg-emerald-600" : "bg-foreground/35")} aria-hidden />
+      <span
+        className={
+          "h-1.5 w-1.5 shrink-0 rounded-full " +
+          (status.open ? "bg-emerald-600" : "bg-foreground/35")
+        }
+        aria-hidden
+      />
       <span>{lead}</span>
       {rest.length ? (
         <>
-          <span className="text-foreground/30" aria-hidden>·</span>
+          <span className="text-foreground/30" aria-hidden>
+            ·
+          </span>
           <span className="text-foreground/60">{rest.join(" · ")}</span>
         </>
       ) : null}
@@ -196,12 +212,40 @@ function Intro() {
 
     const fly = logo.animate(
       [
-        { transform: at(`perspective(900px) scale(${scale * 1.35}) rotateX(22deg) rotateY(-80deg)`), opacity: 0, filter: "blur(14px)", offset: 0, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" },
-        { transform: at(`perspective(900px) scale(${scale * 1.04}) rotateX(-4deg) rotateY(10deg)`), opacity: 1, filter: "blur(0px)", offset: 0.34, easing: "cubic-bezier(0.3, 0, 0.2, 1)" },
-        { transform: at(`perspective(900px) scale(${scale}) rotateX(0deg) rotateY(0deg)`), opacity: 1, filter: "blur(0px)", offset: 0.5 },
-        { transform: at(`perspective(900px) scale(${scale}) rotateX(0deg) rotateY(0deg)`), opacity: 1, filter: "blur(0px)", offset: 0.66, easing: "cubic-bezier(0.65, 0, 0.25, 1)" },
+        {
+          transform: at(`perspective(900px) scale(${scale * 1.35}) rotateX(22deg) rotateY(-80deg)`),
+          opacity: 0,
+          filter: "blur(14px)",
+          offset: 0,
+          easing: "cubic-bezier(0.2, 0.7, 0.2, 1)",
+        },
+        {
+          transform: at(`perspective(900px) scale(${scale * 1.04}) rotateX(-4deg) rotateY(10deg)`),
+          opacity: 1,
+          filter: "blur(0px)",
+          offset: 0.34,
+          easing: "cubic-bezier(0.3, 0, 0.2, 1)",
+        },
+        {
+          transform: at(`perspective(900px) scale(${scale}) rotateX(0deg) rotateY(0deg)`),
+          opacity: 1,
+          filter: "blur(0px)",
+          offset: 0.5,
+        },
+        {
+          transform: at(`perspective(900px) scale(${scale}) rotateX(0deg) rotateY(0deg)`),
+          opacity: 1,
+          filter: "blur(0px)",
+          offset: 0.66,
+          easing: "cubic-bezier(0.65, 0, 0.25, 1)",
+        },
         // same function list as the other frames, so the browser interpolates each part smoothly
-        { transform: "translate(0px, 0px) perspective(900px) scale(1) rotateX(0deg) rotateY(0deg)", opacity: 1, filter: "blur(0px)", offset: 1 },
+        {
+          transform: "translate(0px, 0px) perspective(900px) scale(1) rotateX(0deg) rotateY(0deg)",
+          opacity: 1,
+          filter: "blur(0px)",
+          offset: 1,
+        },
       ],
       // timing is shaped per segment above: turn in (1 s), settle, hold (sheen), glide home (1 s)
       { duration: 3000, easing: "linear", fill: "both" },
@@ -245,7 +289,10 @@ function Intro() {
       className="intro fixed inset-0 z-[100] bg-background/55 backdrop-blur-xl"
     >
       {lineTop != null ? (
-        <div className="absolute left-1/2 flex -translate-x-1/2 flex-col items-center" style={{ top: lineTop }}>
+        <div
+          className="absolute left-1/2 flex -translate-x-1/2 flex-col items-center"
+          style={{ top: lineTop }}
+        >
           <div className="fade-rise whitespace-nowrap text-center text-[0.66rem] uppercase tracking-[0.36em] text-foreground/70 [animation-delay:1s]">
             {BUSINESS.tagline}
           </div>
@@ -304,8 +351,12 @@ function MobileHome() {
           <StatusPill className="absolute top-3.5 left-3.5 max-md:hidden" />
           <span className="absolute inset-x-0 bottom-0 flex items-end justify-between p-4 text-ivory">
             <span>
-              <span className="block text-[0.6rem] uppercase tracking-[0.28em] text-ivory/75">Founder · Chief Stylist</span>
-              <span className="mt-1 block font-display text-[1.6rem] leading-none">{BUSINESS.founder}</span>
+              <span className="block text-[0.6rem] uppercase tracking-[0.28em] text-ivory/75">
+                Founder · Chief Stylist
+              </span>
+              <span className="mt-1 block font-display text-[1.6rem] leading-none">
+                {BUSINESS.founder}
+              </span>
             </span>
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ivory/90 text-ink transition-transform group-hover:translate-x-0.5">
               <ArrowRight className="h-4 w-4" strokeWidth={1.25} />
@@ -315,11 +366,16 @@ function MobileHome() {
 
         <div className="stagger after-intro shrink-0 pt-[clamp(1rem,3svh,1.75rem)] pb-[clamp(0.75rem,2svh,1.25rem)]">
           <StatusLine />
-          <div className="mt-4 text-[0.6rem] uppercase tracking-[0.28em] text-muted-foreground md:mt-0">{BUSINESS.locationShort}</div>
+          <div className="mt-4 text-[0.6rem] uppercase tracking-[0.28em] text-muted-foreground md:mt-0">
+            {BUSINESS.locationShort}
+          </div>
           <h1 className="mt-2 font-display text-[clamp(2.6rem,12vw,3.4rem)] leading-[0.95] tracking-[-0.015em]">
-            {CONTENT.home.headline} <span className="italic text-bronze">{CONTENT.home.headlineAccent}</span>
+            {CONTENT.home.headline}{" "}
+            <span className="italic text-bronze">{CONTENT.home.headlineAccent}</span>
           </h1>
-          <p className="mt-3 text-[0.9rem] leading-relaxed text-muted-foreground">{CONTENT.home.intro}</p>
+          <p className="mt-3 text-[0.9rem] leading-relaxed text-muted-foreground">
+            {CONTENT.home.intro}
+          </p>
           <Announcement className="mt-3" />
           <RatePrompt className="mt-3" />
           <div className="mt-[clamp(1rem,2.5svh,1.5rem)] space-y-2.5">
@@ -330,7 +386,10 @@ function MobileHome() {
               className="label-caps press sheen group flex min-h-14 w-full items-center justify-between gap-4 rounded-sm bg-foreground px-6 text-background hover:bg-foreground/88"
             >
               <span>{CONTENT.home.ctaLabel}</span>
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={1.25} />
+              <ArrowRight
+                className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                strokeWidth={1.25}
+              />
             </Link>
             <Link
               to="/manage"
@@ -371,7 +430,10 @@ function DesktopHome() {
             <LogoReveal className="h-14" />
           </span>
         </Link>
-        <nav className="flex items-center gap-10 [&>a]:[text-indent:var(--tw-tracking,0.22em)]" aria-label="Main">
+        <nav
+          className="flex items-center gap-10 [&>a]:[text-indent:var(--tw-tracking,0.22em)]"
+          aria-label="Main"
+        >
           {quickLinks.map((l) => (
             <Link
               key={l.to}
@@ -399,7 +461,9 @@ function DesktopHome() {
             <br />
             <span className="italic text-bronze">{CONTENT.home.headlineAccent}</span>
           </h1>
-          <p className="mt-8 max-w-md text-[1.1rem] leading-relaxed text-muted-foreground">{CONTENT.home.introLong}</p>
+          <p className="mt-8 max-w-md text-[1.1rem] leading-relaxed text-muted-foreground">
+            {CONTENT.home.introLong}
+          </p>
           <Announcement className="mt-5 max-w-md" />
           <RatePrompt className="mt-4 max-w-md" />
           <div className="mt-10 flex items-center gap-4">
@@ -410,7 +474,10 @@ function DesktopHome() {
               className="press sheen group flex h-[4.25rem] items-center gap-5 whitespace-nowrap rounded-sm bg-foreground px-8 text-[1.05rem] text-background hover:bg-foreground/88 xl:px-10"
             >
               {CONTENT.home.ctaLabel}
-              <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={1.25} />
+              <ArrowRight
+                className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"
+                strokeWidth={1.25}
+              />
             </Link>
             <Link
               to="/manage"
@@ -449,8 +516,12 @@ function DesktopHome() {
           <StatusPill className="absolute top-6 left-6" />
           <span className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-6 p-10 text-ivory">
             <span>
-              <span className="block text-[0.7rem] uppercase tracking-[0.32em] text-ivory/75">Founder · Chief Stylist</span>
-              <span className="mt-3 block font-display text-[2.6rem] leading-none">{BUSINESS.founder}</span>
+              <span className="block text-[0.7rem] uppercase tracking-[0.32em] text-ivory/75">
+                Founder · Chief Stylist
+              </span>
+              <span className="mt-3 block font-display text-[2.6rem] leading-none">
+                {BUSINESS.founder}
+              </span>
               <span className="mt-4 inline-block border-b border-ivory/40 pb-1 text-[0.72rem] uppercase tracking-[0.28em] text-ivory/85">
                 Read the story
               </span>
@@ -478,15 +549,23 @@ function RatePrompt({ className }: { className?: string }) {
     .filter((x) => x.date >= monthAgo && shouldAskRating(x))
     .sort((a, z) => z.date.localeCompare(a.date) || z.time - a.time)[0];
   if (!b) return null;
-  const day = new Date(`${b.date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  const day = new Date(`${b.date}T00:00:00`).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
   return (
     <Link
       to="/manage"
       search={{ ref: b.reference }}
-      className={"press flex items-center justify-between gap-3 rounded-md border border-bronze/30 bg-champagne/15 px-4 py-3 text-[0.9rem] " + (className ?? "")}
+      className={
+        "press flex items-center justify-between gap-3 rounded-md border border-bronze/30 bg-champagne/15 px-4 py-3 text-[0.9rem] " +
+        (className ?? "")
+      }
     >
       <span>
-        How was your visit on {day}? <span className="text-bronze underline underline-offset-4">Rate it</span>
+        How was your visit on {day}?{" "}
+        <span className="text-bronze underline underline-offset-4">Rate it</span>
       </span>
       <span className="text-bronze" aria-hidden>
         ★

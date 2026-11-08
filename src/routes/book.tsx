@@ -24,8 +24,20 @@ export const Route = createFileRoute("/book")({
 });
 
 const options: { key: Audience; title: string; sub: string; img: string; pos: string }[] = [
-  { key: "men", title: "Men", sub: "Hair · Beard · Grooming", img: "/who/men.webp", pos: "47% 32%" },
-  { key: "women", title: "Women", sub: "Hair · Colour · Makeover", img: "/who/women.webp", pos: "52% 30%" },
+  {
+    key: "men",
+    title: "Men",
+    sub: "Hair · Beard · Grooming",
+    img: "/who/men.webp",
+    pos: "47% 32%",
+  },
+  {
+    key: "women",
+    title: "Women",
+    sub: "Hair · Colour · Makeover",
+    img: "/who/women.webp",
+    pos: "52% 30%",
+  },
 ];
 
 function BookEntry() {
@@ -70,7 +82,9 @@ function BookEntry() {
                   <span>
                     <span className="block font-display text-[2.4rem] leading-none">{o.title}</span>
                     <span className="mt-3 block h-px w-10 bg-champagne" />
-                    <span className="mt-3 block text-[0.62rem] uppercase tracking-[0.24em] text-ivory/90">{o.sub}</span>
+                    <span className="mt-3 block text-[0.62rem] uppercase tracking-[0.24em] text-ivory/90">
+                      {o.sub}
+                    </span>
                   </span>
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ivory text-ink transition-transform duration-300 group-hover:translate-x-1">
                     <ArrowRight className="h-5 w-5" strokeWidth={1.25} />
@@ -125,9 +139,13 @@ function DesktopBookEntry({ choose }: { choose: (a: Audience) => void }) {
               <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />
               <span className="absolute inset-0 flex items-end justify-between gap-4 p-8 xl:p-10">
                 <span>
-                  <span className="block font-display text-5xl leading-none xl:text-6xl">{o.title}</span>
+                  <span className="block font-display text-5xl leading-none xl:text-6xl">
+                    {o.title}
+                  </span>
                   <span className="mt-5 block h-px w-14 bg-champagne" />
-                  <span className="mt-5 block whitespace-nowrap text-[0.7rem] uppercase tracking-[0.22em] text-ivory/90 xl:tracking-[0.3em]">{o.sub}</span>
+                  <span className="mt-5 block whitespace-nowrap text-[0.7rem] uppercase tracking-[0.22em] text-ivory/90 xl:tracking-[0.3em]">
+                    {o.sub}
+                  </span>
                 </span>
                 <span className="absolute top-6 right-6 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-ivory text-ink transition-transform duration-300 group-hover:translate-x-1 2xl:static 2xl:h-[4.5rem] 2xl:w-[4.5rem]">
                   <ArrowRight className="h-6 w-6" strokeWidth={1.25} />

@@ -117,7 +117,6 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -160,7 +159,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       totalPrice,
       hasFromPricing,
       bookings,
-      update: (patch) => setDraft((d) => ({ ...d, ...(typeof patch === "function" ? patch(d) : patch) })),
+      update: (patch) =>
+        setDraft((d) => ({ ...d, ...(typeof patch === "function" ? patch(d) : patch) })),
       setAudience: (a) =>
         setDraft((d) =>
           d.audience === a
@@ -194,7 +194,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           date: draft.date,
           time: draft.time,
           // remember that this booking carries reference photos ("Your look")
-          customer: draft.photos?.length ? { ...draft.customer, photos: draft.photos.map((x) => x.path) } : draft.customer,
+          customer: draft.photos?.length
+            ? { ...draft.customer, photos: draft.photos.map((x) => x.path) }
+            : draft.customer,
           status: "confirmed",
           createdAt: new Date().toISOString(),
         };
@@ -253,7 +255,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
               // view-only results carry a hidden ID: match this device's own copy by its appointment
               const same = (x: Booking) =>
                 f.readOnly
-                  ? x.date === f.date && x.time === f.time && x.reference.slice(0, 5) === f.reference.slice(0, 5)
+                  ? x.date === f.date &&
+                    x.time === f.time &&
+                    x.reference.slice(0, 5) === f.reference.slice(0, 5)
                   : x.reference === f.reference;
               const mine = b.find((x) => same(x) && !x.readOnly);
               const canManage = mine && (mine.token || !mine.customer.phone.includes("•"));
@@ -282,7 +286,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           data: { reference, ...auth(bk), action: "cancel" },
         }).catch(() => null);
         if (!r) return { ok: false, error: OFFLINE };
-        if (!r.ok) return { ok: false, error: ("error" in r && r.error) || "Couldn't cancel this booking." };
+        if (!r.ok)
+          return { ok: false, error: ("error" in r && r.error) || "Couldn't cancel this booking." };
         setBookings((b) =>
           b.map((x) => (x.reference === reference ? { ...x, status: "cancelled" as const } : x)),
         );
@@ -295,7 +300,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           data: { reference, ...auth(bk), action: "reschedule", date, time },
         }).catch(() => null);
         if (!r) return { ok: false, error: OFFLINE };
-        if (!r.ok) return { ok: false, error: ("error" in r && r.error) || "Couldn't move this booking." };
+        if (!r.ok)
+          return { ok: false, error: ("error" in r && r.error) || "Couldn't move this booking." };
         setBookings((b) => b.map((x) => (x.reference === reference ? { ...x, date, time } : x)));
         return { ok: true };
       },

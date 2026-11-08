@@ -21,7 +21,8 @@ function salonNow() {
 }
 
 const minutesOf = (b: Booking) => b.snapshot?.minutes ?? Math.max(30, b.serviceIds.length * 30);
-export const hasLook = (b: Booking) => b.status !== "cancelled" && (b.customer.photos?.length ?? 0) > 0;
+export const hasLook = (b: Booking) =>
+  b.status !== "cancelled" && (b.customer.photos?.length ?? 0) > 0;
 
 type When = { date: string; time: number; minutes: number };
 
@@ -35,7 +36,9 @@ function phaseOf(w: When): "later" | "soon" | "now" | "over" {
 }
 
 export function lookPhase(b: Booking) {
-  return b.status === "cancelled" ? "over" : phaseOf({ date: b.date, time: b.time, minutes: minutesOf(b) });
+  return b.status === "cancelled"
+    ? "over"
+    : phaseOf({ date: b.date, time: b.time, minutes: minutesOf(b) });
 }
 
 /** Re-renders every 30 seconds (so the row appears and vanishes on time). */
@@ -49,7 +52,12 @@ function useTick(ms = 30_000) {
 
 /** The booking's photos as short-lived links (only while its slot hasn't ended). */
 function useLookPhotos(b: Booking | null) {
-  const [state, setState] = useState<{ ref: string; photos: LookPhoto[]; loading: boolean; when?: When }>({ ref: "", photos: [], loading: false });
+  const [state, setState] = useState<{
+    ref: string;
+    photos: LookPhoto[];
+    loading: boolean;
+    when?: When;
+  }>({ ref: "", photos: [], loading: false });
   const ref = b?.reference ?? "";
   useEffect(() => {
     if (!b || !ref) return;
@@ -64,7 +72,9 @@ function useLookPhotos(b: Booking | null) {
             loading: false,
             photos: r.urls.map((u, i) => ({ id: `${ref}-${i}`, full: u, thumb: u })),
             // the salon's own date and time (follows any reschedule)
-            ...("date" in r && r.date ? { when: { date: r.date, time: r.time!, minutes: r.minutes! } } : {}),
+            ...("date" in r && r.date
+              ? { when: { date: r.date, time: r.time!, minutes: r.minutes! } }
+              : {}),
           }),
       )
       .catch(() => live && setState({ ref, photos: [], loading: false }));
@@ -73,7 +83,9 @@ function useLookPhotos(b: Booking | null) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref]);
-  return state.ref === ref ? state : { photos: [] as LookPhoto[], loading: Boolean(b), when: undefined };
+  return state.ref === ref
+    ? state
+    : { photos: [] as LookPhoto[], loading: Boolean(b), when: undefined };
 }
 
 /** Full-screen, distraction-free viewer to hand the phone to the stylist. */
@@ -102,7 +114,9 @@ export function LookViewer({
     document.body.style.overflow = "hidden";
     // keep the screen awake while the stylist looks
     let lock: { release: () => Promise<void> } | null = null;
-    const nav = navigator as Navigator & { wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> } };
+    const nav = navigator as Navigator & {
+      wakeLock?: { request: (t: "screen") => Promise<{ release: () => Promise<void> }> };
+    };
     nav.wakeLock
       ?.request("screen")
       .then((l) => (lock = l))
@@ -146,7 +160,13 @@ export function LookViewer({
         </button>
       </div>
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-2">
-        <img key={p.id} src={p.full} alt={`Look ${i + 1}`} className="fade-rise max-h-full max-w-full object-contain" draggable={false} />
+        <img
+          key={p.id}
+          src={p.full}
+          alt={`Look ${i + 1}`}
+          className="fade-rise max-h-full max-w-full object-contain"
+          draggable={false}
+        />
         {n > 1 ? (
           <>
             <button
@@ -176,7 +196,10 @@ export function LookViewer({
               type="button"
               onClick={() => setI(k)}
               aria-label={`Photo ${k + 1}`}
-              className={cn("h-12 w-12 overflow-hidden rounded-md border-2", k === i ? "border-white" : "border-transparent opacity-60")}
+              className={cn(
+                "h-12 w-12 overflow-hidden rounded-md border-2",
+                k === i ? "border-white" : "border-transparent opacity-60",
+              )}
             >
               <img src={x.thumb} alt="" className="h-full w-full object-cover" />
             </button>
@@ -189,7 +212,6 @@ export function LookViewer({
     document.body,
   );
 }
-
 
 function LookRow({
   photos,
@@ -222,7 +244,14 @@ function LookRow({
             <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
           </span>
         ) : (
-          photos.map((p) => <img key={p.id} src={p.thumb} alt="" className="h-10 w-10 rounded-md border-2 border-background object-cover" />)
+          photos.map((p) => (
+            <img
+              key={p.id}
+              src={p.thumb}
+              alt=""
+              className="h-10 w-10 rounded-md border-2 border-background object-cover"
+            />
+          ))
         )}
       </span>
       <span className="min-w-0 flex-1">
@@ -245,7 +274,11 @@ export function UpcomingLook({ className }: { className?: string }) {
   const b = hydrated
     ? (bookings
         .filter((x) => hasLook(x) && ["soon", "now"].includes(lookPhase(x)))
-        .sort((x, y) => (x.date + String(x.time).padStart(4, "0")).localeCompare(y.date + String(y.time).padStart(4, "0")))[0] ?? null)
+        .sort((x, y) =>
+          (x.date + String(x.time).padStart(4, "0")).localeCompare(
+            y.date + String(y.time).padStart(4, "0"),
+          ),
+        )[0] ?? null)
     : null;
   const { photos, loading, when } = useLookPhotos(b);
   if (!b) return null;

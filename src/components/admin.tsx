@@ -32,7 +32,10 @@ import { GlobalSearch } from "@/components/admin-ops";
 type NavItem = { to: string; label: string; icon: typeof LayoutGrid; exact?: boolean };
 
 export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
-  { label: "Command center", items: [{ to: "/hb-desk-7392", label: "Today", icon: LayoutGrid, exact: true }] },
+  {
+    label: "Command center",
+    items: [{ to: "/hb-desk-7392", label: "Today", icon: LayoutGrid, exact: true }],
+  },
   {
     label: "Operations",
     items: [
@@ -104,7 +107,8 @@ export function AdminShell({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      const typing =
+        t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
       if (!typing && (e.key === "/" || ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k"))) {
         e.preventDefault();
         setSearchOpen(true);
@@ -138,7 +142,9 @@ export function AdminShell({
         <nav className="mt-5 flex flex-1 flex-col gap-4 overflow-y-auto">
           {NAV_GROUPS.map((g) => (
             <div key={g.label}>
-              <div className="px-2 text-[0.58rem] uppercase tracking-[0.22em] text-muted-foreground/80">{g.label}</div>
+              <div className="px-2 text-[0.58rem] uppercase tracking-[0.22em] text-muted-foreground/80">
+                {g.label}
+              </div>
               <div className="mt-1.5 flex flex-col gap-0.5">
                 {g.items.map((n) => (
                   <Link
@@ -171,8 +177,12 @@ export function AdminShell({
         <header className="sticky top-0 z-30 border-b border-hairline bg-background/92 px-4 py-3.5 backdrop-blur-md safe-t lg:px-8 lg:py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="truncate font-display text-[1.9rem] leading-none lg:text-[2.2rem]">{title}</h1>
-              {subtitle ? <div className="mt-1 truncate text-[0.78rem] text-muted-foreground">{subtitle}</div> : null}
+              <h1 className="truncate font-display text-[1.9rem] leading-none lg:text-[2.2rem]">
+                {title}
+              </h1>
+              {subtitle ? (
+                <div className="mt-1 truncate text-[0.78rem] text-muted-foreground">{subtitle}</div>
+              ) : null}
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {right}
@@ -193,14 +203,20 @@ export function AdminShell({
             className="flex flex-wrap items-center justify-between gap-3 border-b border-destructive/20 bg-destructive/[0.05] px-4 py-2.5 text-[0.82rem] lg:px-8"
           >
             <span>This console is protected by a short or default access code.</span>
-            <Link to="/hb-desk-7392/settings" hash="access" className="font-medium text-destructive underline underline-offset-4">
+            <Link
+              to="/hb-desk-7392/settings"
+              hash="access"
+              className="font-medium text-destructive underline underline-offset-4"
+            >
               Set a stronger code
             </Link>
           </div>
         ) : null}
 
         <main className="flex-1 px-4 pb-28 pt-5 lg:px-8 lg:pb-12">
-          <div className={cn("page-in mx-auto w-full", wide ? "max-w-none" : "max-w-6xl")}>{children}</div>
+          <div className={cn("page-in mx-auto w-full", wide ? "max-w-none" : "max-w-6xl")}>
+            {children}
+          </div>
         </main>
 
         {/* Phone bottom navigation */}
@@ -229,10 +245,16 @@ export function AdminShell({
         </nav>
         {moreOpen ? (
           <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal aria-label="More">
-            <button className="absolute inset-0 bg-ink/40" aria-label="Close" onClick={() => setMoreOpen(false)} />
+            <button
+              className="absolute inset-0 bg-ink/40"
+              aria-label="Close"
+              onClick={() => setMoreOpen(false)}
+            />
             <div className="slide-in absolute inset-x-0 bottom-0 rounded-t-xl bg-background p-4 pb-8 safe-b">
               <div className="flex items-center justify-between">
-                <span className="text-[0.7rem] uppercase tracking-[0.22em] text-muted-foreground">More</span>
+                <span className="text-[0.7rem] uppercase tracking-[0.22em] text-muted-foreground">
+                  More
+                </span>
                 <button onClick={() => setMoreOpen(false)} aria-label="Close" className="press p-2">
                   <X className="h-4 w-4" />
                 </button>
@@ -277,14 +299,33 @@ export function AdminShell({
 }
 
 export function Panel({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cn("rounded-md border border-hairline bg-card p-4 lg:p-5", className)}>{children}</section>;
+  return (
+    <section className={cn("rounded-md border border-hairline bg-card p-4 lg:p-5", className)}>
+      {children}
+    </section>
+  );
 }
 
-export function Stat({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: "warn" }) {
+export function Stat({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "warn";
+}) {
   return (
     <div className="rounded-md border border-hairline bg-card px-4 py-3.5">
       <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">{label}</div>
-      <div className={cn("mt-1.5 font-display text-[1.9rem] leading-none tabular-nums", tone === "warn" && "text-destructive")}>
+      <div
+        className={cn(
+          "mt-1.5 font-display text-[1.9rem] leading-none tabular-nums",
+          tone === "warn" && "text-destructive",
+        )}
+      >
         {value}
       </div>
       {hint ? <div className="mt-1 text-[0.72rem] text-muted-foreground">{hint}</div> : null}

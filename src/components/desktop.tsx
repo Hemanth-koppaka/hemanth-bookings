@@ -20,7 +20,15 @@ import {
   Phone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BUSINESS, CLOSE_MINUTE, OPEN_MINUTE, WEEK, minuteLabel, type Audience, type Service } from "@/lib/salon";
+import {
+  BUSINESS,
+  CLOSE_MINUTE,
+  OPEN_MINUTE,
+  WEEK,
+  minuteLabel,
+  type Audience,
+  type Service,
+} from "@/lib/salon";
 import { Wordmark } from "@/components/screen";
 import { ScissorsLine, useRewindBack } from "@/components/scissors-line";
 import { SIGNATURE_EMBLEM_HD, isSignature } from "@/lib/service-photos";
@@ -72,7 +80,15 @@ export const prettyPhone = (p: string) => {
 };
 
 /** Full-height desktop shell: header, scrolling body, sticky footer bar. */
-export function DesktopPage({ children, sky, night }: { children: ReactNode; sky?: boolean; night?: boolean }) {
+export function DesktopPage({
+  children,
+  sky,
+  night,
+}: {
+  children: ReactNode;
+  sky?: boolean;
+  night?: boolean;
+}) {
   return (
     <div
       className={cn(

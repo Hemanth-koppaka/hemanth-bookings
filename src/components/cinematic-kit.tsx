@@ -59,7 +59,10 @@ function sample(t: number): Omit<Key, "t"> {
     // tension 0.5 (a slightly heavier, damped camera)
     const v =
       0.5 *
-      (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 + (-p0 + 3 * p1 - 3 * p2 + p3) * u3);
+      (2 * p1 +
+        (-p0 + p2) * u +
+        (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 +
+        (-p0 + 3 * p1 - 3 * p2 + p3) * u3);
     out[f] = v;
   }
   // magnification can't dip below the full frame (would show the photo's edge)
@@ -83,7 +86,7 @@ function clock(s: number) {
   // piecewise: quadratic in, linear middle, quadratic out (same total length T)
   const v = T / (T - a / 2 - d / 2); // cruise speed so the curve still ends at T
   if (s < a) return (v * s * s) / (2 * a);
-  if (s < T - d) return v * a / 2 + v * (s - a);
+  if (s < T - d) return (v * a) / 2 + v * (s - a);
   const r = T - s;
   return T - (v * r * r) / (2 * d);
 }
@@ -160,17 +163,24 @@ export function CinematicKit({
 
     const draw = (s: number) => {
       // the film may be leaving the page between frames
-      if (!stage.current || !deep.current || !sharp.current || !light.current || !dust.current) return;
+      if (!stage.current || !deep.current || !sharp.current || !light.current || !dust.current)
+        return;
       const W = el.clientWidth;
       const H = el.clientHeight;
       const k = sample(clock(s));
       // the hold breathes: a barely-there drift once the move is over
-      const hold = s > DURATION ? (s - DURATION) : 0;
+      const hold = s > DURATION ? s - DURATION : 0;
       const breathe = hold ? 1 + 0.004 * Math.sin(hold * 0.9) : 1;
       const z = k.z * breathe;
       const half = 0.5 / z;
-      const cx = Math.min(1 - half, Math.max(half, k.cx + (hold ? 0.002 * Math.sin(hold * 0.6) : 0)));
-      const cy = Math.min(1 - half, Math.max(half, k.cy + (hold ? 0.0015 * Math.cos(hold * 0.5) : 0)));
+      const cx = Math.min(
+        1 - half,
+        Math.max(half, k.cx + (hold ? 0.002 * Math.sin(hold * 0.6) : 0)),
+      );
+      const cy = Math.min(
+        1 - half,
+        Math.max(half, k.cy + (hold ? 0.0015 * Math.cos(hold * 0.5) : 0)),
+      );
       const tx = W / 2 - cx * W * z;
       const ty = H / 2 - cy * H * z;
       stage.current!.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${z})`;
@@ -255,17 +265,37 @@ export function CinematicKit({
           decoding="async"
         />
         {/* focus plane: the sharp photograph inside a moving window of focus */}
-        <img ref={sharp} src={src} alt="" className="absolute inset-0 h-full w-full object-cover" decoding="async" />
+        <img
+          ref={sharp}
+          src={src}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
+        />
       </div>
       {/* light, dust, vignette and grain sit on the lens, not in the scene */}
       <span ref={light} className="pointer-events-none absolute inset-0 mix-blend-soft-light" />
-      <span ref={dust} className="kit-dust pointer-events-none absolute inset-0 opacity-0" aria-hidden>
+      <span
+        ref={dust}
+        className="kit-dust pointer-events-none absolute inset-0 opacity-0"
+        aria-hidden
+      >
         {Array.from({ length: 11 }, (_, i) => (
-          <i key={i} style={{ left: `${44 + ((i * 37) % 30)}%`, top: `${22 + ((i * 53) % 40)}%`, animationDelay: `${-i * 0.7}s` }} />
+          <i
+            key={i}
+            style={{
+              left: `${44 + ((i * 37) % 30)}%`,
+              top: `${22 + ((i * 53) % 40)}%`,
+              animationDelay: `${-i * 0.7}s`,
+            }}
+          />
         ))}
       </span>
       <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_85%_at_50%_45%,transparent_55%,rgb(10_6_3/0.55))]" />
-      <span className="kit-grain pointer-events-none absolute inset-[-50%] opacity-[0.07] mix-blend-overlay" aria-hidden />
+      <span
+        className="kit-grain pointer-events-none absolute inset-[-50%] opacity-[0.07] mix-blend-overlay"
+        aria-hidden
+      />
     </div>
   );
 }

@@ -19,7 +19,11 @@ const key = (date: string) => `waitlist:${date}`;
 const MAX_PER_DAY = 100;
 
 async function read(date: string): Promise<WaitEntry[]> {
-  const { data } = await sb.from("site_settings").select("value").eq("key", key(date)).maybeSingle();
+  const { data } = await sb
+    .from("site_settings")
+    .select("value")
+    .eq("key", key(date))
+    .maybeSingle();
   const v = data?.value as unknown as WaitEntry[] | null;
   return Array.isArray(v) ? v : [];
 }
@@ -29,7 +33,9 @@ async function write(date: string, list: WaitEntry[]) {
 }
 
 export async function joinWaitlist(date: string, e: WaitEntry) {
-  const list = (await read(date)).filter((x) => x.endpoint !== e.endpoint || x.serviceIds.join() !== e.serviceIds.join());
+  const list = (await read(date)).filter(
+    (x) => x.endpoint !== e.endpoint || x.serviceIds.join() !== e.serviceIds.join(),
+  );
   if (list.length >= MAX_PER_DAY) return false;
   await write(date, [...list, e]);
   return true;
@@ -55,13 +61,23 @@ export async function timeFreedOn(date: string) {
   for (const w of list) {
     const q = E.quote(w.audience, w.serviceIds);
     if (!q) continue; // services no longer offered
-    const day = await E.availability(date, q, rules, { serviceIds: w.serviceIds, ...(w.staffId ? { choice: w.staffId } : {}) });
-    const slot = day.slots.find((s) => s.available && (!w.staffId || !s.staff || s.staff.includes(w.staffId)));
+    const day = await E.availability(date, q, rules, {
+      serviceIds: w.serviceIds,
+      ...(w.staffId ? { choice: w.staffId } : {}),
+    });
+    const slot = day.slots.find(
+      (s) => s.available && (!w.staffId || !s.staff || s.staff.includes(w.staffId)),
+    );
     if (!slot) {
       keep.push(w);
       continue;
     }
-    const label = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+    const label = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      timeZone: "UTC",
+    });
     const url = `/open-time?d=${date}&a=${w.audience}&s=${encodeURIComponent(w.serviceIds.join(","))}${w.staffId ? `&st=${w.staffId}` : ""}`;
     await pushToGuest(w, {
       title: `A time just opened: ${label}, ${clock(slot.minute)}`,

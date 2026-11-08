@@ -33,7 +33,7 @@ MSG91 reports    ─▶ /api/notifications/webhook   (sent / delivered / failed)
    variables in order and a sample. Create matching templates:
    - WhatsApp: utility templates approved by Meta (`{{1}}`, `{{2}}`…).
    - SMS: DLT-registered templates / MSG91 flows (`##var1##`, `##var2##`…).
-   Enter the template names / ids next to each message.
+     Enter the template names / ids next to each message.
 4. **Server secrets** (Lovable project secrets — never in code or the browser):
    - `MSG91_AUTH_KEY` — MSG91 API key
    - `MSG91_WEBHOOK_SECRET` — any long random string
@@ -41,7 +41,7 @@ MSG91 reports    ─▶ /api/notifications/webhook   (sent / delivered / failed)
    `https://<your-site>/api/notifications/webhook?key=<MSG91_WEBHOOK_SECRET>`.
 6. **Reminders**: schedule `POST https://<your-site>/api/notifications/dispatch`
    every 10 minutes with Lovable cron (it sends `Authorization: Bearer
-   LOVABLE_CRON_SECRET`).
+LOVABLE_CRON_SECRET`).
 7. **Admin → Notifications**: set the salon alert number and a test number, save,
    then use **Test** to send a sample. "Sent" means MSG91 accepted it;
    "Delivered" appears only when MSG91 reports delivery.
@@ -72,4 +72,4 @@ marketing consent is separate (`customers.marketing_consent`) and never implied.
   2. Add the API key as a project secret: `BREVO_API_KEY` or `RESEND_API_KEY`.
   3. Admin → Notifications → Email: choose the service, enter the sender
      address and the salon email, save, then **Test guest email**.
-  Database: migration 0007 adds the email settings.
+     Database: migration 0007 adds the email settings.

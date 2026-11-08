@@ -136,12 +136,25 @@ const BY_ICON: Record<string, MotionKind> = {
  * (shave, keratin, colour, clean-up, D-tan, signature/packages) and the weaker
  * ones (face pack, colour protect). Those icons simply stay still.
  */
-const OFF: ReadonlySet<MotionKind> = new Set<MotionKind>(["shave", "keratin", "colour", "cleanup", "detan", "pack", "protect", "signature"]);
+const OFF: ReadonlySet<MotionKind> = new Set<MotionKind>([
+  "shave",
+  "keratin",
+  "colour",
+  "cleanup",
+  "detan",
+  "pack",
+  "protect",
+  "signature",
+]);
 
 /** The motion for a service, from its own icon file (none for an unknown icon). */
 export function motionFor(icon: string | undefined): MotionKind | null {
   if (!icon) return null;
-  const slug = icon.split("/").pop()?.replace(/\.[a-z0-9]+(\?.*)?$/i, "") ?? "";
+  const slug =
+    icon
+      .split("/")
+      .pop()
+      ?.replace(/\.[a-z0-9]+(\?.*)?$/i, "") ?? "";
   if (BY_ICON[slug]) return OFF.has(BY_ICON[slug]!) ? null : BY_ICON[slug]!;
   if (slug.startsWith("waxing-")) return "wax";
   return null;
@@ -168,12 +181,57 @@ const v = ({ t = 520, delay = 0 }: El): CSSProperties =>
 
 // small drawing helpers (viewBox 0 0 100 100; strokes scale with the tile)
 const Line = ({ d, t, delay, w = 2.2, cls = "sm-draw" }: El & { w?: number; cls?: string }) => (
-  <path d={d} pathLength={1} className={`sm-el ${cls}`} style={v({ t, delay })} fill="none" stroke="currentColor" strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" />
+  <path
+    d={d}
+    pathLength={1}
+    className={`sm-el ${cls}`}
+    style={v({ t, delay })}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={w}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  />
 );
-const Dot = ({ cx, cy, r = 1.4, t, delay, cls = "sm-fall" }: { cx: number; cy: number; r?: number; t?: number; delay?: number; cls?: string }) => (
-  <circle cx={cx} cy={cy} r={r} className={`sm-el ${cls}`} style={v({ t, delay })} fill="currentColor" />
+const Dot = ({
+  cx,
+  cy,
+  r = 1.4,
+  t,
+  delay,
+  cls = "sm-fall",
+}: {
+  cx: number;
+  cy: number;
+  r?: number;
+  t?: number;
+  delay?: number;
+  cls?: string;
+}) => (
+  <circle
+    cx={cx}
+    cy={cy}
+    r={r}
+    className={`sm-el ${cls}`}
+    style={v({ t, delay })}
+    fill="currentColor"
+  />
 );
-const Drop = ({ x, y, s = 1, t, delay, cls = "sm-drop" }: { x: number; y: number; s?: number; t?: number; delay?: number; cls?: string }) => (
+const Drop = ({
+  x,
+  y,
+  s = 1,
+  t,
+  delay,
+  cls = "sm-drop",
+}: {
+  x: number;
+  y: number;
+  s?: number;
+  t?: number;
+  delay?: number;
+  cls?: string;
+}) => (
   <path
     d={`M${x} ${y - 5 * s} C${x + 3.2 * s} ${y - 1 * s} ${x + 3.2 * s} ${y + 3 * s} ${x} ${y + 3 * s} C${x - 3.2 * s} ${y + 3 * s} ${x - 3.2 * s} ${y - 1 * s} ${x} ${y - 5 * s} Z`}
     className={`sm-el ${cls}`}
@@ -182,9 +240,23 @@ const Drop = ({ x, y, s = 1, t, delay, cls = "sm-drop" }: { x: number; y: number
     fillOpacity={0.85}
   />
 );
-const Band = ({ t, delay, angle = -20, cls = "sm-sweep", tone = "light" }: El & { angle?: number; cls?: string; tone?: "light" | "warm" }) => (
+const Band = ({
+  t,
+  delay,
+  angle = -20,
+  cls = "sm-sweep",
+  tone = "light",
+}: El & { angle?: number; cls?: string; tone?: "light" | "warm" }) => (
   <g transform={`rotate(${angle} 50 50)`}>
-    <rect x="-20" y="-20" width="26" height="140" className={`sm-el ${cls}`} style={v({ t, delay })} fill={tone === "light" ? "url(#sm-sheen)" : "url(#sm-warm)"} />
+    <rect
+      x="-20"
+      y="-20"
+      width="26"
+      height="140"
+      className={`sm-el ${cls}`}
+      style={v({ t, delay })}
+      fill={tone === "light" ? "url(#sm-sheen)" : "url(#sm-warm)"}
+    />
   </g>
 );
 
@@ -227,8 +299,23 @@ function shapes(kind: MotionKind): ReactNode {
         <>
           {[44, 52, 60].map((x, i) => (
             <g key={x}>
-              <path d={`M${x} 48 C${x + 6} 58 ${x - 6} 68 ${x} 78 C${x + 5} 84 ${x - 2} 88 ${x} 92`} pathLength={1} className="sm-el sm-unwave" style={v({ t: 600, delay: i * 50 })} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-              <Line d={`M${x} 48 L${x} 92`} w={1.8} t={600} delay={160 + i * 50} cls="sm-draw-stay" />
+              <path
+                d={`M${x} 48 C${x + 6} 58 ${x - 6} 68 ${x} 78 C${x + 5} 84 ${x - 2} 88 ${x} 92`}
+                pathLength={1}
+                className="sm-el sm-unwave"
+                style={v({ t: 600, delay: i * 50 })}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                strokeLinecap="round"
+              />
+              <Line
+                d={`M${x} 48 L${x} 92`}
+                w={1.8}
+                t={600}
+                delay={160 + i * 50}
+                cls="sm-draw-stay"
+              />
             </g>
           ))}
         </>
@@ -262,14 +349,29 @@ function shapes(kind: MotionKind): ReactNode {
       return (
         <>
           <Air />
-          <Line d="M26 60 C34 64 34 74 26 74 C20 74 20 66 26 66 C30 66 30 70 27 71" w={1.8} t={520} delay={180} />
+          <Line
+            d="M26 60 C34 64 34 74 26 74 C20 74 20 66 26 66 C30 66 30 70 27 71"
+            w={1.8}
+            t={520}
+            delay={180}
+          />
         </>
       );
     case "updo": // strands sweep up into a bun
       return (
         <>
           <Line d="M40 80 C34 60 40 40 54 30" t={460} />
-          <circle cx={58} cy={24} r={7} pathLength={1} className="sm-el sm-draw" style={v({ t: 360, delay: 300 })} fill="none" stroke="currentColor" strokeWidth={2.0} />
+          <circle
+            cx={58}
+            cy={24}
+            r={7}
+            pathLength={1}
+            className="sm-el sm-draw"
+            style={v({ t: 360, delay: 300 })}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.0}
+          />
         </>
       );
     case "iron": // the plates close and travel down; the strand smooths
@@ -292,15 +394,41 @@ function shapes(kind: MotionKind): ReactNode {
       return (
         <>
           <Drop x={46} y={24} s={1.2} t={460} cls="sm-settle" />
-          <ellipse cx={50} cy={62} rx={18} ry={6} className="sm-el sm-soft" style={v({ t: 560, delay: 260 })} fill="currentColor" fillOpacity={0.18} />
+          <ellipse
+            cx={50}
+            cy={62}
+            rx={18}
+            ry={6}
+            className="sm-el sm-soft"
+            style={v({ t: 560, delay: 260 })}
+            fill="currentColor"
+            fillOpacity={0.18}
+          />
         </>
       );
     case "protect": // a fine protective layer wraps round
-      return <circle cx={50} cy={50} r={40} pathLength={1} className="sm-el sm-draw" style={v({ t: 680 })} fill="none" stroke="currentColor" strokeWidth={1.7} />;
+      return (
+        <circle
+          cx={50}
+          cy={50}
+          r={40}
+          pathLength={1}
+          className="sm-el sm-draw"
+          style={v({ t: 680 })}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.7}
+        />
+      );
     case "repair": // a frayed strand becomes a healthy one
       return (
         <>
-          <Line d="M50 24 L54 34 L47 42 L55 52 L48 62 L54 72 L50 80" w={1.7} t={380} cls="sm-unwave" />
+          <Line
+            d="M50 24 L54 34 L47 42 L55 52 L48 62 L54 72 L50 80"
+            w={1.7}
+            t={380}
+            cls="sm-unwave"
+          />
           <Line d="M51 24 C55 44 47 60 51 80" w={2.0} t={520} delay={200} cls="sm-draw-stay" />
         </>
       );
@@ -329,11 +457,34 @@ function shapes(kind: MotionKind): ReactNode {
 
     /* ── face ── */
     case "facial": // a slow circular massage line
-      return <circle cx={50} cy={48} r={18} pathLength={1} className="sm-el sm-draw" style={v({ t: 680 })} fill="none" stroke="currentColor" strokeWidth={1.8} transform="rotate(-90 50 48)" />;
+      return (
+        <circle
+          cx={50}
+          cy={48}
+          r={18}
+          pathLength={1}
+          className="sm-el sm-draw"
+          style={v({ t: 680 })}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          transform="rotate(-90 50 48)"
+        />
+      );
     case "cleanup": // one cleansing wipe
       return <Band t={520} angle={-10} />;
     case "pack": // a thin layer smooths across the face
-      return <ellipse cx={50} cy={50} rx={26} ry={30} className="sm-el sm-soft" style={v({ t: 640 })} fill="url(#sm-warm)" />;
+      return (
+        <ellipse
+          cx={50}
+          cy={50}
+          rx={26}
+          ry={30}
+          className="sm-el sm-soft"
+          style={v({ t: 640 })}
+          fill="url(#sm-warm)"
+        />
+      );
     case "detan": // dull → bright
       return <Band t={600} angle={-24} />;
     case "brow":
@@ -354,7 +505,19 @@ function shapes(kind: MotionKind): ReactNode {
         </>
       );
     case "wax": // strip applied → lifted cleanly away
-      return <rect x={36} y={44} width={28} height={10} rx={2} className="sm-el sm-strip" style={v({ t: 560 })} fill="currentColor" fillOpacity={0.3} />;
+      return (
+        <rect
+          x={36}
+          y={44}
+          width={28}
+          height={10}
+          rx={2}
+          className="sm-el sm-strip"
+          style={v({ t: 560 })}
+          fill="currentColor"
+          fillOpacity={0.3}
+        />
+      );
 
     /* ── massage ── */
     case "oil-massage": // an oil drop, then two calm strokes
@@ -382,7 +545,20 @@ function shapes(kind: MotionKind): ReactNode {
     case "polish": // one polishing sweep
       return <Line d="M28 62 C40 50 60 50 72 62" w={2.0} t={520} />;
     case "body-polish": // a smooth circular polish
-      return <circle cx={50} cy={52} r={16} pathLength={1} className="sm-el sm-draw" style={v({ t: 640 })} fill="none" stroke="currentColor" strokeWidth={1.8} transform="rotate(-90 50 52)" />;
+      return (
+        <circle
+          cx={50}
+          cy={52}
+          r={16}
+          pathLength={1}
+          className="sm-el sm-draw"
+          style={v({ t: 640 })}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          transform="rotate(-90 50 52)"
+        />
+      );
 
     /* ── makeup / draping ── */
     case "eye-makeup": // brush in, one controlled stroke
@@ -436,8 +612,18 @@ function Strokes({ y, delay = 0, short }: { y: number; delay?: number; short?: b
   const w = short ? 10 : 14;
   return (
     <>
-      <Line d={`M${50 - w} ${y} C${50 - w / 2} ${y - 5} ${50 + w / 2} ${y - 5} ${50 + w} ${y}`} w={1.8} t={360} delay={delay} />
-      <Line d={`M${50 - w} ${y + 8} C${50 - w / 2} ${y + 3} ${50 + w / 2} ${y + 3} ${50 + w} ${y + 8}`} w={1.8} t={360} delay={delay + 200} />
+      <Line
+        d={`M${50 - w} ${y} C${50 - w / 2} ${y - 5} ${50 + w / 2} ${y - 5} ${50 + w} ${y}`}
+        w={1.8}
+        t={360}
+        delay={delay}
+      />
+      <Line
+        d={`M${50 - w} ${y + 8} C${50 - w / 2} ${y + 3} ${50 + w / 2} ${y + 3} ${50 + w} ${y + 8}`}
+        w={1.8}
+        t={360}
+        delay={delay + 200}
+      />
     </>
   );
 }
@@ -445,7 +631,11 @@ function Strokes({ y, delay = 0, short }: { y: number; delay?: number; short?: b
 /** The motion layer that sits over a service icon. */
 export function ServiceMotion({ kind }: { kind: MotionKind }) {
   return (
-    <svg viewBox="0 0 100 100" aria-hidden className="pointer-events-none absolute inset-[9%] h-[82%] w-[82%] overflow-visible text-bronze">
+    <svg
+      viewBox="0 0 100 100"
+      aria-hidden
+      className="pointer-events-none absolute inset-[9%] h-[82%] w-[82%] overflow-visible text-bronze"
+    >
       <defs>
         <linearGradient id="sm-sheen" x1="0" x2="1">
           <stop offset="0" stopColor="#fffaf2" stopOpacity="0" />

@@ -52,11 +52,8 @@ export const uploadReferencePhoto = createServerFn({ method: "POST" })
   });
 
 export const removeReferencePhoto = createServerFn({ method: "POST" })
-  .inputValidator(
-    (d) =>
-      z
-        .object({ draftId, path: z.string().max(200), proof: z.string().max(100) })
-        .parse(d),
+  .inputValidator((d) =>
+    z.object({ draftId, path: z.string().max(200), proof: z.string().max(100) }).parse(d),
   )
   .handler(async ({ data }) => {
     if (!data.path.startsWith(`pending/${data.draftId}/`) || data.path.includes(".."))

@@ -9,10 +9,13 @@ export type Step = (typeof STEPS)[number];
 type Day = Partial<Record<Step, string[]>>;
 
 const key = (iso: string) => `visits:${iso}`;
-const BOT = /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|monitor/i;
+const BOT =
+  /bot|crawl|spider|slurp|facebookexternalhit|preview|headless|lighthouse|pingdom|monitor/i;
 
 async function visitorCode(ip: string, ua: string, iso: string) {
-  const d = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`hb-visit:${iso}:${ip}:${ua}`)));
+  const d = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`hb-visit:${iso}:${ip}:${ua}`)),
+  );
   return Array.from(d.slice(0, 6), (x) => x.toString(16).padStart(2, "0")).join("");
 }
 
@@ -32,9 +35,19 @@ export async function recordVisit(step: Step, ip: string, ua: string) {
 
 /** Visitors who reached each step over the last `days` days (salon time). */
 export async function journey(days: number) {
-  const out: Record<Step, number> = { home: 0, book: 0, services: 0, time: 0, details: 0, review: 0, booked: 0 };
+  const out: Record<Step, number> = {
+    home: 0,
+    book: 0,
+    services: 0,
+    time: 0,
+    details: 0,
+    review: 0,
+    booked: 0,
+  };
   const now = Date.now() + 330 * 60_000;
-  const keys = Array.from({ length: days }, (_, i) => key(new Date(now - i * 86_400_000).toISOString().slice(0, 10)));
+  const keys = Array.from({ length: days }, (_, i) =>
+    key(new Date(now - i * 86_400_000).toISOString().slice(0, 10)),
+  );
   const { data } = await sb.from("site_settings").select("key, value").in("key", keys);
   for (const r of (data ?? []) as { value: unknown }[]) {
     const d = (r.value ?? {}) as Day;

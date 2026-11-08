@@ -5,13 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarPlus, Check, ChevronDown } from "lucide-react";
 import { BUSINESS } from "@/lib/salon";
 import { servicesOf, type Booking } from "@/lib/booking-store";
-import {
-  buildIcs,
-  googleUrl,
-  icsFileName,
-  outlookUrl,
-  type CalendarBooking,
-} from "@/lib/calendar";
+import { buildIcs, googleUrl, icsFileName, outlookUrl, type CalendarBooking } from "@/lib/calendar";
 import { cn } from "@/lib/utils";
 import { sfx } from "@/lib/sfx";
 

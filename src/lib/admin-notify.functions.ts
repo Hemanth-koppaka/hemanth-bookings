@@ -158,7 +158,10 @@ const settingsInput = z.object({
       .string()
       .trim()
       .max(200)
-      .refine((v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Enter a valid sender email"),
+      .refine(
+        (v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+        "Enter a valid sender email",
+      ),
     fromName: z.string().trim().max(80),
   }),
   providerConfig: z.object({
@@ -243,7 +246,11 @@ export const adminSaveNotifySettings = createServerFn({ method: "POST" })
 export const adminSendTestMessage = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z
-      .object({ pin, kind: z.enum(["customer", "admin"]), channel: z.enum(["whatsapp", "sms", "email"]) })
+      .object({
+        pin,
+        kind: z.enum(["customer", "admin"]),
+        channel: z.enum(["whatsapp", "sms", "email"]),
+      })
       .parse(d),
   )
   .handler(async ({ data }) => {

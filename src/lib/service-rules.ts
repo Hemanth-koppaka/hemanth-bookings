@@ -12,7 +12,10 @@ export type ServiceRule = { preferred: string; preferredName: string; fallback: 
 export const SIGNATURE_RE = /bhargav.?s signature/i;
 
 /** The preferred stylist across these services (first preferred rule wins). */
-export function preferredFor(serviceIds: string[], rules: Record<string, ServiceRule>): ServiceRule | null {
+export function preferredFor(
+  serviceIds: string[],
+  rules: Record<string, ServiceRule>,
+): ServiceRule | null {
   for (const id of serviceIds) if (rules[id]) return rules[id];
   return null;
 }

@@ -48,7 +48,9 @@ export function InfoPage({
             </span>
           </div>
         </header>
-        <main className="page-in mx-auto w-full max-w-2xl flex-1 px-5 pt-7 pb-12 lg:px-14 lg:pt-14">{children}</main>
+        <main className="page-in mx-auto w-full max-w-2xl flex-1 px-5 pt-7 pb-12 lg:px-14 lg:pt-14">
+          {children}
+        </main>
       </div>
       <ImagePanel
         src={image}
@@ -62,21 +64,39 @@ export function InfoPage({
   );
 }
 
-export function InfoTitle({ eyebrow, children, sub }: { eyebrow: string; children: ReactNode; sub?: ReactNode }) {
+export function InfoTitle({
+  eyebrow,
+  children,
+  sub,
+}: {
+  eyebrow: string;
+  children: ReactNode;
+  sub?: ReactNode;
+}) {
   return (
     <div className="stagger">
-      <div className="text-[0.62rem] uppercase tracking-[0.3em] text-bronze lg:text-[0.72rem]">{eyebrow}</div>
+      <div className="text-[0.62rem] uppercase tracking-[0.3em] text-bronze lg:text-[0.72rem]">
+        {eyebrow}
+      </div>
       <h1 className="mt-3 font-display text-[clamp(2.6rem,11vw,3.2rem)] leading-[1] tracking-[-0.01em] lg:text-[4rem]">
         {children}
       </h1>
       {sub ? (
-        <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-muted-foreground lg:text-[1.05rem]">{sub}</p>
+        <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-muted-foreground lg:text-[1.05rem]">
+          {sub}
+        </p>
       ) : null}
     </div>
   );
 }
 
-export function BookCTA({ children = "Book an appointment", className }: { children?: ReactNode; className?: string }) {
+export function BookCTA({
+  children = "Book an appointment",
+  className,
+}: {
+  children?: ReactNode;
+  className?: string;
+}) {
   return (
     <Link
       to="/book"
@@ -88,7 +108,10 @@ export function BookCTA({ children = "Book an appointment", className }: { child
       )}
     >
       <span>{children}</span>
-      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={1.25} />
+      <ArrowRight
+        className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+        strokeWidth={1.25}
+      />
     </Link>
   );
 }

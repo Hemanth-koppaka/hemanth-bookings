@@ -40,10 +40,16 @@ export function RateVisit({ booking, className }: { booking: Booking; className?
   // each booked service, by its id (the name only for display)
   const items = booking.serviceIds.map((id, i) => ({
     id,
-    name: named.find((s) => s.id === id)?.name ?? menu.find((s) => s.id === id)?.name ?? named[i]?.name ?? "Service",
+    name:
+      named.find((s) => s.id === id)?.name ??
+      menu.find((s) => s.id === id)?.name ??
+      named[i]?.name ??
+      "Service",
   }));
   const [stars, setStars] = useState<Record<string, number>>({});
-  const [state, setState] = useState<"ask" | "saving" | "done">(() => (shouldAskRating(booking) ? "ask" : "done"));
+  const [state, setState] = useState<"ask" | "saving" | "done">(() =>
+    shouldAskRating(booking) ? "ask" : "done",
+  );
   const [error, setError] = useState("");
   const [thanked, setThanked] = useState(false);
   if (state === "done" && !thanked) return null;
@@ -54,7 +60,9 @@ export function RateVisit({ booking, className }: { booking: Booking; className?
     setState("saving");
     setError("");
     try {
-      const r = await rateMyVisit({ data: { reference: booking.reference, ...auth(booking), ratings } });
+      const r = await rateMyVisit({
+        data: { reference: booking.reference, ...auth(booking), ratings },
+      });
       if (!r.ok) {
         setError(r.error);
         setState("ask");
@@ -75,10 +83,17 @@ export function RateVisit({ booking, className }: { booking: Booking; className?
   };
 
   return (
-    <section className={cn("rounded-md border border-bronze/30 bg-champagne/15 px-5 py-5 lg:px-6", className)}>
+    <section
+      className={cn(
+        "rounded-md border border-bronze/30 bg-champagne/15 px-5 py-5 lg:px-6",
+        className,
+      )}
+    >
       {thanked ? (
         <>
-          <p className="font-display text-[1.3rem] leading-snug">Thank you. Your rating helps other guests choose.</p>
+          <p className="font-display text-[1.3rem] leading-snug">
+            Thank you. Your rating helps other guests choose.
+          </p>
           {/* happy guests: one tap to say it on Google too, where new guests find us */}
           {Math.max(0, ...Object.values(stars)) >= 4 ? (
             <div className="mt-4 border-t border-bronze/20 pt-4">
@@ -91,14 +106,19 @@ export function RateVisit({ booking, className }: { booking: Booking; className?
                 rel="noopener noreferrer"
                 className="press mt-3 inline-flex min-h-11 items-center gap-2.5 rounded-sm bg-foreground px-6 text-[0.7rem] uppercase tracking-[0.2em] text-background"
               >
-                <span aria-hidden className="text-[1rem] leading-none text-[#f4c542]">★</span> Write a Google review
+                <span aria-hidden className="text-[1rem] leading-none text-[#f4c542]">
+                  ★
+                </span>{" "}
+                Write a Google review
               </a>
             </div>
           ) : null}
         </>
       ) : (
         <>
-          <div className="text-[0.62rem] uppercase tracking-[0.28em] text-bronze">After your visit</div>
+          <div className="text-[0.62rem] uppercase tracking-[0.28em] text-bronze">
+            After your visit
+          </div>
           <h2 className="mt-2 font-display text-[1.35rem] leading-snug">How was your visit?</h2>
           <ul className="mt-3 divide-y divide-hairline">
             {items.map((s) => (

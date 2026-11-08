@@ -33,11 +33,18 @@ function scrubRetired<T>(v: T): T {
     text = text.replace(OLD_NAME, "B. $1");
     RETIRED.lastIndex = 0;
     if (!RETIRED.test(text)) return text as T;
-    return text.replace(RETIRED, "").replace(/[ \t]{2,}/g, " ").replace(/\s*([·,/|]\s*)+$/, "").trim() as T;
+    return text
+      .replace(RETIRED, "")
+      .replace(/[ \t]{2,}/g, " ")
+      .replace(/\s*([·,/|]\s*)+$/, "")
+      .trim() as T;
   }
   if (Array.isArray(v))
     return v
-      .filter((x) => !(typeof x === "string" && RETIRED_NUMBERS.includes(x.replace(/\D/g, "").slice(-10))))
+      .filter(
+        (x) =>
+          !(typeof x === "string" && RETIRED_NUMBERS.includes(x.replace(/\D/g, "").slice(-10))),
+      )
       .map(scrubRetired) as T;
   if (v && typeof v === "object")
     return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, scrubRetired(x)])) as T;
@@ -107,7 +114,9 @@ async function buildConfig(): Promise<Record<string, unknown>> {
   const ratings = (set["service_ratings"] ?? {}) as Record<string, { sum: number; count: number }>;
   const ratingOf = (id: string) => {
     const r = ratings[id];
-    return r && r.count > 0 ? { avg: Math.round((r.sum / r.count) * 10) / 10, count: r.count } : undefined;
+    return r && r.count > 0
+      ? { avg: Math.round((r.sum / r.count) * 10) / 10, count: r.count }
+      : undefined;
   };
   const menu = (g: string) =>
     (cats.data ?? [])
@@ -219,7 +228,11 @@ async function buildConfig(): Promise<Record<string, unknown>> {
   // each service's stylist rule (e.g. Bhargav's Signature → Bhargav), for the screens
   {
     const { resolveRules } = await import("./service-rules.server");
-    config["serviceRules"] = resolveRules(store, (set["service_rules"] ?? {}) as never, [menu("men"), menu("women")] as never);
+    config["serviceRules"] = resolveRules(
+      store,
+      (set["service_rules"] ?? {}) as never,
+      [menu("men"), menu("women")] as never,
+    );
   }
   if (!cl.error) {
     config["closures"] = ((cl.data ?? []) as Record<string, unknown>[])

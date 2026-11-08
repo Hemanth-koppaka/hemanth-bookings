@@ -75,19 +75,20 @@ async function renderConfirmationImage(
   ctx.fillRect(0, 0, W, H);
 
   const withBhargav = isBhargavBooking(booking);
-  if (withBhargav) try {
-    const img = await loadImage(portrait.url);
-    const scale = Math.max(W / img.width, H / img.height);
-    const w = img.width * scale;
-    const h = img.height * scale;
-    ctx.globalAlpha = 0.4;
-    ctx.filter = "grayscale(1)";
-    ctx.drawImage(img, (W - w) / 2, (H - h) / 2 - 60, w, h);
-    ctx.filter = "none";
-    ctx.globalAlpha = 1;
-  } catch {
-    /* portrait optional */
-  }
+  if (withBhargav)
+    try {
+      const img = await loadImage(portrait.url);
+      const scale = Math.max(W / img.width, H / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.globalAlpha = 0.4;
+      ctx.filter = "grayscale(1)";
+      ctx.drawImage(img, (W - w) / 2, (H - h) / 2 - 60, w, h);
+      ctx.filter = "none";
+      ctx.globalAlpha = 1;
+    } catch {
+      /* portrait optional */
+    }
 
   const grad = ctx.createLinearGradient(0, 0, 0, H);
   grad.addColorStop(0, "rgba(11,11,11,0.72)");
@@ -473,7 +474,10 @@ function ConfirmedScreen() {
               />
             </Link>
           </div>
-          <div className="mt-9 [@media(max-width:639px)_and_(max-height:800px)]:mt-5 lg:mt-14" style={reveal(stage >= 4, 14, 1500)}>
+          <div
+            className="mt-9 [@media(max-width:639px)_and_(max-height:800px)]:mt-5 lg:mt-14"
+            style={reveal(stage >= 4, 14, 1500)}
+          >
             <h1 className="font-display text-[3.2rem] leading-none tracking-wide [@media(max-width:639px)_and_(max-height:800px)]:text-[2.75rem] sm:text-6xl lg:text-[4.75rem]">
               You're booked.
             </h1>
@@ -481,7 +485,9 @@ function ConfirmedScreen() {
               Your chair is reserved.
             </p>
             <p className="mt-3 text-[0.7rem] uppercase tracking-[0.3em] text-[#C9A96A] [@media(max-width:639px)_and_(max-height:800px)]:mt-2">
-              {/^bhargav\b/i.test(booking.stylist ?? "") ? "Bhargav is waiting for you" : "We’re waiting for you"}
+              {/^bhargav\b/i.test(booking.stylist ?? "")
+                ? "Bhargav is waiting for you"
+                : "We’re waiting for you"}
             </p>
           </div>
         </div>
@@ -644,8 +650,8 @@ function ConfirmedScreen() {
             ) : null}
             {/* the salon's request: keep the appointment, or free the chair in advance */}
             <p className="pt-1 text-center text-[0.78rem] leading-relaxed text-[#E8E1D8]/60">
-              Can't make it? Change or cancel in Manage booking at least {changeDeadline} before, so someone else can have your
-              chair.
+              Can't make it? Change or cancel in Manage booking at least {changeDeadline} before, so
+              someone else can have your chair.
             </p>
             <div className="flex items-center justify-center gap-6">
               <Link

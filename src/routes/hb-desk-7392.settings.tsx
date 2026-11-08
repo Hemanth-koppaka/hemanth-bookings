@@ -20,8 +20,15 @@ export const Route = createFileRoute("/hb-desk-7392/settings")({
 });
 
 function SettingsScreen() {
-  const { staff, addStaff, toggleStaff, removeStaff, signOut, changeCode, pin: adminPin } =
-    useAdmin();
+  const {
+    staff,
+    addStaff,
+    toggleStaff,
+    removeStaff,
+    signOut,
+    changeCode,
+    pin: adminPin,
+  } = useAdmin();
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [currentCode, setCurrentCode] = useState("");
@@ -91,8 +98,18 @@ function SettingsScreen() {
           ))}
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <input className={inputClass} placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input className={inputClass} placeholder="Role" value={role} onChange={(e) => setRole(e.target.value)} />
+          <input
+            className={inputClass}
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <input
+            className={inputClass}
+            placeholder="Role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          />
         </div>
         <div className="mt-5">
           <TinyButton
@@ -123,7 +140,9 @@ function SettingsScreen() {
                   active={h.open}
                   onClick={() =>
                     setHours((list) =>
-                      list.map((x, i) => (i === idx ? { ...x, open: !x.open, breaks: !x.open ? x.breaks : [] } : x)),
+                      list.map((x, i) =>
+                        i === idx ? { ...x, open: !x.open, breaks: !x.open ? x.breaks : [] } : x,
+                      ),
                     )
                   }
                 >
@@ -158,7 +177,10 @@ function SettingsScreen() {
                 <div className="eyebrow">Break periods</div>
                 <div className="mt-3 flex flex-col gap-2">
                   {h.breaks.map((b, bi) => (
-                    <div key={bi} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                    <div
+                      key={bi}
+                      className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                    >
                       <input
                         className={inputClass}
                         type="time"
@@ -312,25 +334,35 @@ function SettingsScreen() {
       <Panel className="mt-4">
         <div className="eyebrow">Online bookings</div>
         <p className="mt-3 text-sm text-muted-foreground">
-          Pausing bookings, notice, how far ahead guests can book and cancellation deadlines now live in Booking rules.
+          Pausing bookings, notice, how far ahead guests can book and cancellation deadlines now
+          live in Booking rules.
         </p>
-        <Link to="/hb-desk-7392/rules" className="mt-4 inline-block border-b border-foreground/30 pb-0.5 text-sm">
+        <Link
+          to="/hb-desk-7392/rules"
+          className="mt-4 inline-block border-b border-foreground/30 pb-0.5 text-sm"
+        >
           Open booking rules
         </Link>
       </Panel>
 
       <Panel className="mt-4">
-        <div id="access" className="eyebrow scroll-mt-28">Access code</div>
+        <div id="access" className="eyebrow scroll-mt-28">
+          Access code
+        </div>
         <p className="mt-3 text-sm text-muted-foreground">
-          Use 6–12 digits that aren't on any sign or receipt: no repeats (111111, 121212), runs (123456) or the salon's phone, plot or PIN code numbers. Changing it signs out every other device.
+          Use 6–12 digits that aren't on any sign or receipt: no repeats (111111, 121212), runs
+          (123456) or the salon's phone, plot or PIN code numbers. Changing it signs out every other
+          device.
         </p>
         <form
           className="mt-4 grid gap-3 sm:grid-cols-3"
           onSubmit={async (e) => {
             e.preventDefault();
             setCodeMsg(null);
-            if (!/^\d{6,12}$/.test(nextCode)) return setCodeMsg({ ok: false, text: "The new code must be 6–12 digits." });
-            if (nextCode !== confirmCode) return setCodeMsg({ ok: false, text: "The two new codes don't match." });
+            if (!/^\d{6,12}$/.test(nextCode))
+              return setCodeMsg({ ok: false, text: "The new code must be 6–12 digits." });
+            if (nextCode !== confirmCode)
+              return setCodeMsg({ ok: false, text: "The two new codes don't match." });
             setCodeBusy(true);
             const r = await changeCode(currentCode, nextCode);
             setCodeBusy(false);
@@ -338,7 +370,10 @@ function SettingsScreen() {
               setCurrentCode("");
               setNextCode("");
               setConfirmCode("");
-              setCodeMsg({ ok: true, text: "Access code updated. Other devices have been signed out." });
+              setCodeMsg({
+                ok: true,
+                text: "Access code updated. Other devices have been signed out.",
+              });
             } else setCodeMsg({ ok: false, text: r.message });
           }}
         >
@@ -377,7 +412,10 @@ function SettingsScreen() {
               {codeBusy ? "Saving…" : "Save code"}
             </TinyButton>
             {codeMsg ? (
-              <span role="status" className={"text-xs " + (codeMsg.ok ? "text-muted-foreground" : "text-destructive")}>
+              <span
+                role="status"
+                className={"text-xs " + (codeMsg.ok ? "text-muted-foreground" : "text-destructive")}
+              >
                 {codeMsg.text}
               </span>
             ) : null}

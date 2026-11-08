@@ -90,60 +90,85 @@ function DetailsScreen() {
   };
 
   const fields = {
-    name: { value: name, set: setName, error: touched && !validName ? "Please enter your name." : "" },
-    phone: { value: phone, set: setPhone, error: touched && !validPhone ? digits.length < 10 ? "Enter a valid 10-digit number." : "Enter a valid mobile number (starts with 6, 7, 8 or 9)." : "" },
-    email: { value: email, set: setEmail, error: touched && !validEmail ? "That email doesn't look right." : "" },
+    name: {
+      value: name,
+      set: setName,
+      error: touched && !validName ? "Please enter your name." : "",
+    },
+    phone: {
+      value: phone,
+      set: setPhone,
+      error:
+        touched && !validPhone
+          ? digits.length < 10
+            ? "Enter a valid 10-digit number."
+            : "Enter a valid mobile number (starts with 6, 7, 8 or 9)."
+          : "",
+    },
+    email: {
+      value: email,
+      set: setEmail,
+      error: touched && !validEmail ? "That email doesn't look right." : "",
+    },
     notes: { value: notes, set: setNotes, error: "" },
     consent: { value: consent, set: setConsent },
   };
 
   return (
     <>
-    <DesktopDetails fields={fields} submit={submit} attempt={attempt} />
-    <div className="md:hidden">
-      <Page>
-        <StepHeader back="/time" step={4} />
-        <Screen className="px-5">
-          <StepIntro eyebrow="Step four" sub="Almost there. Share your details to confirm your booking.">
-            Your <span className="italic text-bronze">details.</span>
-          </StepIntro>
+      <DesktopDetails fields={fields} submit={submit} attempt={attempt} />
+      <div className="md:hidden">
+        <Page>
+          <StepHeader back="/time" step={4} />
+          <Screen className="px-5">
+            <StepIntro
+              eyebrow="Step four"
+              sub="Almost there. Share your details to confirm your booking."
+            >
+              Your <span className="italic text-bronze">details.</span>
+            </StepIntro>
 
-          <MobileSummary />
+            <MobileSummary />
 
-          <form noValidate className="mt-6" onSubmit={submit}>
-            <DetailsFields fields={fields} idPrefix="m-" attempt={attempt} />
-            <button type="submit" className="hidden" aria-hidden tabIndex={-1} />
-          </form>
+            <form noValidate className="mt-6" onSubmit={submit}>
+              <DetailsFields fields={fields} idPrefix="m-" attempt={attempt} />
+              <button type="submit" className="hidden" aria-hidden tabIndex={-1} />
+            </form>
 
-          <p className="mt-4 flex items-center gap-2.5 text-[0.8rem] text-muted-foreground">
-            <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.25} />
-            Your details are only used to manage your appointment.
-          </p>
-        </Screen>
+            <p className="mt-4 flex items-center gap-2.5 text-[0.8rem] text-muted-foreground">
+              <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.25} />
+              Your details are only used to manage your appointment.
+            </p>
+          </Screen>
 
-        <BookingDock
-          action="Review"
-          onAction={() => submit()}
-          open={dockOpen}
-          onToggle={() => setDockOpen((v) => !v)}
-          sub={
-            draft.date && draft.time != null ? (
-              <>
-                {fromISO(draft.date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} · {minuteLabel(draft.time)}
-              </>
-            ) : undefined
-          }
-          sheet={
-            <YourAppointment
-              onAddMore={() => navigate({ to: "/services" })}
-              continueLabel="Done"
-              onContinue={() => setDockOpen(false)}
-              onClose={() => setDockOpen(false)}
-            />
-          }
-        />
-      </Page>
-    </div>
+          <BookingDock
+            action="Review"
+            onAction={() => submit()}
+            open={dockOpen}
+            onToggle={() => setDockOpen((v) => !v)}
+            sub={
+              draft.date && draft.time != null ? (
+                <>
+                  {fromISO(draft.date).toLocaleDateString("en-GB", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                  })}{" "}
+                  · {minuteLabel(draft.time)}
+                </>
+              ) : undefined
+            }
+            sheet={
+              <YourAppointment
+                onAddMore={() => navigate({ to: "/services" })}
+                continueLabel="Done"
+                onContinue={() => setDockOpen(false)}
+                onClose={() => setDockOpen(false)}
+              />
+            }
+          />
+        </Page>
+      </div>
     </>
   );
 }
@@ -155,20 +180,28 @@ function MobileSummary() {
       <SelectionThumb selected={selected} className="h-16 w-16" />
       <div className="min-w-0 flex-1">
         <div className="truncate font-display text-[1.25rem] leading-tight">
-          {selected.length > 1 ? `${selected[0]?.name} + ${selected.length - 1} more` : selected[0]?.name}
+          {selected.length > 1
+            ? `${selected[0]?.name} + ${selected.length - 1} more`
+            : selected[0]?.name}
         </div>
         <div className="mt-0.5 text-[0.8rem] text-muted-foreground">
           {draft.date
-            ? fromISO(draft.date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
+            ? fromISO(draft.date).toLocaleDateString("en-GB", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+              })
             : ""}
-          {draft.time != null ? ` · ${minuteLabel(draft.time)}` : ""} · {formatDuration(totalMinutes)}
+          {draft.time != null ? ` · ${minuteLabel(draft.time)}` : ""} ·{" "}
+          {formatDuration(totalMinutes)}
         </div>
       </div>
       <div className="text-right">
-        <div className="font-display text-[1.3rem] leading-none">
-          {inr(totalPrice)}
-        </div>
-        <Link to="/time" className="mt-1.5 inline-block text-[0.75rem] text-bronze underline underline-offset-4">
+        <div className="font-display text-[1.3rem] leading-none">{inr(totalPrice)}</div>
+        <Link
+          to="/time"
+          className="mt-1.5 inline-block text-[0.75rem] text-bronze underline underline-offset-4"
+        >
           Change
         </Link>
       </div>
@@ -186,7 +219,10 @@ const box =
 
 function FieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
   return (
-    <label htmlFor={htmlFor} className="mb-3 block text-[0.72rem] uppercase tracking-[0.3em] text-foreground/75">
+    <label
+      htmlFor={htmlFor}
+      className="mb-3 block text-[0.72rem] uppercase tracking-[0.3em] text-foreground/75"
+    >
       {children}
     </label>
   );
@@ -194,7 +230,11 @@ function FieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNod
 
 function FieldError({ children, attempt }: { children: string; attempt: number }) {
   return (
-    <p key={children ? attempt : "ok"} role="alert" className={"mt-2 min-h-4 text-sm text-destructive " + (children ? "shake" : "")}>
+    <p
+      key={children ? attempt : "ok"}
+      role="alert"
+      className={"mt-2 min-h-4 text-sm text-destructive " + (children ? "shake" : "")}
+    >
       {children}
     </p>
   );
@@ -212,89 +252,96 @@ function DetailsFields({
   const { name, phone, email, notes, consent } = fields;
   return (
     <>
-    <div>
-      <FieldLabel htmlFor={`${idPrefix}name`}>Full name *</FieldLabel>
-      <input
-        id={`${idPrefix}name`}
-        className={box}
-        value={name.value}
-        onChange={(e) => name.set(e.target.value)}
-        placeholder="Your name"
-        autoComplete="name"
-        aria-invalid={Boolean(name.error)}
-      />
-      <FieldError attempt={attempt}>{name.error}</FieldError>
-    </div>
-
-    <div className="mt-3">
-      <FieldLabel htmlFor={`${idPrefix}phone`}>Mobile number *</FieldLabel>
-      <div
-        className={
-          "flex items-stretch rounded-sm border bg-card transition-colors focus-within:border-foreground/60 " +
-          (phone.error ? "border-destructive" : "border-foreground/18")
-        }
-      >
-        <span className="flex items-center border-r border-foreground/12 px-5 text-[1.05rem] text-foreground/80">+91</span>
+      <div>
+        <FieldLabel htmlFor={`${idPrefix}name`}>Full name *</FieldLabel>
         <input
-          id={`${idPrefix}phone`}
-          className="min-w-0 flex-1 bg-transparent px-5 py-4 text-[1.05rem] outline-none placeholder:text-foreground/35"
-          value={phone.value}
-          onChange={(e) => phone.set(e.target.value)}
-          placeholder="Enter mobile number"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel-national"
-          aria-invalid={Boolean(phone.error)}
+          id={`${idPrefix}name`}
+          className={box}
+          value={name.value}
+          onChange={(e) => name.set(e.target.value)}
+          placeholder="Your name"
+          autoComplete="name"
+          aria-invalid={Boolean(name.error)}
+        />
+        <FieldError attempt={attempt}>{name.error}</FieldError>
+      </div>
+
+      <div className="mt-3">
+        <FieldLabel htmlFor={`${idPrefix}phone`}>Mobile number *</FieldLabel>
+        <div
+          className={
+            "flex items-stretch rounded-sm border bg-card transition-colors focus-within:border-foreground/60 " +
+            (phone.error ? "border-destructive" : "border-foreground/18")
+          }
+        >
+          <span className="flex items-center border-r border-foreground/12 px-5 text-[1.05rem] text-foreground/80">
+            +91
+          </span>
+          <input
+            id={`${idPrefix}phone`}
+            className="min-w-0 flex-1 bg-transparent px-5 py-4 text-[1.05rem] outline-none placeholder:text-foreground/35"
+            value={phone.value}
+            onChange={(e) => phone.set(e.target.value)}
+            placeholder="Enter mobile number"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel-national"
+            aria-invalid={Boolean(phone.error)}
+          />
+        </div>
+        <FieldError attempt={attempt}>{phone.error}</FieldError>
+      </div>
+
+      <div className="mt-3">
+        <FieldLabel htmlFor={`${idPrefix}email`}>Email (optional)</FieldLabel>
+        <input
+          id={`${idPrefix}email`}
+          className={box}
+          value={email.value}
+          onChange={(e) => email.set(e.target.value)}
+          placeholder="Enter your email"
+          type="email"
+          autoComplete="email"
+          autoCapitalize="off"
+          aria-invalid={Boolean(email.error)}
+        />
+        <FieldError attempt={attempt}>{email.error}</FieldError>
+      </div>
+
+      <div className="mt-3">
+        <FieldLabel htmlFor={`${idPrefix}notes`}>Special requests (optional)</FieldLabel>
+        <textarea
+          id={`${idPrefix}notes`}
+          className={box + " resize-none"}
+          rows={3}
+          value={notes.value}
+          onChange={(e) => notes.set(e.target.value)}
+          placeholder="e.g. preferred style, notes for your stylist…"
         />
       </div>
-      <FieldError attempt={attempt}>{phone.error}</FieldError>
-    </div>
 
-    <div className="mt-3">
-      <FieldLabel htmlFor={`${idPrefix}email`}>Email (optional)</FieldLabel>
-      <input
-        id={`${idPrefix}email`}
-        className={box}
-        value={email.value}
-        onChange={(e) => email.set(e.target.value)}
-        placeholder="Enter your email"
-        type="email"
-        autoComplete="email"
-        autoCapitalize="off"
-        aria-invalid={Boolean(email.error)}
-      />
-      <FieldError attempt={attempt}>{email.error}</FieldError>
-    </div>
+      <div className="mt-6">
+        <ReferencePhotos />
+      </div>
 
-    <div className="mt-3">
-      <FieldLabel htmlFor={`${idPrefix}notes`}>Special requests (optional)</FieldLabel>
-      <textarea
-        id={`${idPrefix}notes`}
-        className={box + " resize-none"}
-        rows={3}
-        value={notes.value}
-        onChange={(e) => notes.set(e.target.value)}
-        placeholder="e.g. preferred style, notes for your stylist…"
-      />
-    </div>
-
-    <div className="mt-6">
-      <ReferencePhotos />
-    </div>
-
-    <label htmlFor={`${idPrefix}consent`} className="mt-6 flex cursor-pointer items-start gap-3 rounded-md border border-hairline bg-card px-4 py-3.5">
-      <input
-        id={`${idPrefix}consent`}
-        type="checkbox"
-        checked={consent.value}
-        onChange={(e) => consent.set(e.target.checked)}
-        className="mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0 accent-[var(--bronze)]"
-      />
-      <span className="text-[0.88rem] leading-relaxed">
-        Email me my booking confirmation, changes and reminders (when I add an email).
-        <span className="mt-0.5 block text-[0.76rem] text-muted-foreground">Booking messages only — never promotions. You can still book if you untick this.</span>
-      </span>
-    </label>
+      <label
+        htmlFor={`${idPrefix}consent`}
+        className="mt-6 flex cursor-pointer items-start gap-3 rounded-md border border-hairline bg-card px-4 py-3.5"
+      >
+        <input
+          id={`${idPrefix}consent`}
+          type="checkbox"
+          checked={consent.value}
+          onChange={(e) => consent.set(e.target.checked)}
+          className="mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0 accent-[var(--bronze)]"
+        />
+        <span className="text-[0.88rem] leading-relaxed">
+          Email me my booking confirmation, changes and reminders (when I add an email).
+          <span className="mt-0.5 block text-[0.76rem] text-muted-foreground">
+            Booking messages only — never promotions. You can still book if you untick this.
+          </span>
+        </span>
+      </label>
     </>
   );
 }
@@ -311,9 +358,21 @@ function DesktopDetails({
   const { draft, selected, totalMinutes, totalPrice, hasFromPricing } = useBooking();
 
   const assurances = [
-    { icon: ShieldCheck, title: "Your information is safe", body: "Your details are only used to manage your appointment." },
-    { icon: CalendarDays, title: "Need to reschedule?", body: "You can reschedule or cancel any time from Manage booking." },
-    { icon: MessageCircle, title: "Questions?", body: "Feel free to add a note — we'll take care of the rest." },
+    {
+      icon: ShieldCheck,
+      title: "Your information is safe",
+      body: "Your details are only used to manage your appointment.",
+    },
+    {
+      icon: CalendarDays,
+      title: "Need to reschedule?",
+      body: "You can reschedule or cancel any time from Manage booking.",
+    },
+    {
+      icon: MessageCircle,
+      title: "Questions?",
+      body: "Feel free to add a note — we'll take care of the rest.",
+    },
   ];
 
   return (
@@ -322,7 +381,11 @@ function DesktopDetails({
 
       <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-width:thin]">
         <div className="page-in mx-auto grid max-w-[90rem] grid-cols-1 gap-10 px-8 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,26rem)] lg:px-10 lg:py-9 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,34rem)] xl:gap-16 xl:px-24">
-          <form noValidate onSubmit={submit} className="lg:border-r lg:border-hairline lg:pr-10 xl:pr-16">
+          <form
+            noValidate
+            onSubmit={submit}
+            className="lg:border-r lg:border-hairline lg:pr-10 xl:pr-16"
+          >
             <StepTitle step="four">
               Your <Accent>details</Accent>
             </StepTitle>
@@ -340,25 +403,45 @@ function DesktopDetails({
           <aside className="lg:pt-4">
             <div className="rounded-sm border border-hairline bg-card p-8">
               <div className="flex items-baseline justify-between">
-                <span className="text-[0.72rem] uppercase tracking-[0.3em] text-foreground/75">Your appointment</span>
-                <Link to="/services" className="inline-flex items-center gap-1.5 text-[0.95rem] text-bronze underline underline-offset-4">
+                <span className="text-[0.72rem] uppercase tracking-[0.3em] text-foreground/75">
+                  Your appointment
+                </span>
+                <Link
+                  to="/services"
+                  className="inline-flex items-center gap-1.5 text-[0.95rem] text-bronze underline underline-offset-4"
+                >
                   Change <ArrowRight className="h-4 w-4" strokeWidth={1.25} />
                 </Link>
               </div>
               <div className="mt-6 flex gap-6">
                 {/* one service: its icon large; several: each with its own icon */}
-                {selected.length === 1 ? <SelectionThumb selected={selected} className="h-28 w-28" /> : null}
+                {selected.length === 1 ? (
+                  <SelectionThumb selected={selected} className="h-28 w-28" />
+                ) : null}
                 <div className="min-w-0">
                   {selected.length === 1 ? (
-                    <div className="font-display text-[1.6rem] leading-tight">{selected[0]!.name}</div>
+                    <div className="font-display text-[1.6rem] leading-tight">
+                      {selected[0]!.name}
+                    </div>
                   ) : (
                     <ul className="space-y-2.5">
                       {selected.map((x) => (
                         <li key={x.id} className="flex items-center gap-3.5">
-                          <ServiceIconTile kind={serviceKind(x)} icon={x.icon} photo={x.photo} framed size="sm" className="!h-12 !w-12" />
+                          <ServiceIconTile
+                            kind={serviceKind(x)}
+                            icon={x.icon}
+                            photo={x.photo}
+                            framed
+                            size="sm"
+                            className="!h-12 !w-12"
+                          />
                           <span className="min-w-0">
-                            <span className="block font-display text-[1.4rem] leading-tight">{x.name}</span>
-                            <span className="block text-[0.85rem] text-muted-foreground">{formatDuration(x.minutes)}</span>
+                            <span className="block font-display text-[1.4rem] leading-tight">
+                              {x.name}
+                            </span>
+                            <span className="block text-[0.85rem] text-muted-foreground">
+                              {formatDuration(x.minutes)}
+                            </span>
                           </span>
                         </li>
                       ))}
@@ -366,19 +449,24 @@ function DesktopDetails({
                   )}
                   {draft.date ? (
                     <div className="mt-2 font-display text-[1.25rem] text-foreground/80">
-                      {fromISO(draft.date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+                      {fromISO(draft.date).toLocaleDateString("en-GB", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      })}
                     </div>
                   ) : null}
                   <div className="mt-1 text-[1.05rem] text-muted-foreground">
-                    {draft.time != null ? minuteLabel(draft.time) : ""} · {formatDuration(totalMinutes)}
+                    {draft.time != null ? minuteLabel(draft.time) : ""} ·{" "}
+                    {formatDuration(totalMinutes)}
                   </div>
                 </div>
               </div>
               <div className="mt-6 flex items-baseline justify-between hairline-t pt-6">
-                <span className="text-[0.72rem] uppercase tracking-[0.3em] text-foreground/75">Total</span>
-                <span className="font-display text-[2rem] leading-none">
-                  {inr(totalPrice)}
+                <span className="text-[0.72rem] uppercase tracking-[0.3em] text-foreground/75">
+                  Total
                 </span>
+                <span className="font-display text-[2rem] leading-none">{inr(totalPrice)}</span>
               </div>
             </div>
 
@@ -402,7 +490,10 @@ function DesktopDetails({
           <Lock className="h-4 w-4" strokeWidth={1.25} />
           Your details are only used to manage your appointment.
         </p>
-        <DesktopCTA onClick={() => submit()} className="justify-between md:min-w-[16rem] lg:min-w-[26rem]">
+        <DesktopCTA
+          onClick={() => submit()}
+          className="justify-between md:min-w-[16rem] lg:min-w-[26rem]"
+        >
           Review appointment
         </DesktopCTA>
       </DesktopBar>

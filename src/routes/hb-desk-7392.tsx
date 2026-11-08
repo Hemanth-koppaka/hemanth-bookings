@@ -52,7 +52,9 @@ function AdminLayout() {
           <Wordmark className="mx-auto h-10" />
           <div className="eyebrow mt-8">Operations</div>
           <h1 className="mt-3 font-display text-4xl leading-tight">Enter your access code</h1>
-          {signOutReason ? <p className="mt-4 text-xs text-muted-foreground">{signOutReason}</p> : null}
+          {signOutReason ? (
+            <p className="mt-4 text-xs text-muted-foreground">{signOutReason}</p>
+          ) : null}
           <form
             className="mt-10"
             onSubmit={async (e) => {
