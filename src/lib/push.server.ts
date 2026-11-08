@@ -150,13 +150,28 @@ async function saveSubs(list: PushSub[]) {
   await sb.from("site_settings").upsert({ key: SUBS_KEY, value: list.slice(-20) as never });
 }
 
-export async function addSub(sub: PushSub) {
-  const list = (await listSubs()).filter((x) => x.endpoint !== sub.endpoint);
+export async function addSub(sub: PushSub, ownerStaffId?: string) {
+  const current = await listSubs();
+  const existing = current.find((x) => x.endpoint === sub.endpoint);
+  if (
+    ownerStaffId !== undefined &&
+    existing &&
+    existing.staffId !== ownerStaffId
+  )
+    return false;
+  const list = current.filter((x) => x.endpoint !== sub.endpoint);
   await saveSubs([...list, sub]);
+  return true;
 }
 
-export async function removeSub(endpoint: string) {
-  await saveSubs((await listSubs()).filter((x) => x.endpoint !== endpoint));
+export async function removeSub(endpoint: string, staffId?: string) {
+  await saveSubs(
+    (await listSubs()).filter(
+      (x) =>
+        x.endpoint !== endpoint ||
+        (staffId !== undefined && x.staffId !== staffId),
+    ),
+  );
 }
 
 /* ── sending ───────────────────────────────────────────────── */

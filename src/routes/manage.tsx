@@ -44,6 +44,7 @@ function ManageScreen() {
   const { findBookings, bookings, cancelBooking, rescheduleBooking } = useBooking();
   const { ref } = Route.useSearch();
   const [query, setQuery] = useState(ref ?? "");
+  const [phoneQuery, setPhoneQuery] = useState("");
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [searching, setSearching] = useState(false);
@@ -54,15 +55,14 @@ function ManageScreen() {
   const recent = bookings.filter((b) => b.status === "confirmed").slice(0, 3);
 
   const q = query.trim();
-  const digits = q.replace(/\D/g, "");
-  const looksLikePhone = q !== "" && !/[a-z]/i.test(q);
-  const ready = looksLikePhone ? digits.length >= 10 : q.length >= 4;
+  const phoneDigits = phoneQuery.replace(/\D/g, "");
+  const ready = /^HB-[A-Z0-9]{6}$/i.test(q) && phoneDigits.length >= 10;
 
   const lookup = async (e?: FormEvent) => {
     e?.preventDefault();
     if (searching || !ready) return;
     setSearching(true);
-    const list = await findBookings(looksLikePhone ? digits : q.toUpperCase());
+    const list = await findBookings(q.toUpperCase(), phoneDigits);
     setSearching(false);
     setAttempt((n) => n + 1);
     if (list === null) {
@@ -72,11 +72,7 @@ function ManageScreen() {
     }
     if (!list.length) {
       haptic(20);
-      setError(
-        looksLikePhone
-          ? "No bookings found for that mobile number. Try your booking ID instead."
-          : "No booking matches that ID. Check it in your confirmation, or use your mobile number.",
-      );
+      setError("We couldn't verify that booking. Check the booking ID and mobile number from your confirmation.");
       setMatches(null);
       return;
     }
@@ -111,7 +107,7 @@ function ManageScreen() {
         <>
           <InfoTitle
             eyebrow="Manage booking"
-            sub="Enter your booking ID or the mobile number you booked with."
+            sub="Enter both details from your booking confirmation."
           >
             Find your <span className="italic text-bronze">appointment.</span>
           </InfoTitle>
@@ -131,7 +127,7 @@ function ManageScreen() {
 
           {matches ? (
             <div className="mt-9">
-              <SectionLabel>Bookings for this number</SectionLabel>
+              <SectionLabel>Booking details</SectionLabel>
               <ul className="stagger mt-4 space-y-2.5">
                 {matches.map((b) => (
                   <li key={b.reference}>
@@ -149,7 +145,7 @@ function ManageScreen() {
               <div className={recent.length ? "mt-5 space-y-5" : "space-y-5"}>
                 <div>
                   <label className="mb-3 block text-[0.68rem] uppercase tracking-[0.28em] text-foreground/75" htmlFor="lookup">
-                    Booking ID or mobile number
+                    Booking ID
                   </label>
                   <input
                     id="lookup"
@@ -159,12 +155,30 @@ function ManageScreen() {
                       setQuery(e.target.value);
                       setError("");
                     }}
-                    placeholder="HB-7KQ2MX or 98765 43210"
+                    placeholder="HB-7KQ2MX"
                     autoCapitalize="characters"
                     autoComplete="off"
                     spellCheck={false}
                   />
-                  <p className="mt-2 text-[0.78rem] text-muted-foreground">Either one works.</p>
+                  <p className="mt-2 text-[0.78rem] text-muted-foreground">Both your booking ID and mobile number are required.</p>
+                </div>
+                <div>
+                  <label className="mb-3 block text-[0.68rem] uppercase tracking-[0.28em] text-foreground/75" htmlFor="lookup-phone">
+                    Mobile number used to book
+                  </label>
+                  <input
+                    id="lookup-phone"
+                    className={box}
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phoneQuery}
+                    onChange={(e) => {
+                      setPhoneQuery(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="98765 43210"
+                  />
                 </div>
                 {error ? (
                   <p key={attempt} role="alert" className="shake text-[0.88rem] text-destructive">

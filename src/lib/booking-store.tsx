@@ -19,7 +19,7 @@ export type Customer = {
   photos?: string[];
 };
 
-export type RefPhoto = { path: string; thumb: string };
+export type RefPhoto = { path: string; thumb: string; proof?: string };
 
 export type Draft = {
   audience: Audience | null;
@@ -95,7 +95,7 @@ type Ctx = {
   bookings: Booking[];
   commitBooking: () => Promise<{ booking: Booking } | { error: string }>;
   /** Looks up by booking ID or by the mobile number used to book. null = couldn't reach the salon. */
-  findBookings: (query: string) => Promise<Booking[] | null>;
+  findBookings: (reference: string, phone: string) => Promise<Booking[] | null>;
   cancelBooking: (reference: string) => Promise<ChangeResult>;
   rescheduleBooking: (reference: string, date: string, time: number) => Promise<ChangeResult>;
   hydrated: boolean;
@@ -211,7 +211,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
               },
               consent: booking.customer.consent !== false,
               ...(draft.staffId ? { staffId: draft.staffId } : {}),
-              ...(draft.photos?.length ? { photos: draft.photos.map((x) => x.path) } : {}),
+              ...(draft.photos?.length
+                ? {
+                    photos: draft.photos.map(({ path, proof }) => ({ path, proof })),
+                  }
+                : {}),
             },
           });
           if (!res.ok) return { error: res.error };
@@ -225,9 +229,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setBookings((b) => [booking, ...b]);
         return { booking };
       },
-      findBookings: async (query) => {
+      findBookings: async (reference, phone) => {
         try {
-          const { bookings: list } = await findMyBookings({ data: { query } });
+          const { bookings: list } = await findMyBookings({ data: { reference, phone } });
           const found: Booking[] = list.map((r) => ({
             reference: r.reference,
             audience: r.audience,

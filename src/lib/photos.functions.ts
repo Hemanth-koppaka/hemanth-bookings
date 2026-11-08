@@ -40,7 +40,8 @@ export const uploadReferencePhoto = createServerFn({ method: "POST" })
       });
       if (error)
         return { ok: false as const, error: "Couldn't upload that photo. Please try again." };
-      return { ok: true as const, path };
+      const { pendingPhotoProof } = await import("./admin-auth.server");
+      return { ok: true as const, path, proof: await pendingPhotoProof(path) };
     } catch (e) {
       console.error("reference photo upload failed", e);
       return {
@@ -51,10 +52,17 @@ export const uploadReferencePhoto = createServerFn({ method: "POST" })
   });
 
 export const removeReferencePhoto = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ draftId, path: z.string().max(200) }).parse(d))
+  .inputValidator(
+    (d) =>
+      z
+        .object({ draftId, path: z.string().max(200), proof: z.string().max(100) })
+        .parse(d),
+  )
   .handler(async ({ data }) => {
     if (!data.path.startsWith(`pending/${data.draftId}/`) || data.path.includes(".."))
       return { ok: false };
+    const { verifyPendingPhotoProof } = await import("./admin-auth.server");
+    if (!(await verifyPendingPhotoProof(data.path, data.proof))) return { ok: false };
     const { REF_BUCKET } = await import("./photos.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.storage.from(REF_BUCKET).remove([data.path]);

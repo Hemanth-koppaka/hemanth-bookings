@@ -112,6 +112,14 @@ export async function checkManageToken(reference: string, token: string) {
   return token.length === 32 && same(token, await manageToken(reference));
 }
 
+/** Proof that this server issued a pending photo upload for its exact storage path. */
+export async function pendingPhotoProof(path: string) {
+  return hmac(`pending-photo:${path}`);
+}
+export async function verifyPendingPhotoProof(path: string, proof: string) {
+  return proof.length === 43 && same(proof, await pendingPhotoProof(path));
+}
+
 /** Fingerprint of the stored code, so a code change revokes old sessions. */
 async function codeVersion(stored: string) {
   return b64(await crypto.subtle.digest("SHA-256", enc.encode(stored))).slice(0, 16);

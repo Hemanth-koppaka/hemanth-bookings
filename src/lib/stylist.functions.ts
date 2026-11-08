@@ -130,16 +130,18 @@ export const stylistPushSubscribe = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sid = await stylist(data.token);
     const P = await import("./push.server");
-    if (data.off) await P.removeSub(data.endpoint);
-    else
-      await P.addSub({
+    if (data.off) await P.removeSub(data.endpoint, sid);
+    else {
+      const saved = await P.addSub({
         endpoint: data.endpoint,
         keys: { p256dh: data.p256dh, auth: data.auth },
         device: `${await staffName(sid)} · ${data.device || "Phone"}`,
         origin: data.origin,
         at: Date.now(),
         staffId: sid,
-      });
+      }, sid);
+      if (!saved) return { ok: false as const, error: "That phone is already connected to another account." };
+    }
     return { ok: true as const };
   });
 
