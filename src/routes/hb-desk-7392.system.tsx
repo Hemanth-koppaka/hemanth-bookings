@@ -163,7 +163,7 @@ function SystemScreen() {
                 {data.security.hashed ? (
                   "hashed (PBKDF2), never in plain text"
                 ) : (
-                  <b>in an old format — it is upgraded on the next sign-in</b>
+                  <b>not securely configured; a plaintext code cannot sign in</b>
                 )}
                 .
               </li>
