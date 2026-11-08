@@ -161,25 +161,25 @@ export const adminDashboard = createServerFn({ method: "POST" })
 
     // alerts that need a decision
     const alerts: { level: "info" | "warn"; text: string; to?: string }[] = [];
-    if (!rules.accepting) alerts.push({ level: "warn", text: "Online bookings are paused.", to: "/admin/settings" });
+    if (!rules.accepting) alerts.push({ level: "warn", text: "Online bookings are paused.", to: "/hb-desk-7392/settings" });
     // stylists in parallel needs database update 0009; say so plainly when it's missing
     const { hasPerStylistGuard } = await import("./staff-store.server");
     if (!(await hasPerStylistGuard()))
-      alerts.push({ level: "warn", text: "Only one booking per time slot: the database update for stylists working in parallel (0009) isn't applied yet.", to: "/admin/system" });
+      alerts.push({ level: "warn", text: "Only one booking per time slot: the database update for stylists working in parallel (0009) isn't applied yet.", to: "/hb-desk-7392/system" });
     const pending = all.filter((b) => b.status === "pending" && b.date >= today).length;
-    if (pending) alerts.push({ level: "warn", text: `${pending} booking${pending > 1 ? "s" : ""} waiting for confirmation.`, to: "/admin/appointments" });
+    if (pending) alerts.push({ level: "warn", text: `${pending} booking${pending > 1 ? "s" : ""} waiting for confirmation.`, to: "/hb-desk-7392/appointments" });
     const overlapping = todays.filter(active).some((a, i, list) => list.some((b, j) => j > i && a.time < b.end && b.time < a.end && (!a.staffId || !b.staffId || a.staffId === b.staffId)));
-    if (overlapping) alerts.push({ level: "warn", text: "Two of today's appointments overlap.", to: "/admin/calendar" });
+    if (overlapping) alerts.push({ level: "warn", text: "Two of today's appointments overlap.", to: "/hb-desk-7392/calendar" });
     const tomorrow = all.filter((b) => b.date === addDays(today, 1) && active(b)).length;
-    if (tomorrow) alerts.push({ level: "info", text: `Tomorrow has ${tomorrow} booking${tomorrow > 1 ? "s" : ""}.`, to: "/admin/calendar" });
+    if (tomorrow) alerts.push({ level: "info", text: `Tomorrow has ${tomorrow} booking${tomorrow > 1 ? "s" : ""}.`, to: "/hb-desk-7392/calendar" });
     // booking emails (free): set up, and did any fail in the last day?
     if (ns) {
       const { canSendEmail } = await import("./notify/email.server");
       const emailOn = ns.customerEmail || ns.adminEmail;
       if (emailOn && !canSendEmail(ns.email).ok)
-        alerts.push({ level: "info", text: "Booking emails are switched on but the email service isn't set up yet.", to: "/admin/notifications" });
+        alerts.push({ level: "info", text: "Booking emails are switched on but the email service isn't set up yet.", to: "/hb-desk-7392/notifications" });
       const failedCount = (failed.data ?? []).length;
-      if (failedCount) alerts.push({ level: "warn", text: `${failedCount} booking email${failedCount > 1 ? "s" : ""} failed in the last 24 hours.`, to: "/admin/notifications" });
+      if (failedCount) alerts.push({ level: "warn", text: `${failedCount} booking email${failedCount > 1 ? "s" : ""} failed in the last 24 hours.`, to: "/hb-desk-7392/notifications" });
     }
 
     // ── the charts: the last 30 days and the coming week ──

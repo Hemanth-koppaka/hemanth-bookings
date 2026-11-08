@@ -166,7 +166,7 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean; onOpenChan
                 key={c.id}
                 onClick={() => {
                   onOpenChange(false);
-                  void navigate({ to: "/admin/customers", search: { id: c.id } as never });
+                  void navigate({ to: "/hb-desk-7392/customers", search: { id: c.id } as never });
                 }}
                 className="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left hover:bg-foreground/[0.04]"
               >
@@ -435,7 +435,7 @@ export function BookingDrawer({
                       <Copy className="h-4 w-4" /> Copy phone
                     </button>
                     {b.customerId ? (
-                      <Link to="/admin/customers" search={{ id: b.customerId } as never} className={ACTION}>
+                      <Link to="/hb-desk-7392/customers" search={{ id: b.customerId } as never} className={ACTION}>
                         Profile
                       </Link>
                     ) : null}

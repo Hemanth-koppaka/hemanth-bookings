@@ -15,7 +15,7 @@ import type { SiteContent } from "@/lib/site-content";
 import { BUSINESS } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/content")({
+export const Route = createFileRoute("/hb-desk-7392/content")({
   head: () => ({
     meta: [
       { title: "Site content — Hair by Bhargav" },

@@ -9,7 +9,7 @@ import { adminCustomer, adminCustomers, adminSaveCustomer, type AdminCustomer } 
 import { inr, minuteLabel } from "@/lib/salon";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/admin/customers")({
+export const Route = createFileRoute("/hb-desk-7392/customers")({
   validateSearch: (s: Record<string, unknown>): { id?: string } =>
     typeof s["id"] === "string" && /^[0-9a-f-]{36}$/i.test(s["id"]) ? { id: s["id"] } : {},
   head: () => ({
@@ -68,7 +68,7 @@ function CustomersScreen() {
     };
   }, [pin, term, page, version, signOut]);
 
-  const open = (cid: string | null) => void navigate({ to: "/admin/customers", search: cid ? { id: cid } : {}, replace: true });
+  const open = (cid: string | null) => void navigate({ to: "/hb-desk-7392/customers", search: cid ? { id: cid } : {}, replace: true });
 
   return (
     <AdminShell title="Customers" subtitle="Created automatically from every booking, matched by phone number.">

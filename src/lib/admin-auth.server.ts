@@ -2,8 +2,11 @@
 //
 // - The access code is stored as a PBKDF2 hash (legacy plain-text codes are
 //   accepted once and upgraded in place).
-// - Wrong codes are throttled: after 5 misses the console locks, and each
-//   further run of misses doubles the lock (up to an hour).
+// - Wrong codes are throttled per device (internet connection): after 5
+//   misses that device is locked out, and each further run of misses doubles
+//   its lock (up to an hour). Other devices, like the salon's own phone, can
+//   still sign in. A salon-wide backstop slows guessing spread over many
+//   devices, but never blocks a device that has signed in successfully before.
 // - A correct code is exchanged for a short-lived signed session token; the
 //   code itself is never kept in the browser. Changing the code invalidates
 //   every existing session.
@@ -65,8 +68,19 @@ async function matches(code: string, stored: string) {
 }
 
 /** A short code, or the original code that matches the public street number, is weak. */
-export const isWeakCode = (code: string) =>
-  code.length < 6 || code === "1143" || /^(\d)\1+$/.test(code);
+// The salon's own numbers (phone, plot, PIN code) are the first things guessed.
+const SALON_NUMBERS = ["7981648951", "1143", "500072"];
+/** Too short, a repeat (111111, 121212, 123123), a run (123456, 654321) or the salon's own numbers. */
+export const isWeakCode = (raw: string) => {
+  const code = raw.trim().toLowerCase();
+  if (code.length < 6) return true;
+  if (/^(.)\1+$/.test(code) || /^(..)\1+$/.test(code) || /^(...)\1+$/.test(code)) return true;
+  if (/^\d+$/.test(code) && ("01234567890".includes(code) || "09876543210".includes(code))) return true;
+  const digits = code.replace(/\D/g, "");
+  return SALON_NUMBERS.some((n) => digits.includes(n) || (digits.length >= 6 && n.includes(digits)));
+};
+export const WEAK_CODE_HINT =
+  "Use at least 6 characters. Avoid repeats (111111, 121212), runs (123456) and the salon's phone, plot or PIN code numbers.";
 
 /* ── session tokens ─────────────────────────────────────────── */
 
@@ -149,11 +163,17 @@ export async function signOutEverywhere(token: string) {
 
 /** Lockout state and session policy, for the security panel. */
 export async function securityStatus() {
-  const g = await readGuard();
+  const now = Date.now();
+  const g = prune(await readGuards(GUARD_KEY), now);
   const stored = await readSecret().catch(() => "");
+  const devices = Object.values(g.devices);
   return {
-    failedAttempts: g.fails,
-    lockedUntil: g.lockedUntil > Date.now() ? g.lockedUntil : 0,
+    /** Wrong codes in the last 24 hours, from all devices. */
+    failedAttempts: devices.reduce((n, e) => n + e.fails, 0),
+    /** Devices locked out right now (each for its own wrong codes). */
+    lockedDevices: devices.filter((e) => e.lockedUntil > now).length,
+    /** The salon-wide backstop (never holds a device that signed in before). */
+    backstopUntil: g.backstopUntil > now ? g.backstopUntil : 0,
     hashed: stored.startsWith("pbkdf2$"),
     sessionHours: SESSION_HOURS,
     attemptsBeforeLock: FREE_ATTEMPTS,
@@ -161,22 +181,101 @@ export async function securityStatus() {
   };
 }
 
-/* ── throttling ─────────────────────────────────────────────── */
+/* ── throttling: per device, with a salon-wide backstop ──────── */
 
 type Guard = { fails: number; lockedUntil: number };
+type Entry = Guard & { at: number };
+/** Stored per sign-in kind (console, stylists). */
+type Guards = {
+  devices: Record<string, Entry>;
+  /** Devices that signed in successfully (last 60 days): never held by the backstop. */
+  trusted: Record<string, number>;
+  /** Times of recent misses from any device, for the backstop. */
+  misses: number[];
+  backstopUntil: number;
+};
+const BACKSTOP_MISSES = 30; // wrong codes per hour, from all devices together
+const BACKSTOP_LOCK_MS = 15 * 60_000;
+const DAY = 24 * 3600_000;
 
-async function readGuard(): Promise<Guard> {
-  const { data } = await supabaseAdmin
-    .from("site_settings")
-    .select("value")
-    .eq("key", GUARD_KEY)
-    .maybeSingle();
-  const v = (data?.value ?? {}) as Partial<Guard>;
-  return { fails: v.fails ?? 0, lockedUntil: v.lockedUntil ?? 0 };
+/** A scrambled code for this device's internet connection (never the address itself). */
+async function deviceKey(): Promise<string> {
+  try {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const h = getRequest().headers;
+    const ip = (h.get("cf-connecting-ip") ?? h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0] ?? "").trim();
+    if (!ip) return "unknown";
+    const d = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(`hb-guard:${ip}`)));
+    return Array.from(d.slice(0, 10), (x) => x.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return "unknown";
+  }
 }
 
-const writeGuard = (g: Guard) =>
-  supabaseAdmin.from("site_settings").upsert({ key: GUARD_KEY, value: g as never });
+async function readGuards(key: string): Promise<Guards> {
+  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", key).maybeSingle();
+  const v = (data?.value ?? {}) as Partial<Guards>;
+  // an older salon-wide lock ({fails, lockedUntil}) is simply dropped
+  return {
+    devices: v.devices && typeof v.devices === "object" ? v.devices : {},
+    trusted: v.trusted && typeof v.trusted === "object" ? v.trusted : {},
+    misses: Array.isArray(v.misses) ? v.misses : [],
+    backstopUntil: typeof v.backstopUntil === "number" ? v.backstopUntil : 0,
+  };
+}
+
+function prune(g: Guards, now: number): Guards {
+  const devices = Object.fromEntries(
+    Object.entries(g.devices)
+      .filter(([, e]) => e.lockedUntil > now || now - e.at < DAY)
+      .sort((x, y) => y[1].at - x[1].at)
+      .slice(0, 300),
+  );
+  const trusted = Object.fromEntries(
+    Object.entries(g.trusted)
+      .filter(([, at]) => now - at < 60 * DAY)
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, 50),
+  );
+  return { devices, trusted, misses: g.misses.filter((t) => now - t < 3600_000).slice(-200), backstopUntil: g.backstopUntil };
+}
+
+const writeGuards = (key: string, g: Guards) =>
+  supabaseAdmin.from("site_settings").upsert({ key, value: g as never });
+
+/** Seconds this device must wait before trying again, or 0. */
+function lockedFor(g: Guards, dev: string, now: number): number {
+  const own = g.devices[dev]?.lockedUntil ?? 0;
+  const backstop = g.trusted[dev] ? 0 : g.backstopUntil;
+  const until = Math.max(own, backstop);
+  return until > now ? Math.ceil((until - now) / 1000) : 0;
+}
+
+/** Records a wrong code from this device; returns the lock or the tries left. */
+async function recordMiss(key: string, g: Guards, dev: string, now: number) {
+  const fails = (g.devices[dev]?.fails ?? 0) + 1;
+  const rounds = Math.floor(fails / FREE_ATTEMPTS);
+  const lockedUntil =
+    fails % FREE_ATTEMPTS === 0 ? now + Math.min(BASE_LOCK_MS * 2 ** (rounds - 1), MAX_LOCK_MS) : 0;
+  g.devices[dev] = { fails, lockedUntil, at: now };
+  g.misses.push(now);
+  if (g.misses.filter((t) => now - t < 3600_000).length >= BACKSTOP_MISSES) {
+    g.backstopUntil = now + BACKSTOP_LOCK_MS;
+    g.misses = [];
+  }
+  await writeGuards(key, prune(g, now));
+  const wait = lockedFor(g, dev, now);
+  return wait
+    ? { ok: false as const, lockedFor: wait }
+    : { ok: false as const, attemptsLeft: FREE_ATTEMPTS - (fails % FREE_ATTEMPTS) };
+}
+
+/** A correct code: this device's count resets and it is trusted from now on. */
+async function recordSuccess(key: string, g: Guards, dev: string, now: number) {
+  delete g.devices[dev];
+  if (dev !== "unknown") g.trusted[dev] = now;
+  await writeGuards(key, prune(g, now));
+}
 
 export type SignInResult =
   | { ok: true; token: string; expiresAt: number; weak: boolean }
@@ -184,31 +283,20 @@ export type SignInResult =
 
 /** Exchanges the access code for a session token, with lockout after repeated misses. */
 export async function signIn(code: string): Promise<SignInResult> {
-  const guard = await readGuard();
   const now = Date.now();
-  if (guard.lockedUntil > now)
-    return { ok: false, lockedFor: Math.ceil((guard.lockedUntil - now) / 1000) };
+  const [g, dev] = await Promise.all([readGuards(GUARD_KEY), deviceKey()]);
+  const wait = lockedFor(g, dev, now);
+  if (wait) return { ok: false, lockedFor: wait };
 
   const stored = await readSecret();
-  if (!(await matches(code, stored))) {
-    const fails = guard.fails + 1;
-    const rounds = Math.floor(fails / FREE_ATTEMPTS);
-    const lockedUntil =
-      fails % FREE_ATTEMPTS === 0
-        ? now + Math.min(BASE_LOCK_MS * 2 ** (rounds - 1), MAX_LOCK_MS)
-        : 0;
-    await writeGuard({ fails, lockedUntil });
-    return lockedUntil
-      ? { ok: false, lockedFor: Math.ceil((lockedUntil - now) / 1000) }
-      : { ok: false, attemptsLeft: FREE_ATTEMPTS - (fails % FREE_ATTEMPTS) };
-  }
+  if (!(await matches(code, stored))) return recordMiss(GUARD_KEY, g, dev, now);
 
   let current = stored;
   if (!stored.startsWith("pbkdf2$")) {
     current = await hashCode(code);
     await supabaseAdmin.from("admin_secret").update({ pin: current }).eq("id", 1);
   }
-  if (guard.fails || guard.lockedUntil) await writeGuard({ fails: 0, lockedUntil: 0 });
+  await recordSuccess(GUARD_KEY, g, dev, now);
   return { ok: true, ...(await issueToken(current, isWeakCode(code))), weak: isWeakCode(code) };
 }
 
@@ -219,7 +307,7 @@ export async function changeCode(token: string, current: string, next: string) {
   if (!(await matches(current, stored)))
     return { ok: false as const, error: "Current code doesn't match." };
   if (isWeakCode(next))
-    return { ok: false as const, error: "Use at least 6 digits, not all the same." };
+    return { ok: false as const, error: WEAK_CODE_HINT };
   const hashed = await hashCode(next);
   const { error } = await supabaseAdmin.from("admin_secret").update({ pin: hashed }).eq("id", 1);
   if (error) return { ok: false as const, error: "Couldn't save the new code." };
@@ -254,33 +342,19 @@ export async function setStylistCode(staffId: string, code: string) {
   return !error;
 }
 
-async function readStylistGuard(): Promise<Guard> {
-  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", STYLIST_GUARD).maybeSingle();
-  const v = (data?.value ?? {}) as Partial<Guard>;
-  return { fails: v.fails ?? 0, lockedUntil: v.lockedUntil ?? 0 };
-}
-
-/** A stylist's code → a session for their own day only (same lockout rules as the console). */
+/** A stylist's code → a session for their own day only (same per-device lockout as the console, counted separately). */
 export async function stylistSignIn(code: string): Promise<
   { ok: true; token: string; expiresAt: number; staffId: string } | { ok: false; lockedFor?: number; attemptsLeft?: number }
 > {
-  const guard = await readStylistGuard();
   const now = Date.now();
-  if (guard.lockedUntil > now) return { ok: false, lockedFor: Math.ceil((guard.lockedUntil - now) / 1000) };
+  const [g, dev] = await Promise.all([readGuards(STYLIST_GUARD), deviceKey()]);
+  const wait = lockedFor(g, dev, now);
+  if (wait) return { ok: false, lockedFor: wait };
   const codes = await stylistCodes();
   let staffId: string | null = null;
   for (const [id, stored] of Object.entries(codes)) if (await matches(code, stored)) staffId = id;
-  if (!staffId) {
-    const fails = guard.fails + 1;
-    const rounds = Math.floor(fails / FREE_ATTEMPTS);
-    const lockedUntil = fails % FREE_ATTEMPTS === 0 ? now + Math.min(BASE_LOCK_MS * 2 ** (rounds - 1), MAX_LOCK_MS) : 0;
-    await supabaseAdmin.from("site_settings").upsert({ key: STYLIST_GUARD, value: { fails, lockedUntil } as never });
-    return lockedUntil
-      ? { ok: false, lockedFor: Math.ceil((lockedUntil - now) / 1000) }
-      : { ok: false, attemptsLeft: FREE_ATTEMPTS - (fails % FREE_ATTEMPTS) };
-  }
-  if (guard.fails || guard.lockedUntil)
-    await supabaseAdmin.from("site_settings").upsert({ key: STYLIST_GUARD, value: { fails: 0, lockedUntil: 0 } as never });
+  if (!staffId) return recordMiss(STYLIST_GUARD, g, dev, now);
+  await recordSuccess(STYLIST_GUARD, g, dev, now);
   const exp = now + 14 * 3600_000;
   const body = b64(enc.encode(JSON.stringify({ kind: "stylist", sid: staffId, exp, iat: now, v: await codeVersion(codes[staffId]!) })));
   return { ok: true, token: `${body}.${await hmac(body)}`, expiresAt: exp, staffId };

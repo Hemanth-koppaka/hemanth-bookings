@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Search engines may read the public site; the admin console and the site's
-// internal endpoints stay out of search results. Points to the sitemap on
+// Search engines may read the public site; the site's internal endpoints stay
+// out of search results. The admin console is deliberately NOT listed here
+// (this file is public and would reveal its address); its pages carry a
+// "noindex" tag instead. Points to the sitemap on
 // whichever address the site is served from.
 export const Route = createFileRoute("/robots.txt")({
   server: {
@@ -10,7 +12,6 @@ export const Route = createFileRoute("/robots.txt")({
         const origin = new URL(request.url).origin;
         const body = `User-agent: *
 Allow: /
-Disallow: /admin
 Disallow: /api/
 Disallow: /_serverFn/
 Disallow: /confirmed

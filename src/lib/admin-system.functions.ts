@@ -200,18 +200,8 @@ export const adminSystemHealth = createServerFn({ method: "POST" })
         ? "Set (scheduled jobs can authenticate)."
         : "Not set — scheduled jobs can't run.",
     });
-    add({
-      group: "Secrets",
-      label: "MSG91_AUTH_KEY",
-      status: has("MSG91_AUTH_KEY") ? "ok" : "warn",
-      detail: has("MSG91_AUTH_KEY") ? "Set." : "Not set.",
-    });
-    add({
-      group: "Secrets",
-      label: "MSG91_WEBHOOK_SECRET",
-      status: has("MSG91_WEBHOOK_SECRET") ? "ok" : "warn",
-      detail: has("MSG91_WEBHOOK_SECRET") ? "Set." : "Not set — delivery reports are refused.",
-    });
+    // No MSG91 checks: the salon doesn't use paid WhatsApp/SMS messaging, so its
+    // keys being unset is expected, not something that needs attention.
 
     const { securityStatus } = await import("./admin-auth.server");
     return { checks, security: await securityStatus(), checkedAt: Date.now() };

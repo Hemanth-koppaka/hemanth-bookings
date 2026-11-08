@@ -7,7 +7,7 @@ import { useAdmin } from "@/lib/admin-store";
 import { adminActivity, type ActivityEntry } from "@/lib/admin-ops.functions";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/activity")({
+export const Route = createFileRoute("/hb-desk-7392/activity")({
   head: () => ({
     meta: [
       { title: "Activity — Hair by Bhargav" },

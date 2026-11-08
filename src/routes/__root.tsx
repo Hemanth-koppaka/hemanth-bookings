@@ -191,7 +191,7 @@ function SoundDirector() {
   useEffect(() => {
     const from = prev.current;
     prev.current = path;
-    if (from === null || from === path || path.startsWith("/admin")) return;
+    if (from === null || from === path || path.startsWith("/hb-desk-7392")) return;
     const a = FLOW[from];
     const b = FLOW[path];
     if (a !== undefined && b !== undefined) {

@@ -32,38 +32,38 @@ import { GlobalSearch } from "@/components/admin-ops";
 type NavItem = { to: string; label: string; icon: typeof LayoutGrid; exact?: boolean };
 
 export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
-  { label: "Command center", items: [{ to: "/admin", label: "Today", icon: LayoutGrid, exact: true }] },
+  { label: "Command center", items: [{ to: "/hb-desk-7392", label: "Today", icon: LayoutGrid, exact: true }] },
   {
     label: "Operations",
     items: [
-      { to: "/admin/calendar", label: "Calendar", icon: CalendarDays },
-      { to: "/admin/appointments", label: "Bookings", icon: ListChecks },
-      { to: "/admin/customers", label: "Customers", icon: Users },
-      { to: "/admin/staff", label: "Staff", icon: Contact },
-      { to: "/admin/closures", label: "Closures", icon: CalendarOff },
+      { to: "/hb-desk-7392/calendar", label: "Calendar", icon: CalendarDays },
+      { to: "/hb-desk-7392/appointments", label: "Bookings", icon: ListChecks },
+      { to: "/hb-desk-7392/customers", label: "Customers", icon: Users },
+      { to: "/hb-desk-7392/staff", label: "Staff", icon: Contact },
+      { to: "/hb-desk-7392/closures", label: "Closures", icon: CalendarOff },
     ],
   },
   {
     label: "Catalogue",
     items: [
-      { to: "/admin/services", label: "Services", icon: Scissors },
-      { to: "/admin/content", label: "Site content", icon: FileText },
+      { to: "/hb-desk-7392/services", label: "Services", icon: Scissors },
+      { to: "/hb-desk-7392/content", label: "Site content", icon: FileText },
     ],
   },
   {
     label: "Insights",
     items: [
-      { to: "/admin/reports", label: "Reports", icon: BarChart3 },
-      { to: "/admin/activity", label: "Activity", icon: History },
+      { to: "/hb-desk-7392/reports", label: "Reports", icon: BarChart3 },
+      { to: "/hb-desk-7392/activity", label: "Activity", icon: History },
     ],
   },
   {
     label: "System",
     items: [
-      { to: "/admin/rules", label: "Booking rules", icon: SlidersHorizontal },
-      { to: "/admin/notifications", label: "Notifications", icon: BellRing },
-      { to: "/admin/system", label: "System health", icon: HeartPulse },
-      { to: "/admin/settings", label: "Settings", icon: Settings },
+      { to: "/hb-desk-7392/rules", label: "Booking rules", icon: SlidersHorizontal },
+      { to: "/hb-desk-7392/notifications", label: "Notifications", icon: BellRing },
+      { to: "/hb-desk-7392/system", label: "System health", icon: HeartPulse },
+      { to: "/hb-desk-7392/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
@@ -72,10 +72,10 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
 export const NAV = NAV_GROUPS.flatMap((g) => g.items);
 
 const MOBILE: NavItem[] = [
-  { to: "/admin", label: "Today", icon: LayoutGrid, exact: true },
-  { to: "/admin/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/admin/appointments", label: "Bookings", icon: ListChecks },
-  { to: "/admin/customers", label: "Customers", icon: Users },
+  { to: "/hb-desk-7392", label: "Today", icon: LayoutGrid, exact: true },
+  { to: "/hb-desk-7392/calendar", label: "Calendar", icon: CalendarDays },
+  { to: "/hb-desk-7392/appointments", label: "Bookings", icon: ListChecks },
+  { to: "/hb-desk-7392/customers", label: "Customers", icon: Users },
 ];
 
 export function AdminShell({
@@ -118,7 +118,7 @@ export function AdminShell({
     <div className="flex min-h-[100svh] bg-background">
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-[100svh] w-56 shrink-0 flex-col border-r border-hairline bg-card/40 px-4 py-5 lg:flex">
-        <Link to="/admin" className="flex items-center gap-3 px-2">
+        <Link to="/hb-desk-7392" className="flex items-center gap-3 px-2">
           <Wordmark className="h-9" />
           <span className="text-[0.6rem] uppercase leading-tight tracking-[0.24em] text-muted-foreground">
             Admin
@@ -193,7 +193,7 @@ export function AdminShell({
             className="flex flex-wrap items-center justify-between gap-3 border-b border-destructive/20 bg-destructive/[0.05] px-4 py-2.5 text-[0.82rem] lg:px-8"
           >
             <span>This console is protected by a short or default access code.</span>
-            <Link to="/admin/settings" hash="access" className="font-medium text-destructive underline underline-offset-4">
+            <Link to="/hb-desk-7392/settings" hash="access" className="font-medium text-destructive underline underline-offset-4">
               Set a stronger code
             </Link>
           </div>
@@ -239,16 +239,16 @@ export function AdminShell({
               </div>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {[
-                  { to: "/admin/staff", label: "Staff", icon: Contact },
-                  { to: "/admin/closures", label: "Closures", icon: CalendarOff },
-                  { to: "/admin/services", label: "Services", icon: Scissors },
-                  { to: "/admin/content", label: "Site content", icon: FileText },
-                  { to: "/admin/rules", label: "Booking rules", icon: SlidersHorizontal },
-                  { to: "/admin/notifications", label: "Messages", icon: BellRing },
-                  { to: "/admin/reports", label: "Reports", icon: BarChart3 },
-                  { to: "/admin/activity", label: "Activity", icon: History },
-                  { to: "/admin/system", label: "Health", icon: HeartPulse },
-                  { to: "/admin/settings", label: "Settings", icon: Settings },
+                  { to: "/hb-desk-7392/staff", label: "Staff", icon: Contact },
+                  { to: "/hb-desk-7392/closures", label: "Closures", icon: CalendarOff },
+                  { to: "/hb-desk-7392/services", label: "Services", icon: Scissors },
+                  { to: "/hb-desk-7392/content", label: "Site content", icon: FileText },
+                  { to: "/hb-desk-7392/rules", label: "Booking rules", icon: SlidersHorizontal },
+                  { to: "/hb-desk-7392/notifications", label: "Messages", icon: BellRing },
+                  { to: "/hb-desk-7392/reports", label: "Reports", icon: BarChart3 },
+                  { to: "/hb-desk-7392/activity", label: "Activity", icon: History },
+                  { to: "/hb-desk-7392/system", label: "Health", icon: HeartPulse },
+                  { to: "/hb-desk-7392/settings", label: "Settings", icon: Settings },
                 ].map((n) => (
                   <Link
                     key={n.label}

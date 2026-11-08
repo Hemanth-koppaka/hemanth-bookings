@@ -2,7 +2,7 @@
   "name": "Hair by Bhargav · Salon",
   "short_name": "HB Salon",
   "description": "The salon's operations console: today's diary and booking alerts.",
-  "start_url": "/admin",
+  "start_url": "/hb-desk-7392",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f8f5f0",

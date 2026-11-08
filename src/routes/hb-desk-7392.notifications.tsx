@@ -18,7 +18,7 @@ import type { NotifySettings } from "@/lib/notify/service.server";
 import { cn } from "@/lib/utils";
 import { PhoneAlertsPanel } from "@/components/phone-alerts";
 
-export const Route = createFileRoute("/admin/notifications")({
+export const Route = createFileRoute("/hb-desk-7392/notifications")({
   head: () => ({
     meta: [
       { title: "Notifications — Hair by Bhargav" },
