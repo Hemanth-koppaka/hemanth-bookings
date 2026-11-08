@@ -261,9 +261,10 @@ export const getAvailability = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    // the day's reads don't need the salon configuration: start them while it loads
+    const prefetch = (await import("./engine.server")).prefetchDay(data.date);
     const E = await engine();
-    // rules load alongside the day's data instead of before it
-    const rules = E.loadRules();
+    const rules = prefetch.rules;
     let q: { minutes: number; buffer: number } = E.quote(data.audience, data.serviceIds) ?? {
       minutes: 30,
       buffer: 0,
@@ -295,6 +296,7 @@ export const getAvailability = createServerFn({ method: "POST" })
       ...(ignore ? { ignoreReference: ignore } : {}),
       serviceIds,
       choice,
+      prefetch,
     });
   });
 
