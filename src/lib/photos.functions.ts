@@ -52,10 +52,17 @@ export const uploadReferencePhoto = createServerFn({ method: "POST" })
   });
 
 export const removeReferencePhoto = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ draftId, path: z.string().max(200) }).parse(d))
+  .inputValidator(
+    (d) =>
+      z
+        .object({ draftId, path: z.string().max(200), proof: z.string().max(100) })
+        .parse(d),
+  )
   .handler(async ({ data }) => {
     if (!data.path.startsWith(`pending/${data.draftId}/`) || data.path.includes(".."))
       return { ok: false };
+    const { verifyPendingPhotoProof } = await import("./admin-auth.server");
+    if (!(await verifyPendingPhotoProof(data.path, data.proof))) return { ok: false };
     const { REF_BUCKET } = await import("./photos.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.storage.from(REF_BUCKET).remove([data.path]);

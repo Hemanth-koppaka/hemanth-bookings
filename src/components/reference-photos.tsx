@@ -55,8 +55,8 @@ export function ReferencePhotos({ compact }: { compact?: boolean }) {
 
   const remove = (p: RefPhoto) => {
     update((d) => ({ photos: (d.photos ?? []).filter((x) => x.path !== p.path) }));
-    if (draft.draftId)
-      void removeReferencePhoto({ data: { draftId: draft.draftId, path: p.path } }).catch(() => {});
+    if (draft.draftId && p.proof)
+      void removeReferencePhoto({ data: { draftId: draft.draftId, path: p.path, proof: p.proof } }).catch(() => {});
   };
 
   const tile = compact ? "h-20 w-20" : "h-24 w-24";
