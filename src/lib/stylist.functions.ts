@@ -139,7 +139,7 @@ export const stylistPushSubscribe = createServerFn({ method: "POST" })
         origin: data.origin,
         at: Date.now(),
         staffId: sid,
-      });
+      }, sid);
       if (!saved) return { ok: false as const, error: "That phone is already connected to another account." };
     }
     return { ok: true as const };

@@ -758,14 +758,14 @@ export const adminSaveConfig = createServerFn({ method: "POST" })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await sb.from("salon_config").update({ data: merged as any }).eq("id", 1);
     if (error) throw new Error("Couldn't save settings");
-    const c = data.config as { accepting?: boolean; maxAdvanceDays?: number };
+    const c = data.config;
     const E = await import("./engine.server");
     if (c.accepting !== undefined) {
       await E.audit({ action: c.accepting ? "bookings.resume" : "bookings.pause", entity: "settings", entityId: "booking", summary: c.accepting ? "Resumed online bookings" : "Paused online bookings" });
     }
-    if (c.accepting !== undefined || c.maxAdvanceDays !== undefined) {
+    if (c.accepting !== undefined) {
       const { data: cur } = await sb.from("site_settings").select("value").eq("key", "booking").maybeSingle();
-      const value = { ...((cur?.value as object) ?? {}), ...(c.accepting !== undefined ? { accepting: c.accepting } : {}), ...(c.maxAdvanceDays !== undefined ? { maxAdvanceDays: c.maxAdvanceDays } : {}) };
+      const value = { ...((cur?.value as object) ?? {}), accepting: c.accepting };
       await sb.from("site_settings").upsert({ key: "booking", value });
     }
     return { ok: true };
