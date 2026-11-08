@@ -130,7 +130,7 @@ export const stylistPushSubscribe = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sid = await stylist(data.token);
     const P = await import("./push.server");
-    if (data.off) await P.removeSub(data.endpoint);
+    if (data.off) await P.removeSub(data.endpoint, sid);
     else
       await P.addSub({
         endpoint: data.endpoint,

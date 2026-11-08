@@ -98,7 +98,17 @@ const bookingInput = z.object({
   }),
   // Optional reference photos uploaded during booking (pending/<draft>/<file>).
   photos: z
-    .array(z.string().regex(/^pending\/[0-9a-f-]{36}\/[a-z0-9]+\.(jpg|png|webp)$/))
+    .array(
+      z.union([
+        // Legacy local drafts may still contain bare paths; they are ignored unless
+        // accompanied by a server-issued proof below.
+        z.string().regex(/^pending\/[0-9a-f-]{36}\/[a-z0-9]+\.(jpg|png|webp)$/),
+        z.object({
+          path: z.string().regex(/^pending\/[0-9a-f-]{36}\/[a-z0-9]+\.(jpg|png|webp)$/),
+          proof: z.string().max(100),
+        }).strict(),
+      ]),
+    )
     .max(3)
     .optional(),
   /** Agreed to booking messages on WhatsApp/SMS. */
@@ -176,6 +186,14 @@ const notify = async (...a: Parameters<typeof import("./notify/service.server").
 export const createBooking = createServerFn({ method: "POST" })
   .inputValidator((d) => bookingInput.parse(d))
   .handler(async ({ data }) => {
+    const photoPaths: string[] = [];
+    if (data.photos?.length) {
+      const { verifyPendingPhotoProof } = await import("./admin-auth.server");
+      for (const photo of data.photos) {
+        if (typeof photo === "string") continue;
+        if (await verifyPendingPhotoProof(photo.path, photo.proof)) photoPaths.push(photo.path);
+      }
+    }
     const r = await insertBooking(
       {
         audience: data.audience,
@@ -189,7 +207,7 @@ export const createBooking = createServerFn({ method: "POST" })
         staffChoice: data.staffId ?? "any",
         meta: { ip: await connectionCode() },
       },
-      { staff: false, ...(data.photos?.length ? { photos: data.photos } : {}) },
+      { staff: false, ...(photoPaths.length ? { photos: photoPaths } : {}) },
     );
     const { sweepPhotos } = await import("./photos.server");
     await sweepPhotos().catch(() => {});
@@ -708,10 +726,31 @@ export const adminUpsertBooking = createServerFn({ method: "POST" })
 
 export const adminSaveConfig = createServerFn({ method: "POST" })
   .inputValidator((d) =>
-    pinOnly.extend({ config: z.record(z.string(), z.unknown()) }).parse(d),
+    pinOnly
+      .extend({
+        config: z
+          .object({
+            accepting: z.boolean().optional(),
+            staff: z
+              .array(
+                z
+                  .object({
+                    id: z.string().trim().min(1).max(80),
+                    name: z.string().trim().min(1).max(80),
+                    role: z.string().trim().min(1).max(80),
+                    active: z.boolean(),
+                  })
+                  .strict(),
+              )
+              .max(30)
+              .optional(),
+          })
+          .strict()
+          .refine((config) => config.accepting !== undefined || config.staff !== undefined),
+      })
+      .parse(d),
   )
   .handler(async ({ data }) => {
-    if (JSON.stringify(data.config).length > 500_000) throw new Error("Too large");
     const sb = await assertPin(data.pin);
     // Merge, so saving one setting never wipes the others.
     const { data: existing } = await sb.from("salon_config").select("data").eq("id", 1).maybeSingle();

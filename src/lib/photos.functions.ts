@@ -40,7 +40,8 @@ export const uploadReferencePhoto = createServerFn({ method: "POST" })
       });
       if (error)
         return { ok: false as const, error: "Couldn't upload that photo. Please try again." };
-      return { ok: true as const, path };
+      const { pendingPhotoProof } = await import("./admin-auth.server");
+      return { ok: true as const, path, proof: await pendingPhotoProof(path) };
     } catch (e) {
       console.error("reference photo upload failed", e);
       return {

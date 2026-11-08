@@ -155,8 +155,14 @@ export async function addSub(sub: PushSub) {
   await saveSubs([...list, sub]);
 }
 
-export async function removeSub(endpoint: string) {
-  await saveSubs((await listSubs()).filter((x) => x.endpoint !== endpoint));
+export async function removeSub(endpoint: string, staffId?: string) {
+  await saveSubs(
+    (await listSubs()).filter(
+      (x) =>
+        x.endpoint !== endpoint ||
+        (staffId !== undefined && x.staffId !== staffId),
+    ),
+  );
 }
 
 /* ── sending ───────────────────────────────────────────────── */

@@ -40,7 +40,7 @@ export function ReferencePhotos({ compact }: { compact?: boolean }) {
           data: { draftId: id, dataUrl: shrinkImage(img, 1600, 0.82) },
         });
         if (!r.ok) throw new Error(r.error);
-        added.push({ path: r.path, thumb: shrinkImage(img, 320, 0.72) });
+        added.push({ path: r.path, proof: r.proof, thumb: shrinkImage(img, 320, 0.72) });
         haptic();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Couldn't add that photo.");

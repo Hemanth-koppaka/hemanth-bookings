@@ -19,7 +19,7 @@ export type Customer = {
   photos?: string[];
 };
 
-export type RefPhoto = { path: string; thumb: string };
+export type RefPhoto = { path: string; thumb: string; proof?: string };
 
 export type Draft = {
   audience: Audience | null;
@@ -211,7 +211,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
               },
               consent: booking.customer.consent !== false,
               ...(draft.staffId ? { staffId: draft.staffId } : {}),
-              ...(draft.photos?.length ? { photos: draft.photos.map((x) => x.path) } : {}),
+              ...(draft.photos?.length
+                ? {
+                    photos: draft.photos.map(({ path, proof }) => ({ path, proof })),
+                  }
+                : {}),
             },
           });
           if (!res.ok) return { error: res.error };
