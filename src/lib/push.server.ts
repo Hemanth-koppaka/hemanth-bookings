@@ -151,8 +151,18 @@ async function saveSubs(list: PushSub[]) {
 }
 
 export async function addSub(sub: PushSub) {
-  const list = (await listSubs()).filter((x) => x.endpoint !== sub.endpoint);
+  const current = await listSubs();
+  const existing = current.find((x) => x.endpoint === sub.endpoint);
+  if (
+    sub.staffId !== undefined &&
+    existing &&
+    existing.staffId !== undefined &&
+    existing.staffId !== sub.staffId
+  )
+    return false;
+  const list = current.filter((x) => x.endpoint !== sub.endpoint);
   await saveSubs([...list, sub]);
+  return true;
 }
 
 export async function removeSub(endpoint: string, staffId?: string) {
