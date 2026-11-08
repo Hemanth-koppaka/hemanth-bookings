@@ -12,7 +12,7 @@ import {
 } from "@/lib/admin-system.functions";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/system")({
+export const Route = createFileRoute("/hb-desk-7392/system")({
   head: () => ({
     meta: [
       { title: "System health — Hair by Bhargav" },
@@ -175,33 +175,41 @@ function SystemScreen() {
                   : " Set ADMIN_SESSION_SECRET for a dedicated signing key."}
               </li>
               <li>
-                After {data.security.attemptsBeforeLock} wrong codes, sign-in locks (5 minutes,
-                doubling up to an hour).{" "}
-                {data.security.lockedUntil ? (
+                After {data.security.attemptsBeforeLock} wrong codes, that device is locked out (5
+                minutes, doubling up to an hour); other devices, like the salon's own phone, can
+                still sign in.{" "}
+                {data.security.lockedDevices ? (
                   <b className="text-destructive">
-                    Locked until{" "}
-                    {new Date(data.security.lockedUntil).toLocaleTimeString("en-GB", {
-                      timeZone: "Asia/Kolkata",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                    .
+                    {data.security.lockedDevices} device
+                    {data.security.lockedDevices > 1 ? "s" : ""} locked out right now.
                   </b>
                 ) : data.security.failedAttempts ? (
                   <span className="text-amber-700">
                     {data.security.failedAttempts} wrong attempt
-                    {data.security.failedAttempts > 1 ? "s" : ""} since the last successful sign-in.
+                    {data.security.failedAttempts > 1 ? "s" : ""} in the last 24 hours.
                   </span>
                 ) : (
                   <span className="text-muted-foreground">
-                    No wrong attempts since the last sign-in.
+                    No wrong attempts in the last 24 hours.
                   </span>
                 )}
+                {data.security.backstopUntil ? (
+                  <b className="text-destructive">
+                    {" "}
+                    Many wrong codes from different devices: new devices must wait until{" "}
+                    {new Date(data.security.backstopUntil).toLocaleTimeString("en-GB", {
+                      timeZone: "Asia/Kolkata",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                    ; devices that have signed in before are not affected.
+                  </b>
+                ) : null}
               </li>
             </ul>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
-                to="/admin/settings"
+                to="/hb-desk-7392/settings"
                 hash="access"
                 className="press inline-flex min-h-9 items-center rounded-md border border-foreground/15 px-3 text-[0.8rem] hover:border-foreground/45"
               >

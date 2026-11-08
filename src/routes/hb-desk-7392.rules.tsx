@@ -8,7 +8,7 @@ import { adminGetRules, adminSaveRules } from "@/lib/admin-ops.functions";
 import type { BookingRules } from "@/lib/engine.server";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/rules")({
+export const Route = createFileRoute("/hb-desk-7392/rules")({
   head: () => ({
     meta: [
       { title: "Booking rules — Hair by Bhargav" },

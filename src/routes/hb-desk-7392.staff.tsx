@@ -27,7 +27,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/admin/staff")({
+export const Route = createFileRoute("/hb-desk-7392/staff")({
   head: () => ({
     meta: [
       { title: "Staff — Hair by Bhargav" },

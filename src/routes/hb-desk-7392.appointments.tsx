@@ -8,7 +8,7 @@ import { adminBookings, type AdminBooking } from "@/lib/admin-data.functions";
 import { fromISO, inr, minuteLabel, toISO } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/appointments")({
+export const Route = createFileRoute("/hb-desk-7392/appointments")({
   head: () => ({
     meta: [
       { title: "Bookings — Hair by Bhargav" },

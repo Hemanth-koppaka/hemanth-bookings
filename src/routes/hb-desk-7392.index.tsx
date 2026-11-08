@@ -34,7 +34,7 @@ import { adminUpsertBooking } from "@/lib/salon.functions";
 import { formatDuration, inr, minuteLabel } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/")({
+export const Route = createFileRoute("/hb-desk-7392/")({
   head: () => ({
     meta: [
       { title: "Today at the salon — Hair by Bhargav" },

@@ -5,7 +5,7 @@ import { Wordmark } from "@/components/screen";
 import { inputClass } from "@/components/admin";
 import { Toaster } from "@/components/ui/sonner";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/hb-desk-7392")({
   head: () => ({
     meta: [
       { title: "Salon operations — Hair by Bhargav" },
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/admin")({
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
     links: [
-      { rel: "manifest", href: "/admin.webmanifest" },
+      { rel: "manifest", href: "/hb-desk-7392.webmanifest" },
       { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
     ],
   }),

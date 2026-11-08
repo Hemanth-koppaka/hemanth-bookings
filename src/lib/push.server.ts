@@ -238,7 +238,7 @@ export async function pushBookingEvent(
         ? `Moved: ${c.name ?? "a guest"} → ${when}`
         : `New booking: ${c.name ?? "a guest"}`;
   const body = `${services || "Appointment"} · ${when}${staff ? ` · ${staff}` : ""}`;
-  return pushToSalon({ title, body, url: `/admin/appointments?ref=${encodeURIComponent(reference)}`, tag: reference }, { staffId });
+  return pushToSalon({ title, body, url: `/hb-desk-7392/appointments?ref=${encodeURIComponent(reference)}`, tag: reference }, { staffId });
 }
 
 /* ── guests: free reminders before their appointment ──────────── */

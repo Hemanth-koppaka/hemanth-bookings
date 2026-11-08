@@ -156,10 +156,10 @@ export const adminStylistCodes = createServerFn({ method: "POST" })
 export const adminSetStylistCode = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ pin, staffId: z.string().max(80), code: z.string().max(64) }).parse(d))
   .handler(async ({ data }) => {
-    const { assertAdmin, setStylistCode, isWeakCode } = await import("./admin-auth.server");
+    const { assertAdmin, setStylistCode, isWeakCode, WEAK_CODE_HINT } = await import("./admin-auth.server");
     await assertAdmin(data.pin);
     const code = data.code.trim();
-    if (code && isWeakCode(code)) return { ok: false as const, error: "Use at least 6 characters (not all the same)." };
+    if (code && isWeakCode(code)) return { ok: false as const, error: WEAK_CODE_HINT };
     const ok = await setStylistCode(data.staffId, code);
     if (!ok) return { ok: false as const, error: "Couldn't save. Please try again." };
     const E = await import("./engine.server");

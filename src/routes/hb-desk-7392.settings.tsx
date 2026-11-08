@@ -6,7 +6,7 @@ import { SoundSettingsPanel } from "@/components/admin-sound";
 import { adminSaveBusinessHours } from "@/lib/salon.functions";
 import { BUSINESS, WEEK, type WeekDay } from "@/lib/salon";
 
-export const Route = createFileRoute("/admin/settings")({
+export const Route = createFileRoute("/hb-desk-7392/settings")({
   head: () => ({
     meta: [
       { title: "Settings — Hair by Bhargav" },
@@ -314,7 +314,7 @@ function SettingsScreen() {
         <p className="mt-3 text-sm text-muted-foreground">
           Pausing bookings, notice, how far ahead guests can book and cancellation deadlines now live in Booking rules.
         </p>
-        <Link to="/admin/rules" className="mt-4 inline-block border-b border-foreground/30 pb-0.5 text-sm">
+        <Link to="/hb-desk-7392/rules" className="mt-4 inline-block border-b border-foreground/30 pb-0.5 text-sm">
           Open booking rules
         </Link>
       </Panel>
@@ -322,7 +322,7 @@ function SettingsScreen() {
       <Panel className="mt-4">
         <div id="access" className="eyebrow scroll-mt-28">Access code</div>
         <p className="mt-3 text-sm text-muted-foreground">
-          Use 6–12 digits that aren't on any sign or receipt. Changing it signs out every other device.
+          Use 6–12 digits that aren't on any sign or receipt: no repeats (111111, 121212), runs (123456) or the salon's phone, plot or PIN code numbers. Changing it signs out every other device.
         </p>
         <form
           className="mt-4 grid gap-3 sm:grid-cols-3"

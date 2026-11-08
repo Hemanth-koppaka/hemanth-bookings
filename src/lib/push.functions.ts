@@ -68,7 +68,7 @@ export const adminPushTest = createServerFn({ method: "POST" })
     return P.pushToSalon({
       title: "Booking alerts are on",
       body: "New bookings, moves and cancellations will appear here.",
-      url: "/admin",
+      url: "/hb-desk-7392",
       tag: "test",
     }, { ownersOnly: true });
   });

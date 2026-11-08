@@ -9,7 +9,7 @@ import { adminAddClosure, adminClosures, adminReopen } from "@/lib/admin-staff.f
 import { fromISO, minuteLabel } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/closures")({
+export const Route = createFileRoute("/hb-desk-7392/closures")({
   head: () => ({
     meta: [
       { title: "Salon closures — Hair by Bhargav" },

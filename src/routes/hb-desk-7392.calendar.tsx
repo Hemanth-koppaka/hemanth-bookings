@@ -20,7 +20,7 @@ import { fromISO, hoursFor, isClosed, minuteLabel, toISO } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/admin/calendar")({
+export const Route = createFileRoute("/hb-desk-7392/calendar")({
   head: () => ({
     meta: [
       { title: "Calendar — Hair by Bhargav" },

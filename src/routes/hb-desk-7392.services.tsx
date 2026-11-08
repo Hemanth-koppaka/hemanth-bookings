@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/admin/services")({
+export const Route = createFileRoute("/hb-desk-7392/services")({
   head: () => ({
     meta: [
       { title: "Catalogue — Hair by Bhargav" },
