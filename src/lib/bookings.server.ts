@@ -3,7 +3,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { metaWithStaff } from "./staff-store.server";
 import { applyConfig, type SalonConfig } from "./salon";
-import { loadConfig } from "./config.server";
+import { loadConfig, loadConfigFast } from "./config.server";
 
 async function db() {
   return supabaseAdmin;
@@ -17,7 +17,8 @@ const last10 = (p: string) => p.replace(/\D/g, "").slice(-10);
  * latest hours, closures and prices (`fresh`).
  */
 export async function engine(fresh = false) {
-  applyConfig((await loadConfig(fresh)) as SalonConfig);
+  // customer screens read the fast copy; anything that saves a booking reads fresh
+  applyConfig((await (fresh ? loadConfig(true) : loadConfigFast())) as SalonConfig);
   return import("./engine.server");
 }
 

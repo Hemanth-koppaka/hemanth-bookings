@@ -60,6 +60,8 @@ let cached: { at: number; value: Promise<Record<string, unknown>> } | null = nul
 /** Forget the cached configuration (call after any admin change). */
 export function invalidateConfig() {
   cached = null;
+  const c = sharedCache();
+  if (c) void c.delete(SHARED_KEY).catch(() => {});
 }
 
 /** The live salon configuration (briefly cached; `fresh` skips the cache and refreshes it). */
@@ -70,10 +72,105 @@ export function loadConfig(fresh = false): Promise<Record<string, unknown>> {
   const entry = { at: now, value };
   cached = entry;
   // never keep a failed build
-  value.catch(() => {
-    if (cached === entry) cached = null;
-  });
+  value.then(
+    (v) => writeShared(v, now),
+    () => {
+      if (cached === entry) cached = null;
+    },
+  );
   return value;
+}
+
+/*
+ * Customer screens (every page load and the Time screen's slots) used to wait
+ * 1.5-2.5 s whenever the server copy handling the request had no fresh
+ * configuration, which on the live site is most requests. They now take:
+ *  - this server copy's configuration, if it is under 20 s old;
+ *  - else one up to 2 minutes old, refreshing it in the background;
+ *  - else the copy another server copy left in the data-centre's shared cache;
+ *  - else a fresh build (as before).
+ * Admin screens keep loadConfig(), and saving a booking always uses
+ * loadConfig(true), so nothing is ever booked against an older configuration.
+ */
+const STALE_MAX_MS = 120_000;
+// a URL on a reserved domain: the shared cache's key, never fetched
+const SHARED_KEY = "https://salon-config.invalid/v1";
+let refreshing: Promise<unknown> | null = null;
+
+/** Cloudflare's per-data-centre cache, when the server runs there. */
+function sharedCache(): {
+  match: (k: string) => Promise<Response | undefined>;
+  put: (k: string, r: Response) => Promise<void>;
+  delete: (k: string) => Promise<boolean>;
+} | null {
+  try {
+    const c = (globalThis as { caches?: { default?: unknown } }).caches?.default;
+    return (c as ReturnType<typeof sharedCache>) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeShared(value: Record<string, unknown>, at: number) {
+  const c = sharedCache();
+  if (!c) return;
+  const body = new Response(JSON.stringify(value), {
+    headers: {
+      "content-type": "application/json",
+      "cache-control": `max-age=${STALE_MAX_MS / 1000}`,
+      "x-built-at": String(at),
+    },
+  });
+  void c.put(SHARED_KEY, body).catch(() => {});
+}
+
+async function readShared(): Promise<{ at: number; value: Record<string, unknown> } | null> {
+  const c = sharedCache();
+  if (!c) return null;
+  try {
+    const r = await c.match(SHARED_KEY);
+    if (!r) return null;
+    const at = Number(r.headers.get("x-built-at"));
+    if (!at || Date.now() - at > STALE_MAX_MS) return null;
+    return { at, value: (await r.json()) as Record<string, unknown> };
+  } catch {
+    return null;
+  }
+}
+
+/** Rebuilds behind the scenes; visitors keep the current copy until the new one is ready. */
+function refreshInBackground() {
+  if (refreshing) return;
+  const at = Date.now();
+  refreshing = buildConfig()
+    .then((v) => {
+      cached = { at, value: Promise.resolve(v) };
+      writeShared(v, at);
+    })
+    .catch(() => {})
+    .finally(() => {
+      refreshing = null;
+    });
+}
+
+/** The salon configuration for customer screens: never waits when a recent copy exists. */
+export async function loadConfigFast(): Promise<Record<string, unknown>> {
+  const now = Date.now();
+  if (cached && now - cached.at < TTL_MS) return cached.value;
+  if (cached && now - cached.at < STALE_MAX_MS) {
+    const value = await cached.value.catch(() => null);
+    if (value) {
+      refreshInBackground();
+      return value;
+    }
+  }
+  const shared = await readShared();
+  if (shared) {
+    cached = { at: shared.at, value: Promise.resolve(shared.value) };
+    if (now - shared.at >= TTL_MS) refreshInBackground();
+    return shared.value;
+  }
+  return loadConfig();
 }
 
 /** Builds the full salon configuration from the online tables. */
