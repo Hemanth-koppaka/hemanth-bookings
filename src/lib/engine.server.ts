@@ -83,6 +83,44 @@ export function salonNow() {
 export const dayDiff = (a: string, b: string) =>
   Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
+/** The day's live bookings (a fresh read every time: never cached). */
+function dayBookings(date: string) {
+  return Promise.resolve(
+    sb.from("bookings").select("*").eq("date", date).neq("status", "cancelled"),
+  );
+}
+
+/** The day's one-off blocks and breaks (none until the Admin OS migration). */
+function dayBlocks(date: string): Promise<{ data: unknown; error: unknown }> {
+  return Promise.resolve(
+    sb
+      .from("time_blocks" as never)
+      .select("start_minute, end_minute, kind, reason")
+      .eq("date", date)
+      .is("archived_at", null),
+  );
+}
+
+/**
+ * Starts every read a day's availability needs at once, so the Time screen waits
+ * for one database round trip instead of four in a row. Nothing here is cached:
+ * bookings and blocks are read fresh on every call.
+ */
+export function prefetchDay(date: string) {
+  const p = {
+    store: loadStore(),
+    rules: loadRules(),
+    ruleSettings: loadRuleSettings(),
+    booked: dayBookings(date),
+    blocks: dayBlocks(date),
+    guard: hasPerStylistGuard(),
+  };
+  // a read that ends up unused must not surface as an unhandled rejection
+  for (const v of Object.values(p)) v.catch(() => {});
+  return p;
+}
+export type DayPrefetch = ReturnType<typeof prefetchDay>;
+
 /**
  * Opening hours, weekly and one-day breaks, closures and blocked periods for a date.
  * Expects the salon config (hours, exceptions) to be applied already (applyConfig).
@@ -90,6 +128,7 @@ export const dayDiff = (a: string, b: string) =>
 export async function dayPlan(
   date: string,
   store?: Awaited<ReturnType<typeof loadStore>>,
+  blocksIn?: Promise<{ data: unknown; error: unknown }>,
 ): Promise<DayPlan> {
   const hours = hoursFor(date);
   const weekly: Range[] = breaksFor(date).map((b) => ({
@@ -100,11 +139,7 @@ export async function dayPlan(
   // time_blocks arrives with the Admin OS migration; until then there are simply none
   // blocks and closures load together (one round trip, not two)
   const [{ data, error }, closure] = await Promise.all([
-    sb
-      .from("time_blocks" as never)
-      .select("start_minute, end_minute, kind, reason")
-      .eq("date", date)
-      .is("archived_at", null),
+    blocksIn ?? dayBlocks(date),
     salonClosureOn(date, store),
   ]);
   const rows = (error ? [] : (data ?? [])) as {
@@ -174,11 +209,13 @@ export async function staffDay(
     staffMode?: boolean | undefined;
     store?: Awaited<ReturnType<typeof loadStore>> | undefined;
     rules?: Record<string, ServiceRule> | undefined;
+    /** the day's bookings, when already requested (see prefetchDay) */
+    booked?: ReturnType<typeof dayBookings> | undefined;
   } = {},
 ): Promise<{ eligible: Stylist[]; working: StaffDay[]; salonBusy: Range[] } | null> {
   const [store, booked, ruleSettings] = await Promise.all([
     options.store ?? loadStore(),
-    sb.from("bookings").select("*").eq("date", date).neq("status", "cancelled"),
+    options.booked ?? dayBookings(date),
     options.rules ? Promise.resolve(null) : loadRuleSettings(),
   ]);
   const rules = options.rules ?? resolveRules(store, ruleSettings ?? {});
@@ -392,27 +429,27 @@ export async function availability(
     serviceIds?: string[];
     /** "any" (default) or a stylist id. */
     choice?: string;
+    /** reads already started by prefetchDay(date) */
+    prefetch?: DayPrefetch;
   } = {},
 ): Promise<DayAvailability> {
-  // one read of the stylist store, then everything else in parallel
-  const [store, rules, ruleSettings] = await Promise.all([
-    loadStore(),
-    rulesIn,
-    loadRuleSettings(),
-  ]);
+  // every read starts together (one round trip), unless the caller started them already
+  const pre = options.prefetch ?? prefetchDay(date);
+  const [store, rules, ruleSettings] = await Promise.all([pre.store, rulesIn, pre.ruleSettings]);
   const svcRules = resolveRules(store, ruleSettings);
   const pref = preferredFor(options.serviceIds ?? [], svcRules);
   const [plan, team, perStylist] = await Promise.all([
-    dayPlan(date, store),
+    dayPlan(date, store, pre.blocks),
     options.serviceIds?.length
       ? staffDay(date, options.serviceIds, {
           ignoreReference: options.ignoreReference,
           staffMode: options.staff,
           store,
           rules: svcRules,
+          booked: pre.booked,
         })
       : Promise.resolve(null),
-    hasPerStylistGuard(),
+    pre.guard,
   ]);
   const now = salonNow();
   const base = {

@@ -139,8 +139,11 @@ export async function staffTablesExist(): Promise<boolean> {
 
 /** Reads the whole store (seeding the team the first time). */
 export async function loadStore(): Promise<Store> {
+  // the existence check (cached once known) and the reads go out together
+  const reads = Promise.all(TABLES.map((n) => Promise.resolve(sb.from(n as never).select("*"))));
+  reads.catch(() => {});
   if (await staffTablesExist()) {
-    const res = await Promise.all(TABLES.map((n) => sb.from(n as never).select("*")));
+    const res = await reads;
     return Object.fromEntries(
       TABLES.map((n, i) => [n, (res[i]!.data ?? []) as Row[]]),
     ) as unknown as Store;
