@@ -64,6 +64,7 @@ function ServicesScreen() {
     totalPrice,
     hasFromPricing,
     update,
+    setAudience,
   } = useBooking();
   const navigate = useNavigate();
   const [active, setActive] = useState<string | null>(null);
@@ -74,9 +75,20 @@ function ServicesScreen() {
   const chipRow = useRef<HTMLDivElement>(null);
   const popularity = usePopularity();
 
+  // "/services?for=men" comes from the Book page's Men/Women choice when it was
+  // tapped before the page's code had loaded (a plain link then): apply it here.
+  const linked =
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("for");
   useEffect(() => {
-    if (hydrated && !draft.audience) navigate({ to: "/book" });
-  }, [hydrated, draft.audience, navigate]);
+    if (!hydrated) return;
+    if (linked === "men" || linked === "women") {
+      // apply the choice first; tidy the address only once it has taken effect
+      if (draft.audience !== linked) setAudience(linked);
+      else window.history.replaceState(window.history.state, "", window.location.pathname);
+      return;
+    }
+    if (!draft.audience) navigate({ to: "/book" });
+  }, [hydrated, draft.audience, navigate, linked, setAudience]);
 
   const menu = draft.audience ? menuFor(draft.audience) : [];
   const popular = useMemo(() => popularIn(menu, popularity), [menu, popularity]);
