@@ -4,6 +4,7 @@ import { useAdmin } from "@/lib/admin-store";
 import { Wordmark } from "@/components/screen";
 import { inputClass } from "@/components/admin";
 import { Toaster } from "@/components/ui/sonner";
+import { AdminAssistant } from "@/components/admin-assistant";
 
 export const Route = createFileRoute("/hb-desk-7392")({
   head: () => ({
@@ -111,6 +112,7 @@ function AdminLayout() {
   return (
     <>
       <Outlet />
+      <AdminAssistant />
       <Toaster position="top-center" />
     </>
   );
