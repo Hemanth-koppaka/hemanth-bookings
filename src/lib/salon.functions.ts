@@ -67,7 +67,7 @@ const toMin = (t: string | null | undefined) => {
 const hhmm = (t: string) => t.slice(0, 5);
 type PersistedBreaks = Record<string, { start: string; end: string }[]>;
 
-const loadConfig = async () => (await import("./config.server")).loadConfig();
+const loadConfig = async () => (await import("./config.server")).loadConfigFast();
 
 export const getSalonConfig = createServerFn({ method: "GET" }).handler(async () => {
   // the site's own address too, for search engines (absolute links)
