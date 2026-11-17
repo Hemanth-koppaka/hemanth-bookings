@@ -7,7 +7,7 @@ import { ScrollStrip, prettyPhone } from "@/components/desktop";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { RemindMe } from "@/components/remind-me";
 import { RateVisit, visitOver } from "@/components/rate-visit";
-import { BookingLook } from "@/components/my-look";
+import { LookEditor } from "@/components/my-look";
 import { auth, useBooking, servicesOf, type Booking, type ChangeResult } from "@/lib/booking-store";
 import { getAvailability, getPublicRules } from "@/lib/salon.functions";
 import type { DayAvailability } from "@/lib/engine.server";
@@ -72,7 +72,21 @@ function ManageScreen() {
 
   const lookup = async (e?: FormEvent) => {
     e?.preventDefault();
-    if (searching || !ready) return;
+    if (searching) return;
+    if (!ready) {
+      // say exactly what's missing instead of doing nothing
+      haptic(20);
+      setAttempt((n) => n + 1);
+      const idOk = /^HB-[A-Z0-9]{6}$/i.test(q);
+      setError(
+        !q && phoneDigits.length >= 10
+          ? "Add your booking ID too. It starts with HB- and is on your confirmation. For your privacy, a mobile number alone isn't enough."
+          : !idOk
+            ? "Check the booking ID: it looks like HB-7KQ2MX and is on your confirmation."
+            : "Enter the 10-digit mobile number you booked with.",
+      );
+      return;
+    }
     setSearching(true);
     const list = await findBookings(q.toUpperCase(), phoneDigits);
     setSearching(false);
@@ -181,7 +195,9 @@ function ManageScreen() {
                     spellCheck={false}
                   />
                   <p className="mt-2 text-[0.78rem] text-muted-foreground">
-                    Both your booking ID and mobile number are required.
+                    Both your booking ID and mobile number are needed, so only you can open your booking.
+                    Lost the ID? It's in your confirmation email and calendar entry, or call the salon on{" "}
+                    <span className="whitespace-nowrap text-foreground/80">+91 79816 48951</span>.
                   </p>
                 </div>
                 <div>
@@ -210,7 +226,7 @@ function ManageScreen() {
                     {error}
                   </p>
                 ) : null}
-                <PrimaryAction type="submit" disabled={searching || !ready}>
+                <PrimaryAction type="submit" disabled={searching}>
                   <span className="inline-flex items-center gap-3">
                     <Search className="h-4 w-4" strokeWidth={1.25} />
                     {searching ? "Searching…" : "Find booking"}
@@ -502,8 +518,8 @@ function BookingPanel({
       {/* regulars: the same services again, straight to choosing a time */}
       {mode === "view" ? <BookAgain booking={booking} className="mt-6" /> : null}
 
-      {/* the reference photos they booked with, ready for the stylist (until the slot ends) */}
-      {mode === "view" ? <BookingLook booking={booking} className="mt-6" /> : null}
+      {/* the guest's reference photos: add, remove or show the stylist (until the visit) */}
+      {mode === "view" ? <LookEditor booking={booking} className="mt-6" /> : null}
 
       {/* after the visit: rate each service (once) */}
       {mode === "view" ? <RateVisit booking={booking} className="mt-6" /> : null}

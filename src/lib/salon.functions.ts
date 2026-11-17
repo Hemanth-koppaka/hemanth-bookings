@@ -1179,18 +1179,114 @@ export const myLookPhotos = createServerFn({ method: "POST" })
     const folder = `bookings/${r.reference}`;
     const { data: files } = await bucket.list(folder, { limit: 10 });
     const paths = (files ?? []).filter((f) => f.id).map((f) => `${folder}/${f.name}`);
-    if (!paths.length) return { urls: [] as string[], over: false, ...when };
+    if (!paths.length) return { urls: [] as string[], names: [] as string[], over: false, ...when };
     // links last until the slot ends (at least 10 minutes, at most 6 hours)
     const left = date === today ? (end - nowMin) * 60 : 6 * 3600;
     const { data: signed } = await bucket.createSignedUrls(
       paths,
       Math.max(600, Math.min(left, 6 * 3600)),
     );
-    return {
-      urls: (signed ?? []).map((s) => s.signedUrl).filter((u): u is string => Boolean(u)),
-      over: false,
-      ...when,
-    };
+    const pairs = (signed ?? [])
+      .map((x, i) => ({ url: x.signedUrl, name: paths[i]!.split("/").pop()! }))
+      .filter((x): x is { url: string; name: string } => Boolean(x.url));
+    return { urls: pairs.map((x) => x.url), names: pairs.map((x) => x.name), over: false, ...when };
+  });
+
+/** The visit has ended or won't happen: no more photo changes. */
+function visitOver(row: Record<string, unknown>) {
+  const st =
+    ((row["meta"] as Record<string, unknown> | null)?.["status"] as string | undefined) ?? "";
+  const minutes =
+    (row["duration_minutes"] as number | null) ?? ((row["slots"] as number | null) ?? 1) * 30;
+  const now = new Date(Date.now() + 330 * 60_000);
+  const today = now.toISOString().slice(0, 10);
+  const nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const date = row["date"] as string;
+  return (
+    row["status"] === "cancelled" ||
+    ["cancelled", "no-show", "completed"].includes(st) ||
+    date < today ||
+    (date === today && nowMin >= (row["time"] as number) + minutes)
+  );
+}
+
+/** Keeps the booking's photo list (counts for the salon and stylist) in step with storage. */
+async function syncLookList(sb: Awaited<ReturnType<typeof db>>, reference: string, customer: unknown) {
+  const { REF_BUCKET } = await import("./photos.server");
+  const folder = `bookings/${reference}`;
+  const { data: files } = await sb.storage.from(REF_BUCKET).list(folder, { limit: 10 });
+  const photos = (files ?? []).filter((f) => f.id).map((f) => `${folder}/${f.name}`);
+  const c = { ...((customer as Record<string, unknown>) ?? {}) };
+  if (photos.length) c["photos"] = photos;
+  else delete c["photos"];
+  await sb.from("bookings").update({ customer: c as never }).eq("reference", reference);
+  return photos.length;
+}
+
+/** A guest adds a reference photo to their own booking (up to 3, until the visit). */
+export const addMyLookPhoto = createServerFn({ method: "POST" })
+  .inputValidator((d) => lookup.extend({ dataUrl: z.string().max(3_500_000) }).parse(d))
+  .handler(async ({ data }) => {
+    const sb = await db();
+    const reference = data.reference.trim().toUpperCase();
+    const { data: r } = await sb.from("bookings").select("*").eq("reference", reference).maybeSingle();
+    if (!r || !(await owns(r, data))) return { ok: false as const, error: "Booking not found." };
+    if (visitOver(r as Record<string, unknown>))
+      return { ok: false as const, error: "This visit is over, so photos can't be added." };
+    const { REF_BUCKET, MAX_REFERENCE_PHOTOS, ensureBucket, decodeImage, randomName } =
+      await import("./photos.server");
+    let img;
+    try {
+      img = decodeImage(data.dataUrl);
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "That file isn't a valid image." };
+    }
+    await ensureBucket(REF_BUCKET, false);
+    const bucket = sb.storage.from(REF_BUCKET);
+    const folder = `bookings/${reference}`;
+    const { data: existing } = await bucket.list(folder, { limit: 10 });
+    if ((existing ?? []).filter((f) => f.id).length >= MAX_REFERENCE_PHOTOS)
+      return { ok: false as const, error: `You can add up to ${MAX_REFERENCE_PHOTOS} photos.` };
+    const { error } = await bucket.upload(`${folder}/${randomName()}.${img.ext}`, img.bytes, {
+      contentType: img.mime,
+      upsert: false,
+    });
+    if (error) return { ok: false as const, error: "Couldn't upload that photo. Please try again." };
+    const count = await syncLookList(sb, reference, r.customer);
+    const E = await engine();
+    await E.audit({
+      actor: "guest",
+      action: "booking.photo_added",
+      entity: "booking",
+      entityId: reference,
+      summary: `Guest added a reference photo to ${reference} (${count} now)`,
+    });
+    return { ok: true as const, count };
+  });
+
+/** A guest removes one of their booking's reference photos. */
+export const removeMyLookPhoto = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    lookup.extend({ name: z.string().regex(/^[A-Za-z0-9_-]{1,64}\.(jpg|jpeg|png|webp)$/) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const sb = await db();
+    const reference = data.reference.trim().toUpperCase();
+    const { data: r } = await sb.from("bookings").select("*").eq("reference", reference).maybeSingle();
+    if (!r || !(await owns(r, data))) return { ok: false as const };
+    if (visitOver(r as Record<string, unknown>)) return { ok: false as const };
+    const { REF_BUCKET } = await import("./photos.server");
+    await sb.storage.from(REF_BUCKET).remove([`bookings/${reference}/${data.name}`]);
+    const count = await syncLookList(sb, reference, r.customer);
+    const E = await engine();
+    await E.audit({
+      actor: "guest",
+      action: "booking.photo_removed",
+      entity: "booking",
+      entityId: reference,
+      summary: `Guest removed a reference photo from ${reference} (${count} left)`,
+    });
+    return { ok: true as const, count };
   });
 
 /** The site's public key for phone notifications (safe to share). */
