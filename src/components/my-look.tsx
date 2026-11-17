@@ -6,13 +6,17 @@
 // links only to the guest who made the booking, and deletes them after the visit.
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, Loader2, Maximize2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImagePlus, Loader2, Maximize2, X } from "lucide-react";
 import { auth, useBooking, type Booking } from "@/lib/booking-store";
-import { myLookPhotos } from "@/lib/salon.functions";
+import { addMyLookPhoto, myLookPhotos, removeMyLookPhoto } from "@/lib/salon.functions";
+import { loadImageFile, shrinkImage } from "@/lib/image";
 import { minuteLabel } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
 export type LookPhoto = { id: string; full: string; thumb: string };
+
+/** Most reference photos per booking (the server enforces the same). */
+const LOOK_MAX = 3;
 
 /** Salon time now (UTC+5:30): ISO day and minutes since midnight. */
 function salonNow() {
@@ -301,7 +305,7 @@ export function UpcomingLook({ className }: { className?: string }) {
 }
 
 /** Manage booking: the booking's look, until its slot ends. */
-export function BookingLook({ booking, className }: { booking: Booking; className?: string }) {
+export function BookingLook({ booking, className }: { booking: Booking; className?: string | undefined }) {
   useTick();
   const [open, setOpen] = useState(false);
   const show = hasLook(booking) && lookPhase(booking) !== "over";
@@ -319,5 +323,159 @@ export function BookingLook({ booking, className }: { booking: Booking; classNam
       />
       {open && photos.length ? <LookViewer photos={photos} onClose={() => setOpen(false)} /> : null}
     </>
+  );
+}
+
+/**
+ * Manage booking: the guest's look, which they can still add to (up to 3
+ * photos) or trim until the visit is over. The stylist and the salon see the
+ * same photos straight away.
+ */
+export function LookEditor({ booking, className }: { booking: Booking; className?: string | undefined }) {
+  useTick();
+  const input = useRef<HTMLInputElement>(null);
+  const [photos, setPhotos] = useState<(LookPhoto & { name: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(0);
+  const [error, setError] = useState("");
+  const [open, setOpen] = useState<number | null>(null);
+  const editable =
+    booking.status !== "cancelled" && !booking.readOnly && lookPhase(booking) !== "over";
+
+  const load = async () => {
+    try {
+      const r = await myLookPhotos({ data: { reference: booking.reference, ...auth(booking) } });
+      const names = "names" in r && r.names ? r.names : [];
+      setPhotos(
+        r.urls.map((u, i) => ({
+          id: names[i] ?? `${booking.reference}-${i}`,
+          name: names[i] ?? "",
+          full: u,
+          thumb: u,
+        })),
+      );
+    } catch {
+      /* keep what we have */
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (editable) void load();
+    else setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking.reference, editable]);
+
+  if (!editable) return <BookingLook booking={booking} className={className} />;
+
+  const room = LOOK_MAX - photos.length - busy;
+  const add = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setError("");
+    const picked = Array.from(files).slice(0, Math.max(0, room));
+    if (files.length > picked.length) setError(`You can add up to ${LOOK_MAX} photos.`);
+    setBusy((n) => n + picked.length);
+    for (const file of picked) {
+      try {
+        const img = await loadImageFile(file);
+        const r = await addMyLookPhoto({
+          data: { reference: booking.reference, ...auth(booking), dataUrl: shrinkImage(img, 1600, 0.82) },
+        });
+        if (!r.ok) throw new Error(r.error);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Couldn't add that photo.");
+      } finally {
+        setBusy((n) => n - 1);
+      }
+    }
+    if (input.current) input.current.value = "";
+    await load();
+  };
+  const remove = async (p: { name: string }) => {
+    if (!p.name) return;
+    setPhotos((list) => list.filter((x) => x.name !== p.name));
+    await removeMyLookPhoto({ data: { reference: booking.reference, ...auth(booking), name: p.name } }).catch(
+      () => {},
+    );
+    await load();
+  };
+
+  return (
+    <section className={cn("rounded-sm border border-foreground/12 bg-card/70 p-4", className)}>
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <span className="text-[0.72rem] uppercase tracking-[0.3em] text-foreground/75">Your look</span>
+        <span className="text-[0.75rem] tabular-nums text-muted-foreground">
+          {photos.length}/{LOOK_MAX}
+        </span>
+      </div>
+      <p className="mb-4 text-[0.85rem] leading-relaxed text-muted-foreground">
+        {photos.length
+          ? "Your stylist sees these photos. You can add or remove them until your visit."
+          : "Show your stylist a look you love. Add up to 3 photos any time before your visit."}
+      </p>
+      <div className="flex flex-wrap gap-3">
+        {loading && !photos.length ? (
+          <div className="flex h-20 w-20 items-center justify-center rounded-md border border-hairline bg-card">
+            <Loader2 className="h-5 w-5 animate-spin text-bronze" strokeWidth={1.5} aria-label="Loading" />
+          </div>
+        ) : null}
+        {photos.map((p, i) => (
+          <div key={p.id} className="pop-in relative h-20 w-20 overflow-hidden rounded-md border border-hairline bg-muted">
+            <button type="button" onClick={() => setOpen(i)} aria-label="Show this photo full screen" className="h-full w-full">
+              <img src={p.thumb} alt="Your reference photo" className="h-full w-full object-cover" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void remove(p)}
+              aria-label="Remove photo"
+              className="press absolute top-1 right-1 flex h-7 w-7 items-center justify-center rounded-full bg-ink/75 text-ivory backdrop-blur-sm hover:bg-ink"
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+          </div>
+        ))}
+        {Array.from({ length: busy }, (_, i) => (
+          <div key={`busy-${i}`} className="flex h-20 w-20 items-center justify-center rounded-md border border-hairline bg-card">
+            <Loader2 className="h-5 w-5 animate-spin text-bronze" strokeWidth={1.5} aria-label="Uploading" />
+          </div>
+        ))}
+        {!loading && room > 0 ? (
+          <button
+            type="button"
+            onClick={() => input.current?.click()}
+            className="press flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-foreground/25 bg-card text-foreground/70 hover:border-bronze hover:text-bronze"
+          >
+            <ImagePlus className="h-5 w-5" strokeWidth={1.25} />
+            <span className="text-[0.62rem] uppercase tracking-[0.14em]">Add photo</span>
+          </button>
+        ) : null}
+      </div>
+      {photos.length ? (
+        <button
+          type="button"
+          onClick={() => setOpen(0)}
+          className="mt-4 inline-flex items-center gap-2 text-[0.82rem] text-bronze underline underline-offset-4"
+        >
+          <Maximize2 className="h-3.5 w-3.5" strokeWidth={1.5} /> Show my stylist
+        </button>
+      ) : null}
+      <input
+        ref={input}
+        id={`look-add-${booking.reference}`}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => void add(e.target.files)}
+      />
+      {error ? (
+        <p key={error} role="alert" className="shake mt-3 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+      {open !== null && photos.length ? (
+        <LookViewer photos={photos} start={open} onClose={() => setOpen(null)} />
+      ) : null}
+    </section>
   );
 }
