@@ -10,13 +10,13 @@ export const Route = createFileRoute("/artist")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "The artist, B. Kiran — Hair by Kiran" },
+      { title: "The artist, Kiran Rao — Lumen Studio" },
       {
         name: "description",
         content:
-          "Meet B. Kiran, founder and chief stylist of The Hair By Kiran Unisex Salon in Sector 9, Midtown.",
+          "Meet Kiran Rao, founder and chief stylist of Lumen Studio in Sector 9, Midtown.",
       },
-      { property: "og:title", content: "The artist, B. Kiran — Hair by Kiran" },
+      { property: "og:title", content: "The artist, Kiran Rao — Lumen Studio" },
       { property: "og:description", content: "Founder and chief stylist." },
       { property: "og:image", content: founder.url },
       { name: "twitter:image", content: founder.url },
@@ -48,7 +48,7 @@ function ArtistScreen() {
       <div className="relative overflow-hidden rounded-xl bg-ink lg:hidden">
         <img
           src={founder.url}
-          alt="B. Kiran, founder and chief stylist"
+          alt="Kiran Rao, founder and chief stylist"
           className="aspect-4/5 w-full object-cover grayscale"
           decoding="async"
         />

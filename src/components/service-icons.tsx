@@ -287,7 +287,7 @@ function TileIcon({
     <span
       className={cn(
         "relative flex shrink-0 items-center justify-center overflow-hidden rounded-md transition-colors duration-300",
-        active ? "bg-[#f3ece1] ring-1 ring-ink/70" : "bg-champagne/16",
+        active ? "bg-[#E4F0EB] ring-1 ring-ink/70" : "bg-champagne/16",
         box,
         className,
       )}
@@ -357,7 +357,7 @@ export function ServiceIconTile({
         className={cn(
           "flex shrink-0 items-center justify-center rounded-md border border-dashed transition-colors duration-300",
           active
-            ? "border-ink/50 bg-[#f3ece1] text-ink/40"
+            ? "border-ink/50 bg-[#E4F0EB] text-ink/40"
             : "border-foreground/20 bg-transparent text-foreground/25",
           box,
           className,

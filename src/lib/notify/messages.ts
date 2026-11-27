@@ -155,7 +155,15 @@ export function templateVars(
     case "NO_SHOW":
       return [f.customerName, f.reference, ...when, svc, f.manageUrl];
     case "BOOKING_PRICE_CHANGED":
-      return [f.customerName, f.reference, ...when, svc, f.previousPrice == null ? "" : fmtPrice(f.previousPrice), fmtPrice(f.price), f.manageUrl];
+      return [
+        f.customerName,
+        f.reference,
+        ...when,
+        svc,
+        f.previousPrice == null ? "" : fmtPrice(f.previousPrice),
+        fmtPrice(f.price),
+        f.manageUrl,
+      ];
     case "BOOKING_RESCHEDULED":
       return [f.customerName, ...when, svc, f.reference, f.manageUrl];
     case "BOOKING_CANCELLED":
@@ -179,7 +187,17 @@ export function templateVars(
 
 /** Names of the variables above, in order (shown in Admin to set up templates). */
 export function templateVarNames(recipient: Recipient, event: NotifyEvent): string[] {
-  if (event === "BOOKING_PRICE_CHANGED") return ["customer_name", "booking_id", "date", "time", "services", "previous_total", "total", "manage_url"];
+  if (event === "BOOKING_PRICE_CHANGED")
+    return [
+      "customer_name",
+      "booking_id",
+      "date",
+      "time",
+      "services",
+      "previous_total",
+      "total",
+      "manage_url",
+    ];
   if (recipient === "admin") {
     if (event === "BOOKING_RESCHEDULED")
       return [
@@ -271,10 +289,21 @@ export function messageText(
     case "BOOKING_UPDATED":
     case "BOOKING_COMPLETED":
     case "NO_SHOW":
-      return ["HAIR BY KIRAN", `Hi ${f.customerName}, ${event === "BOOKING_COMPLETED" ? "your appointment is marked completed" : event === "NO_SHOW" ? "your appointment is marked as not attended" : "your appointment details have been updated"}.`, `Date: ${fmtDate(f.date)}`, `Time: ${fmtTime(f.time)}`, `Service: ${svc}`, f.stylist ? `Stylist: ${f.stylist}` : "", `Booking ID: ${f.reference}`, f.manageUrl ? `Manage your booking: ${f.manageUrl}` : ""].filter(Boolean).join("\n");
+      return [
+        "LUMEN STUDIO",
+        `Hi ${f.customerName}, ${event === "BOOKING_COMPLETED" ? "your appointment is marked completed" : event === "NO_SHOW" ? "your appointment is marked as not attended" : "your appointment details have been updated"}.`,
+        `Date: ${fmtDate(f.date)}`,
+        `Time: ${fmtTime(f.time)}`,
+        `Service: ${svc}`,
+        f.stylist ? `Stylist: ${f.stylist}` : "",
+        `Booking ID: ${f.reference}`,
+        f.manageUrl ? `Manage your booking: ${f.manageUrl}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
     case "BOOKING_PRICE_CHANGED":
       return [
-        "HAIR BY KIRAN",
+        "LUMEN STUDIO",
         `Hi ${f.customerName}, the price of your upcoming appointment has changed.`,
         f.previousPrice == null ? "" : `Previous total: ${fmtPrice(f.previousPrice)}`,
         `Updated total: ${fmtPrice(f.price)}`,
@@ -284,12 +313,16 @@ export function messageText(
         `Booking ID: ${f.reference}`,
         "Your appointment date and time are unchanged.",
         f.manageUrl ? `Manage your booking: ${f.manageUrl}` : "",
-      ].filter(Boolean).join("\n");
+      ]
+        .filter(Boolean)
+        .join("\n");
     case "BOOKING_RESCHEDULED":
       return [
-        "HAIR BY KIRAN",
+        "LUMEN STUDIO",
         `Hi ${f.customerName}, your appointment has been rescheduled.`,
-        f.previous ? `Previous appointment: ${fmtDate(f.previous.date)}, ${fmtTime(f.previous.time)}` : "",
+        f.previous
+          ? `Previous appointment: ${fmtDate(f.previous.date)}, ${fmtTime(f.previous.time)}`
+          : "",
         `New date: ${fmtDate(f.date)}`,
         `New time: ${fmtTime(f.time)}`,
         `Service: ${svc}`,
@@ -300,14 +333,14 @@ export function messageText(
         .join("\n");
     case "BOOKING_CANCELLED":
       return [
-        "HAIR BY KIRAN",
+        "LUMEN STUDIO",
         `Hi ${f.customerName}, your appointment ${f.reference} on ${fmtDate(f.date)} at ${fmtTime(f.time)} (${svc}) has been cancelled.`,
         "We hope to see you soon.",
       ].join("\n");
     case "BOOKING_REMINDER_24H":
     case "BOOKING_REMINDER_2H":
       return [
-        "HAIR BY KIRAN",
+        "LUMEN STUDIO",
         `Hi ${f.customerName}, a reminder of your appointment ${event === "BOOKING_REMINDER_2H" ? "today" : "tomorrow"}.`,
         `Date: ${fmtDate(f.date)}`,
         `Time: ${fmtTime(f.time)}`,
@@ -320,7 +353,7 @@ export function messageText(
         .join("\n");
     default:
       return [
-        "HAIR BY KIRAN",
+        "LUMEN STUDIO",
         "Your appointment is confirmed.",
         `Name: ${f.customerName}`,
         `Booking ID: ${f.reference}`,

@@ -10,13 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ArtistRouteImport } from './routes/artist'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as ConfirmedRouteImport } from './routes/confirmed'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DetailsRouteImport } from './routes/details'
-import { Route as FilmRouteImport } from './routes/film'
-import { Route as HbDesk7392RouteImport } from './routes/hb-desk-7392'
 import { Route as HoursRouteImport } from './routes/hours'
 import { Route as ManageRouteImport } from './routes/manage'
 import { Route as OpenTimeRouteImport } from './routes/open-time'
@@ -27,21 +26,21 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as StylistRouteImport } from './routes/stylist'
 import { Route as TimeRouteImport } from './routes/time'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminActivityRouteImport } from './routes/admin.activity'
+import { Route as AdminAppointmentsRouteImport } from './routes/admin.appointments'
+import { Route as AdminCalendarRouteImport } from './routes/admin.calendar'
+import { Route as AdminClosuresRouteImport } from './routes/admin.closures'
+import { Route as AdminContentRouteImport } from './routes/admin.content'
+import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
+import { Route as AdminRulesRouteImport } from './routes/admin.rules'
+import { Route as AdminServicesRouteImport } from './routes/admin.services'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminStaffRouteImport } from './routes/admin.staff'
+import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as ApiPhotoSweepRouteImport } from './routes/api/photo-sweep'
-import { Route as HbDesk7392IndexRouteImport } from './routes/hb-desk-7392.index'
-import { Route as HbDesk7392ActivityRouteImport } from './routes/hb-desk-7392.activity'
-import { Route as HbDesk7392AppointmentsRouteImport } from './routes/hb-desk-7392.appointments'
-import { Route as HbDesk7392CalendarRouteImport } from './routes/hb-desk-7392.calendar'
-import { Route as HbDesk7392ClosuresRouteImport } from './routes/hb-desk-7392.closures'
-import { Route as HbDesk7392ContentRouteImport } from './routes/hb-desk-7392.content'
-import { Route as HbDesk7392CustomersRouteImport } from './routes/hb-desk-7392.customers'
-import { Route as HbDesk7392NotificationsRouteImport } from './routes/hb-desk-7392.notifications'
-import { Route as HbDesk7392ReportsRouteImport } from './routes/hb-desk-7392.reports'
-import { Route as HbDesk7392RulesRouteImport } from './routes/hb-desk-7392.rules'
-import { Route as HbDesk7392ServicesRouteImport } from './routes/hb-desk-7392.services'
-import { Route as HbDesk7392SettingsRouteImport } from './routes/hb-desk-7392.settings'
-import { Route as HbDesk7392StaffRouteImport } from './routes/hb-desk-7392.staff'
-import { Route as HbDesk7392SystemRouteImport } from './routes/hb-desk-7392.system'
 import { Route as ApiNotificationsDispatchRouteImport } from './routes/api/notifications/dispatch'
 import { Route as ApiNotificationsWebhookRouteImport } from './routes/api/notifications/webhook'
 import { Route as ApiPublicWaitlistDispatchRouteImport } from './routes/api/public/waitlist-dispatch'
@@ -49,6 +48,11 @@ import { Route as ApiPublicWaitlistDispatchRouteImport } from './routes/api/publ
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArtistRoute = ArtistRouteImport.update({
@@ -74,16 +78,6 @@ const ContactRoute = ContactRouteImport.update({
 const DetailsRoute = DetailsRouteImport.update({
   id: '/details',
   path: '/details',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FilmRoute = FilmRouteImport.update({
-  id: '/film',
-  path: '/film',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HbDesk7392Route = HbDesk7392RouteImport.update({
-  id: '/hb-desk-7392',
-  path: '/hb-desk-7392',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HoursRoute = HoursRouteImport.update({
@@ -136,80 +130,80 @@ const TimeRoute = TimeRouteImport.update({
   path: '/time',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAppointmentsRoute = AdminAppointmentsRouteImport.update({
+  id: '/appointments',
+  path: '/appointments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCalendarRoute = AdminCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminClosuresRoute = AdminClosuresRouteImport.update({
+  id: '/closures',
+  path: '/closures',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentRoute = AdminContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCustomersRoute = AdminCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRulesRoute = AdminRulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminServicesRoute = AdminServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminStaffRoute = AdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSystemRoute = AdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiPhotoSweepRoute = ApiPhotoSweepRouteImport.update({
   id: '/api/photo-sweep',
   path: '/api/photo-sweep',
   getParentRoute: () => rootRouteImport,
-} as any)
-const HbDesk7392IndexRoute = HbDesk7392IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392ActivityRoute = HbDesk7392ActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392AppointmentsRoute = HbDesk7392AppointmentsRouteImport.update({
-  id: '/appointments',
-  path: '/appointments',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392CalendarRoute = HbDesk7392CalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392ClosuresRoute = HbDesk7392ClosuresRouteImport.update({
-  id: '/closures',
-  path: '/closures',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392ContentRoute = HbDesk7392ContentRouteImport.update({
-  id: '/content',
-  path: '/content',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392CustomersRoute = HbDesk7392CustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392NotificationsRoute = HbDesk7392NotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392ReportsRoute = HbDesk7392ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392RulesRoute = HbDesk7392RulesRouteImport.update({
-  id: '/rules',
-  path: '/rules',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392ServicesRoute = HbDesk7392ServicesRouteImport.update({
-  id: '/services',
-  path: '/services',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392SettingsRoute = HbDesk7392SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392StaffRoute = HbDesk7392StaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => HbDesk7392Route,
-} as any)
-const HbDesk7392SystemRoute = HbDesk7392SystemRouteImport.update({
-  id: '/system',
-  path: '/system',
-  getParentRoute: () => HbDesk7392Route,
 } as any)
 const ApiNotificationsDispatchRoute =
   ApiNotificationsDispatchRouteImport.update({
@@ -231,13 +225,12 @@ const ApiPublicWaitlistDispatchRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/artist': typeof ArtistRoute
   '/book': typeof BookRoute
   '/confirmed': typeof ConfirmedRoute
   '/contact': typeof ContactRoute
   '/details': typeof DetailsRoute
-  '/film': typeof FilmRoute
-  '/hb-desk-7392': typeof HbDesk7392RouteWithChildren
   '/hours': typeof HoursRoute
   '/manage': typeof ManageRoute
   '/open-time': typeof OpenTimeRoute
@@ -248,21 +241,21 @@ export interface FileRoutesByFullPath {
   '/studio': typeof StudioRoute
   '/stylist': typeof StylistRoute
   '/time': typeof TimeRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/closures': typeof AdminClosuresRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/rules': typeof AdminRulesRoute
+  '/admin/services': typeof AdminServicesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff': typeof AdminStaffRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/photo-sweep': typeof ApiPhotoSweepRoute
-  '/hb-desk-7392/activity': typeof HbDesk7392ActivityRoute
-  '/hb-desk-7392/appointments': typeof HbDesk7392AppointmentsRoute
-  '/hb-desk-7392/calendar': typeof HbDesk7392CalendarRoute
-  '/hb-desk-7392/closures': typeof HbDesk7392ClosuresRoute
-  '/hb-desk-7392/content': typeof HbDesk7392ContentRoute
-  '/hb-desk-7392/customers': typeof HbDesk7392CustomersRoute
-  '/hb-desk-7392/notifications': typeof HbDesk7392NotificationsRoute
-  '/hb-desk-7392/reports': typeof HbDesk7392ReportsRoute
-  '/hb-desk-7392/rules': typeof HbDesk7392RulesRoute
-  '/hb-desk-7392/services': typeof HbDesk7392ServicesRoute
-  '/hb-desk-7392/settings': typeof HbDesk7392SettingsRoute
-  '/hb-desk-7392/staff': typeof HbDesk7392StaffRoute
-  '/hb-desk-7392/system': typeof HbDesk7392SystemRoute
-  '/hb-desk-7392/': typeof HbDesk7392IndexRoute
+  '/admin/': typeof AdminIndexRoute
   '/api/notifications/dispatch': typeof ApiNotificationsDispatchRoute
   '/api/notifications/webhook': typeof ApiNotificationsWebhookRoute
   '/api/public/waitlist-dispatch': typeof ApiPublicWaitlistDispatchRoute
@@ -274,7 +267,6 @@ export interface FileRoutesByTo {
   '/confirmed': typeof ConfirmedRoute
   '/contact': typeof ContactRoute
   '/details': typeof DetailsRoute
-  '/film': typeof FilmRoute
   '/hours': typeof HoursRoute
   '/manage': typeof ManageRoute
   '/open-time': typeof OpenTimeRoute
@@ -285,21 +277,21 @@ export interface FileRoutesByTo {
   '/studio': typeof StudioRoute
   '/stylist': typeof StylistRoute
   '/time': typeof TimeRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/closures': typeof AdminClosuresRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/rules': typeof AdminRulesRoute
+  '/admin/services': typeof AdminServicesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff': typeof AdminStaffRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/photo-sweep': typeof ApiPhotoSweepRoute
-  '/hb-desk-7392/activity': typeof HbDesk7392ActivityRoute
-  '/hb-desk-7392/appointments': typeof HbDesk7392AppointmentsRoute
-  '/hb-desk-7392/calendar': typeof HbDesk7392CalendarRoute
-  '/hb-desk-7392/closures': typeof HbDesk7392ClosuresRoute
-  '/hb-desk-7392/content': typeof HbDesk7392ContentRoute
-  '/hb-desk-7392/customers': typeof HbDesk7392CustomersRoute
-  '/hb-desk-7392/notifications': typeof HbDesk7392NotificationsRoute
-  '/hb-desk-7392/reports': typeof HbDesk7392ReportsRoute
-  '/hb-desk-7392/rules': typeof HbDesk7392RulesRoute
-  '/hb-desk-7392/services': typeof HbDesk7392ServicesRoute
-  '/hb-desk-7392/settings': typeof HbDesk7392SettingsRoute
-  '/hb-desk-7392/staff': typeof HbDesk7392StaffRoute
-  '/hb-desk-7392/system': typeof HbDesk7392SystemRoute
-  '/hb-desk-7392': typeof HbDesk7392IndexRoute
+  '/admin': typeof AdminIndexRoute
   '/api/notifications/dispatch': typeof ApiNotificationsDispatchRoute
   '/api/notifications/webhook': typeof ApiNotificationsWebhookRoute
   '/api/public/waitlist-dispatch': typeof ApiPublicWaitlistDispatchRoute
@@ -307,13 +299,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/artist': typeof ArtistRoute
   '/book': typeof BookRoute
   '/confirmed': typeof ConfirmedRoute
   '/contact': typeof ContactRoute
   '/details': typeof DetailsRoute
-  '/film': typeof FilmRoute
-  '/hb-desk-7392': typeof HbDesk7392RouteWithChildren
   '/hours': typeof HoursRoute
   '/manage': typeof ManageRoute
   '/open-time': typeof OpenTimeRoute
@@ -324,21 +315,21 @@ export interface FileRoutesById {
   '/studio': typeof StudioRoute
   '/stylist': typeof StylistRoute
   '/time': typeof TimeRoute
+  '/admin/activity': typeof AdminActivityRoute
+  '/admin/appointments': typeof AdminAppointmentsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/closures': typeof AdminClosuresRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/rules': typeof AdminRulesRoute
+  '/admin/services': typeof AdminServicesRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/staff': typeof AdminStaffRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/photo-sweep': typeof ApiPhotoSweepRoute
-  '/hb-desk-7392/activity': typeof HbDesk7392ActivityRoute
-  '/hb-desk-7392/appointments': typeof HbDesk7392AppointmentsRoute
-  '/hb-desk-7392/calendar': typeof HbDesk7392CalendarRoute
-  '/hb-desk-7392/closures': typeof HbDesk7392ClosuresRoute
-  '/hb-desk-7392/content': typeof HbDesk7392ContentRoute
-  '/hb-desk-7392/customers': typeof HbDesk7392CustomersRoute
-  '/hb-desk-7392/notifications': typeof HbDesk7392NotificationsRoute
-  '/hb-desk-7392/reports': typeof HbDesk7392ReportsRoute
-  '/hb-desk-7392/rules': typeof HbDesk7392RulesRoute
-  '/hb-desk-7392/services': typeof HbDesk7392ServicesRoute
-  '/hb-desk-7392/settings': typeof HbDesk7392SettingsRoute
-  '/hb-desk-7392/staff': typeof HbDesk7392StaffRoute
-  '/hb-desk-7392/system': typeof HbDesk7392SystemRoute
-  '/hb-desk-7392/': typeof HbDesk7392IndexRoute
+  '/admin/': typeof AdminIndexRoute
   '/api/notifications/dispatch': typeof ApiNotificationsDispatchRoute
   '/api/notifications/webhook': typeof ApiNotificationsWebhookRoute
   '/api/public/waitlist-dispatch': typeof ApiPublicWaitlistDispatchRoute
@@ -347,13 +338,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/artist'
     | '/book'
     | '/confirmed'
     | '/contact'
     | '/details'
-    | '/film'
-    | '/hb-desk-7392'
     | '/hours'
     | '/manage'
     | '/open-time'
@@ -364,21 +354,21 @@ export interface FileRouteTypes {
     | '/studio'
     | '/stylist'
     | '/time'
+    | '/admin/activity'
+    | '/admin/appointments'
+    | '/admin/calendar'
+    | '/admin/closures'
+    | '/admin/content'
+    | '/admin/customers'
+    | '/admin/notifications'
+    | '/admin/reports'
+    | '/admin/rules'
+    | '/admin/services'
+    | '/admin/settings'
+    | '/admin/staff'
+    | '/admin/system'
     | '/api/photo-sweep'
-    | '/hb-desk-7392/activity'
-    | '/hb-desk-7392/appointments'
-    | '/hb-desk-7392/calendar'
-    | '/hb-desk-7392/closures'
-    | '/hb-desk-7392/content'
-    | '/hb-desk-7392/customers'
-    | '/hb-desk-7392/notifications'
-    | '/hb-desk-7392/reports'
-    | '/hb-desk-7392/rules'
-    | '/hb-desk-7392/services'
-    | '/hb-desk-7392/settings'
-    | '/hb-desk-7392/staff'
-    | '/hb-desk-7392/system'
-    | '/hb-desk-7392/'
+    | '/admin/'
     | '/api/notifications/dispatch'
     | '/api/notifications/webhook'
     | '/api/public/waitlist-dispatch'
@@ -390,7 +380,6 @@ export interface FileRouteTypes {
     | '/confirmed'
     | '/contact'
     | '/details'
-    | '/film'
     | '/hours'
     | '/manage'
     | '/open-time'
@@ -401,34 +390,33 @@ export interface FileRouteTypes {
     | '/studio'
     | '/stylist'
     | '/time'
+    | '/admin/activity'
+    | '/admin/appointments'
+    | '/admin/calendar'
+    | '/admin/closures'
+    | '/admin/content'
+    | '/admin/customers'
+    | '/admin/notifications'
+    | '/admin/reports'
+    | '/admin/rules'
+    | '/admin/services'
+    | '/admin/settings'
+    | '/admin/staff'
+    | '/admin/system'
     | '/api/photo-sweep'
-    | '/hb-desk-7392/activity'
-    | '/hb-desk-7392/appointments'
-    | '/hb-desk-7392/calendar'
-    | '/hb-desk-7392/closures'
-    | '/hb-desk-7392/content'
-    | '/hb-desk-7392/customers'
-    | '/hb-desk-7392/notifications'
-    | '/hb-desk-7392/reports'
-    | '/hb-desk-7392/rules'
-    | '/hb-desk-7392/services'
-    | '/hb-desk-7392/settings'
-    | '/hb-desk-7392/staff'
-    | '/hb-desk-7392/system'
-    | '/hb-desk-7392'
+    | '/admin'
     | '/api/notifications/dispatch'
     | '/api/notifications/webhook'
     | '/api/public/waitlist-dispatch'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/artist'
     | '/book'
     | '/confirmed'
     | '/contact'
     | '/details'
-    | '/film'
-    | '/hb-desk-7392'
     | '/hours'
     | '/manage'
     | '/open-time'
@@ -439,21 +427,21 @@ export interface FileRouteTypes {
     | '/studio'
     | '/stylist'
     | '/time'
+    | '/admin/activity'
+    | '/admin/appointments'
+    | '/admin/calendar'
+    | '/admin/closures'
+    | '/admin/content'
+    | '/admin/customers'
+    | '/admin/notifications'
+    | '/admin/reports'
+    | '/admin/rules'
+    | '/admin/services'
+    | '/admin/settings'
+    | '/admin/staff'
+    | '/admin/system'
     | '/api/photo-sweep'
-    | '/hb-desk-7392/activity'
-    | '/hb-desk-7392/appointments'
-    | '/hb-desk-7392/calendar'
-    | '/hb-desk-7392/closures'
-    | '/hb-desk-7392/content'
-    | '/hb-desk-7392/customers'
-    | '/hb-desk-7392/notifications'
-    | '/hb-desk-7392/reports'
-    | '/hb-desk-7392/rules'
-    | '/hb-desk-7392/services'
-    | '/hb-desk-7392/settings'
-    | '/hb-desk-7392/staff'
-    | '/hb-desk-7392/system'
-    | '/hb-desk-7392/'
+    | '/admin/'
     | '/api/notifications/dispatch'
     | '/api/notifications/webhook'
     | '/api/public/waitlist-dispatch'
@@ -461,13 +449,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   ArtistRoute: typeof ArtistRoute
   BookRoute: typeof BookRoute
   ConfirmedRoute: typeof ConfirmedRoute
   ContactRoute: typeof ContactRoute
   DetailsRoute: typeof DetailsRoute
-  FilmRoute: typeof FilmRoute
-  HbDesk7392Route: typeof HbDesk7392RouteWithChildren
   HoursRoute: typeof HoursRoute
   ManageRoute: typeof ManageRoute
   OpenTimeRoute: typeof OpenTimeRoute
@@ -491,6 +478,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/artist': {
@@ -526,20 +520,6 @@ declare module '@tanstack/react-router' {
       path: '/details'
       fullPath: '/details'
       preLoaderRoute: typeof DetailsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/film': {
-      id: '/film'
-      path: '/film'
-      fullPath: '/film'
-      preLoaderRoute: typeof FilmRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hb-desk-7392': {
-      id: '/hb-desk-7392'
-      path: '/hb-desk-7392'
-      fullPath: '/hb-desk-7392'
-      preLoaderRoute: typeof HbDesk7392RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hours': {
@@ -612,110 +592,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TimeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/appointments': {
+      id: '/admin/appointments'
+      path: '/appointments'
+      fullPath: '/admin/appointments'
+      preLoaderRoute: typeof AdminAppointmentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/calendar': {
+      id: '/admin/calendar'
+      path: '/calendar'
+      fullPath: '/admin/calendar'
+      preLoaderRoute: typeof AdminCalendarRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/closures': {
+      id: '/admin/closures'
+      path: '/closures'
+      fullPath: '/admin/closures'
+      preLoaderRoute: typeof AdminClosuresRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content': {
+      id: '/admin/content'
+      path: '/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/customers': {
+      id: '/admin/customers'
+      path: '/customers'
+      fullPath: '/admin/customers'
+      preLoaderRoute: typeof AdminCustomersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/rules': {
+      id: '/admin/rules'
+      path: '/rules'
+      fullPath: '/admin/rules'
+      preLoaderRoute: typeof AdminRulesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/services': {
+      id: '/admin/services'
+      path: '/services'
+      fullPath: '/admin/services'
+      preLoaderRoute: typeof AdminServicesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/staff': {
+      id: '/admin/staff'
+      path: '/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AdminStaffRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/system': {
+      id: '/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AdminSystemRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/photo-sweep': {
       id: '/api/photo-sweep'
       path: '/api/photo-sweep'
       fullPath: '/api/photo-sweep'
       preLoaderRoute: typeof ApiPhotoSweepRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/hb-desk-7392/': {
-      id: '/hb-desk-7392/'
-      path: '/'
-      fullPath: '/hb-desk-7392/'
-      preLoaderRoute: typeof HbDesk7392IndexRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/activity': {
-      id: '/hb-desk-7392/activity'
-      path: '/activity'
-      fullPath: '/hb-desk-7392/activity'
-      preLoaderRoute: typeof HbDesk7392ActivityRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/appointments': {
-      id: '/hb-desk-7392/appointments'
-      path: '/appointments'
-      fullPath: '/hb-desk-7392/appointments'
-      preLoaderRoute: typeof HbDesk7392AppointmentsRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/calendar': {
-      id: '/hb-desk-7392/calendar'
-      path: '/calendar'
-      fullPath: '/hb-desk-7392/calendar'
-      preLoaderRoute: typeof HbDesk7392CalendarRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/closures': {
-      id: '/hb-desk-7392/closures'
-      path: '/closures'
-      fullPath: '/hb-desk-7392/closures'
-      preLoaderRoute: typeof HbDesk7392ClosuresRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/content': {
-      id: '/hb-desk-7392/content'
-      path: '/content'
-      fullPath: '/hb-desk-7392/content'
-      preLoaderRoute: typeof HbDesk7392ContentRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/customers': {
-      id: '/hb-desk-7392/customers'
-      path: '/customers'
-      fullPath: '/hb-desk-7392/customers'
-      preLoaderRoute: typeof HbDesk7392CustomersRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/notifications': {
-      id: '/hb-desk-7392/notifications'
-      path: '/notifications'
-      fullPath: '/hb-desk-7392/notifications'
-      preLoaderRoute: typeof HbDesk7392NotificationsRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/reports': {
-      id: '/hb-desk-7392/reports'
-      path: '/reports'
-      fullPath: '/hb-desk-7392/reports'
-      preLoaderRoute: typeof HbDesk7392ReportsRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/rules': {
-      id: '/hb-desk-7392/rules'
-      path: '/rules'
-      fullPath: '/hb-desk-7392/rules'
-      preLoaderRoute: typeof HbDesk7392RulesRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/services': {
-      id: '/hb-desk-7392/services'
-      path: '/services'
-      fullPath: '/hb-desk-7392/services'
-      preLoaderRoute: typeof HbDesk7392ServicesRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/settings': {
-      id: '/hb-desk-7392/settings'
-      path: '/settings'
-      fullPath: '/hb-desk-7392/settings'
-      preLoaderRoute: typeof HbDesk7392SettingsRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/staff': {
-      id: '/hb-desk-7392/staff'
-      path: '/staff'
-      fullPath: '/hb-desk-7392/staff'
-      preLoaderRoute: typeof HbDesk7392StaffRouteImport
-      parentRoute: typeof HbDesk7392Route
-    }
-    '/hb-desk-7392/system': {
-      id: '/hb-desk-7392/system'
-      path: '/system'
-      fullPath: '/hb-desk-7392/system'
-      preLoaderRoute: typeof HbDesk7392SystemRouteImport
-      parentRoute: typeof HbDesk7392Route
     }
     '/api/notifications/dispatch': {
       id: '/api/notifications/dispatch'
@@ -741,53 +721,50 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface HbDesk7392RouteChildren {
-  HbDesk7392ActivityRoute: typeof HbDesk7392ActivityRoute
-  HbDesk7392AppointmentsRoute: typeof HbDesk7392AppointmentsRoute
-  HbDesk7392CalendarRoute: typeof HbDesk7392CalendarRoute
-  HbDesk7392ClosuresRoute: typeof HbDesk7392ClosuresRoute
-  HbDesk7392ContentRoute: typeof HbDesk7392ContentRoute
-  HbDesk7392CustomersRoute: typeof HbDesk7392CustomersRoute
-  HbDesk7392NotificationsRoute: typeof HbDesk7392NotificationsRoute
-  HbDesk7392ReportsRoute: typeof HbDesk7392ReportsRoute
-  HbDesk7392RulesRoute: typeof HbDesk7392RulesRoute
-  HbDesk7392ServicesRoute: typeof HbDesk7392ServicesRoute
-  HbDesk7392SettingsRoute: typeof HbDesk7392SettingsRoute
-  HbDesk7392StaffRoute: typeof HbDesk7392StaffRoute
-  HbDesk7392SystemRoute: typeof HbDesk7392SystemRoute
-  HbDesk7392IndexRoute: typeof HbDesk7392IndexRoute
+interface AdminRouteChildren {
+  AdminActivityRoute: typeof AdminActivityRoute
+  AdminAppointmentsRoute: typeof AdminAppointmentsRoute
+  AdminCalendarRoute: typeof AdminCalendarRoute
+  AdminClosuresRoute: typeof AdminClosuresRoute
+  AdminContentRoute: typeof AdminContentRoute
+  AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminRulesRoute: typeof AdminRulesRoute
+  AdminServicesRoute: typeof AdminServicesRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminStaffRoute: typeof AdminStaffRoute
+  AdminSystemRoute: typeof AdminSystemRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
-const HbDesk7392RouteChildren: HbDesk7392RouteChildren = {
-  HbDesk7392ActivityRoute: HbDesk7392ActivityRoute,
-  HbDesk7392AppointmentsRoute: HbDesk7392AppointmentsRoute,
-  HbDesk7392CalendarRoute: HbDesk7392CalendarRoute,
-  HbDesk7392ClosuresRoute: HbDesk7392ClosuresRoute,
-  HbDesk7392ContentRoute: HbDesk7392ContentRoute,
-  HbDesk7392CustomersRoute: HbDesk7392CustomersRoute,
-  HbDesk7392NotificationsRoute: HbDesk7392NotificationsRoute,
-  HbDesk7392ReportsRoute: HbDesk7392ReportsRoute,
-  HbDesk7392RulesRoute: HbDesk7392RulesRoute,
-  HbDesk7392ServicesRoute: HbDesk7392ServicesRoute,
-  HbDesk7392SettingsRoute: HbDesk7392SettingsRoute,
-  HbDesk7392StaffRoute: HbDesk7392StaffRoute,
-  HbDesk7392SystemRoute: HbDesk7392SystemRoute,
-  HbDesk7392IndexRoute: HbDesk7392IndexRoute,
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminActivityRoute: AdminActivityRoute,
+  AdminAppointmentsRoute: AdminAppointmentsRoute,
+  AdminCalendarRoute: AdminCalendarRoute,
+  AdminClosuresRoute: AdminClosuresRoute,
+  AdminContentRoute: AdminContentRoute,
+  AdminCustomersRoute: AdminCustomersRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminRulesRoute: AdminRulesRoute,
+  AdminServicesRoute: AdminServicesRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminStaffRoute: AdminStaffRoute,
+  AdminSystemRoute: AdminSystemRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 
-const HbDesk7392RouteWithChildren = HbDesk7392Route._addFileChildren(
-  HbDesk7392RouteChildren,
-)
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   ArtistRoute: ArtistRoute,
   BookRoute: BookRoute,
   ConfirmedRoute: ConfirmedRoute,
   ContactRoute: ContactRoute,
   DetailsRoute: DetailsRoute,
-  FilmRoute: FilmRoute,
-  HbDesk7392Route: HbDesk7392RouteWithChildren,
   HoursRoute: HoursRoute,
   ManageRoute: ManageRoute,
   OpenTimeRoute: OpenTimeRoute,

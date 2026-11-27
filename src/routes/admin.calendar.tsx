@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/hb-desk-7392/calendar")({
+export const Route = createFileRoute("/admin/calendar")({
   // the assistant's "View in Calendar" opens a given day: ?date=2026-11-14
   validateSearch: (s: Record<string, unknown>): { date?: string } =>
     typeof s["date"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s["date"])
@@ -38,10 +38,10 @@ export const Route = createFileRoute("/hb-desk-7392/calendar")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Calendar — Hair by Kiran" },
+      { title: "Calendar — Lumen Studio" },
       { name: "description", content: "Day, week and month view of the salon's chair." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Calendar — Hair by Kiran" },
+      { property: "og:title", content: "Calendar — Lumen Studio" },
       { property: "og:description", content: "Day, week and month view." },
     ],
   }),
@@ -51,7 +51,7 @@ export const Route = createFileRoute("/hb-desk-7392/calendar")({
 type View = "day" | "week" | "month";
 
 /** One colour per stylist column (initials and the booking's edge). */
-const STYLIST_COLOURS = ["#6250d6", "#1baf7a", "#eb6834", "#2a78d6", "#e87ba4", "#eda100"];
+const STYLIST_COLOURS = ["#6250d6", "#1baf7a", "#00B386", "#2a78d6", "#e87ba4", "#24CFA4"];
 
 const addDays = (iso: string, n: number) => {
   const d = fromISO(iso);

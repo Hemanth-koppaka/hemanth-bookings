@@ -140,7 +140,7 @@ async function connectionCode(): Promise<string> {
     ).trim();
     if (!ip) return "";
     const d = new Uint8Array(
-      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`hb-salon:${ip}`)),
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`bk-salon:${ip}`)),
     );
     return Array.from(d.slice(0, 8), (x) => x.toString(16).padStart(2, "0")).join("");
   } catch {
@@ -475,7 +475,7 @@ export const findMyBookings = createServerFn({ method: "POST" })
         reference: z
           .string()
           .trim()
-          .regex(/^HB-[A-Z0-9]{6}$/i),
+          .regex(/^BK-[A-Z0-9]{6}$/i),
         phone: z
           .string()
           .trim()
@@ -1570,8 +1570,8 @@ export const joinWaitlist = createServerFn({ method: "POST" })
         ? `We’ll remind you when ${data.back} is back`
         : `You’re on the waitlist for ${label}`,
       body: data.back
-        ? `${data.back} is back ${label}. We’ll send the first free time the evening before · Hair by Kiran`
-        : "We’ll alert this device if a time opens · Hair by Kiran",
+        ? `${data.back} is back ${label}. We’ll send the first free time the evening before · Lumen Studio`
+        : "We’ll alert this device if a time opens · Lumen Studio",
       url: "/book",
       tag: `wait-join-${data.date}`,
     });

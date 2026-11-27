@@ -61,7 +61,10 @@ export type Ctx = {
 /** Spelling shortcuts people type or dictation produces. */
 export function tidy(input: string): string {
   return input
-    .replace(/\b(tmrw|tmr|tmw|tomo|tomoro|tomorow|tommorow|tommorrow|2moro|2morrow|2mrw)\b/gi, "tomorrow")
+    .replace(
+      /\b(tmrw|tmr|tmw|tomo|tomoro|tomorow|tommorow|tommorrow|2moro|2morrow|2mrw)\b/gi,
+      "tomorrow",
+    )
     .replace(/\b(tdy|tday|2day|todays)\b/gi, "today")
     .replace(/\bnxt\b/gi, "next")
     .replace(/\b(\d{1,2})\s*o'?\s*clock\b/gi, "$1")
@@ -75,9 +78,11 @@ export function tidy(input: string): string {
 
 /** "morning", "afternoon", "evening": the salon's day in three parts. */
 export function findPeriod(t: string): { start: number; end: number; label: string } | null {
-  if (/\b(whole|full|entire|all) day\b/.test(t)) return { start: 600, end: 1200, label: "the whole day" };
+  if (/\b(whole|full|entire|all) day\b/.test(t))
+    return { start: 600, end: 1200, label: "the whole day" };
   if (/\bmorning\b/.test(t)) return { start: 600, end: 780, label: "the morning" };
-  if (/\b(afternoon|after lunch)\b/.test(t)) return { start: 840, end: 1020, label: "the afternoon" };
+  if (/\b(afternoon|after lunch)\b/.test(t))
+    return { start: 840, end: 1020, label: "the afternoon" };
   if (/\b(evening|night)\b/.test(t)) return { start: 1020, end: 1200, label: "the evening" };
   return null;
 }
@@ -264,7 +269,7 @@ export function findPhone(text: string): Found<string> | null {
 }
 
 export function findRef(text: string): string | undefined {
-  return /\bHB-?\s?([A-Z0-9]{4,8})\b/i.exec(text)?.[1]?.toUpperCase().replace(/^/, "HB-");
+  return /\bBK-?\s?([A-Z0-9]{4,8})\b/i.exec(text)?.[1]?.toUpperCase().replace(/^/, "BK-");
 }
 
 /** What's left once dates, times, phone, services and command words are removed. */
@@ -317,7 +322,7 @@ export function parseCommand(input: string, ctx: Ctx): Intent {
     : raw;
   const times = findTimes(blank(textNoPhone, dates));
   const ref = findRef(raw);
-  const refM = /\bHB-?\s?[A-Z0-9]{4,8}\b/i.exec(raw);
+  const refM = /\bBK-?\s?[A-Z0-9]{4,8}\b/i.exec(raw);
   const date = dates[0]?.value ?? null;
   const time = times[0]?.value ?? null;
   const cut: [number, number][] = [
@@ -328,16 +333,23 @@ export function parseCommand(input: string, ctx: Ctx): Intent {
   ];
 
   const period = findPeriod(t);
-  const ask = /\b(which|what|whats|show|list|any|see|view|check|tell|did i|have i|are there|is there|how many)\b|\?/.test(t);
+  const ask =
+    /\b(which|what|whats|show|list|any|see|view|check|tell|did i|have i|are there|is there|how many)\b|\?/.test(
+      t,
+    );
   const dateList = [...new Set(dates.map((d) => d.value))];
 
   // the price of a service: "change haircut price to 600"
   const money = /(?:₹|rs\.?|rupees?|inr)?\s*\b(\d{2,6})\b(?!\s*(?:am|pm|min|hr|:))/i;
-  if (has(t, /\b(price|cost|rate|charges?|fee)\b/) && has(t, /\b(change|set|make|update|increase|raise|reduce|lower|to)\b/)) {
+  if (
+    has(t, /\b(price|cost|rate|charges?|fee)\b/) &&
+    has(t, /\b(change|set|make|update|increase|raise|reduce|lower|to)\b/)
+  ) {
     const svc = findServices(raw, ctx.menus, audienceWord(t));
     const after = raw.slice(Math.max(raw.toLowerCase().lastIndexOf(" to "), 0));
     const m = money.exec(after) ?? money.exec(raw);
-    if (m && svc.ids.length) return { kind: "price", serviceIds: svc.ids, audience: svc.audience, price: Number(m[1]) };
+    if (m && svc.ids.length)
+      return { kind: "price", serviceIds: svc.ids, audience: svc.audience, price: Number(m[1]) };
     return { kind: "unknown", hint: "price" };
   }
 
@@ -346,10 +358,17 @@ export function parseCommand(input: string, ctx: Ctx): Intent {
     const first = norm(st.name).split(" ")[0];
     return first && first.length > 2 && new RegExp(`\\b${first}\\b`).test(norm(raw));
   });
-  if (stylist && has(t, /\b(off|leave|holiday|not available|unavailable|absent|away|not coming|block|busy)\b/) && !has(t, /\b(book|move|cancel|reschedule)\b/)) {
-    const reason = /\b(?:for|because|reason)\s+([a-z][^,.;]*)$/i.exec(blank(raw, [...dates, ...times]))?.[1]?.trim() ?? "";
+  if (
+    stylist &&
+    has(t, /\b(off|leave|holiday|not available|unavailable|absent|away|not coming|block|busy)\b/) &&
+    !has(t, /\b(book|move|cancel|reschedule)\b/)
+  ) {
+    const reason =
+      /\b(?:for|because|reason)\s+([a-z][^,.;]*)$/i
+        .exec(blank(raw, [...dates, ...times]))?.[1]
+        ?.trim() ?? "";
     const start = times[0]?.value ?? period?.start ?? null;
-    const end = times[1]?.value ?? (times[0] ? times[0].value + 60 : period?.end ?? null);
+    const end = times[1]?.value ?? (times[0] ? times[0].value + 60 : (period?.end ?? null));
     return {
       kind: "staffOff",
       staffId: stylist.id,
@@ -362,18 +381,36 @@ export function parseCommand(input: string, ctx: Ctx): Intent {
   }
 
   // remove a block: "unblock 3 pm today", "remove tomorrow's block"
-  if (has(t, /\b(unblock|un-block|(remove|delete|cancel|clear|undo|open up) (the |my |that |this )?(block|blocked|break)|(block|blocked time) (removed?|cancel(led)?))\b/))
+  if (
+    has(
+      t,
+      /\b(unblock|un-block|(remove|delete|cancel|clear|undo|open up) (the |my |that |this )?(block|blocked|break)|(block|blocked time) (removed?|cancel(led)?))\b/,
+    )
+  )
     return { kind: "unblock", date: date ?? ctx.today, time };
 
   // which times are blocked
   if (has(t, /\b(block|blocks|blocked|breaks)\b/) && (ask || (!times.length && !period)))
     return ask || !has(t, /^ ?(block|hold)\b/)
-      ? { kind: "blocks", range: dates.length ? { from: dates[0]!.value, to: dates[dates.length - 1]!.value, label: dates[0]!.value === ctx.today ? "today" : dates[0]!.value } : /\bweek\b/.test(t) ? rangeOf(t, ctx.today, dates) : { from: ctx.today, to: addDays(ctx.today, 30), label: "the next 30 days" } }
+      ? {
+          kind: "blocks",
+          range: dates.length
+            ? {
+                from: dates[0]!.value,
+                to: dates[dates.length - 1]!.value,
+                label: dates[0]!.value === ctx.today ? "today" : dates[0]!.value,
+              }
+            : /\bweek\b/.test(t)
+              ? rangeOf(t, ctx.today, dates)
+              : { from: ctx.today, to: addDays(ctx.today, 30), label: "the next 30 days" },
+        }
       : { kind: "unknown", hint: "block-time" };
 
   // reopen after a closure: "reopen 25 dec"
   if (has(t, /\b(reopen|re-open|open again|(cancel|remove|undo) (the )?(holiday|closure|leave))\b/))
-    return dates.length ? { kind: "reopen", date: dates[0]!.value } : { kind: "unknown", hint: "reopen" };
+    return dates.length
+      ? { kind: "reopen", date: dates[0]!.value }
+      : { kind: "unknown", hint: "reopen" };
 
   // close the salon for a day
   if (
@@ -393,7 +430,9 @@ export function parseCommand(input: string, ctx: Ctx): Intent {
   // block time
   if (has(t, /\b(block|break|busy|hold)\b/) && (times.length >= 1 || period)) {
     const start = times[0]?.value ?? period!.start;
-    const end = times[1]?.value ?? (times[0] ? start + (has(t, /\bhalf an hour|30 ?min/) ? 30 : 60) : period!.end);
+    const end =
+      times[1]?.value ??
+      (times[0] ? start + (has(t, /\bhalf an hour|30 ?min/) ? 30 : 60) : period!.end);
     const reason =
       /\b(?:for|because|reason)\s+([a-z][^,.;]*)$/i
         .exec(blank(raw, [...dates, ...times]))?.[1]
@@ -478,8 +517,14 @@ export function parseCommand(input: string, ctx: Ctx): Intent {
   }
 
   // a customer's phone or details: "Kumar's phone number"
-  if (has(t, /\b(phone|number|contact|mobile|details|email|whatsapp)\b/) && !has(t, /\b(book|move|cancel)\b/)) {
-    const n = leftoverName(raw, cut, []).replace(/\b(Phone|Number|Contact|Mobile|Details|Email|Whatsapp|Give|Me|Get|Send)\b/g, "").replace(/\s+/g, " ").trim();
+  if (
+    has(t, /\b(phone|number|contact|mobile|details|email|whatsapp)\b/) &&
+    !has(t, /\b(book|move|cancel)\b/)
+  ) {
+    const n = leftoverName(raw, cut, [])
+      .replace(/\b(Phone|Number|Contact|Mobile|Details|Email|Whatsapp|Give|Me|Get|Send)\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
     if (n) return { kind: "customer", name: n };
   }
 
@@ -515,7 +560,14 @@ export function parseCommand(input: string, ctx: Ctx): Intent {
   const name = leftoverName(raw, cut, []);
   if (ref) return { kind: "find", name: ref };
   const wordCount = raw.split(" ").filter(Boolean).length;
-  if (name && (has(t, /\b(find|search|look ?up|where is|when is|booking (of|for)|appointment (of|for)|'s (booking|appointment|visit)|coming)\b/) || wordCount <= 2))
+  if (
+    name &&
+    (has(
+      t,
+      /\b(find|search|look ?up|where is|when is|booking (of|for)|appointment (of|for)|'s (booking|appointment|visit)|coming)\b/,
+    ) ||
+      wordCount <= 2)
+  )
     return { kind: "find", name };
   return { kind: "unknown", hint: raw };
 }
@@ -556,7 +608,7 @@ export const HELP_LINES = [
   "earnings this week · how many bookings today",
   "find Ravi",
   "book Ravi 9876543210 haircut tomorrow 4 pm",
-  "move Ravi to 5 pm  ·  move HB-7KQ2MX to 14 Nov 11 am",
+  "move Ravi to 5 pm  ·  move BK-7KQ2MX to 14 Nov 11 am",
   "cancel Ravi tomorrow because unwell",
   "Ravi arrived · Ravi in chair · Ravi done · Ravi no show",
   "block 3 pm to 5 pm today for training",

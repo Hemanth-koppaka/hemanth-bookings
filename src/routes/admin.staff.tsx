@@ -31,14 +31,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/hb-desk-7392/staff")({
+export const Route = createFileRoute("/admin/staff")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Staff \u2014 Hair by Kiran" },
+      { property: "og:title", content: "Staff \u2014 Lumen Studio" },
       { property: "og:description", content: "Stylists, services, hours, breaks and leave." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Staff — Hair by Kiran" },
+      { title: "Staff — Lumen Studio" },
       { name: "description", content: "Stylists, services, hours, breaks and leave." },
       { name: "robots", content: "noindex" },
     ],
@@ -542,7 +542,7 @@ function rebookText(c: Affected, stylist: string) {
       ? `${window.location.origin}/manage?ref=${encodeURIComponent(c.reference)}`
       : "";
   return [
-    `Hello ${c.name || "there"}, this is Hair by Kiran.`,
+    `Hello ${c.name || "there"}, this is Lumen Studio.`,
     `We're sorry, ${stylist} won't be available for your appointment on ${day} at ${minuteLabel(c.time)}.`,
     `Please choose a new time here: ${link}`,
     "Or just reply to this message and we'll arrange it for you. Thank you!",
@@ -774,7 +774,7 @@ function TimeOff({
   const today = salonToday();
   // "Also for": the same leave for others in one go (e.g. a couple's trip). The last
   // choice per stylist is remembered on this device, so the usual partner is pre-ticked.
-  const alsoKey = `hb-leave-also-${member.id}`;
+  const alsoKey = `bk-leave-also-${member.id}`;
   const [also, setAlso] = useState<string[]>(() => {
     try {
       const v = JSON.parse(localStorage.getItem(alsoKey) ?? "[]") as unknown;

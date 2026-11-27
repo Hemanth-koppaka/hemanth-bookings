@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS public.notification_logs (
   id bigserial PRIMARY KEY,
   -- booking + event (+ occurrence) + recipient + channel: one message, ever
   idempotency_key text NOT NULL UNIQUE,
-  booking_id text NOT NULL,                 -- booking reference, e.g. HB-2026-00124
+  booking_id text NOT NULL,                 -- booking reference, e.g. BK-2026-00124
   event_type text NOT NULL,                 -- BOOKING_CONFIRMED, BOOKING_REMINDER_24H, …
   recipient_type text NOT NULL,             -- customer | admin | test
   recipient_phone text NOT NULL DEFAULT '', -- E.164

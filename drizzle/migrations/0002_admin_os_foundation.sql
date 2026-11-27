@@ -82,14 +82,14 @@ WHERE b.customer_id IS NULL
   AND c.phone_key = RIGHT(regexp_replace(b.customer ->> 'phone', '\D', '', 'g'), 10)
   AND c.phone_key <> '';
 
--- Human-friendly booking IDs: HB-2026-00124
+-- Human-friendly booking IDs: BK-2026-00124
 CREATE OR REPLACE FUNCTION public.next_booking_reference()
 RETURNS TABLE (reference text, booking_no bigint)
 LANGUAGE plpgsql SET search_path = public AS $$
 DECLARE n bigint;
 BEGIN
   n := nextval('public.booking_no_seq');
-  reference := 'HB-' || to_char(now() AT TIME ZONE 'Asia/Kolkata', 'YYYY') || '-' || lpad(n::text, 5, '0');
+  reference := 'BK-' || to_char(now() AT TIME ZONE 'Asia/Kolkata', 'YYYY') || '-' || lpad(n::text, 5, '0');
   booking_no := n;
   RETURN NEXT;
 END $$;
@@ -117,7 +117,7 @@ BEGIN
      AND OLD.archived_at IS NULL THEN
     RETURN NEW;
   END IF;
-  PERFORM pg_advisory_xact_lock(hashtext('hb-booking:' || NEW.date::text));
+  PERFORM pg_advisory_xact_lock(hashtext('bk-booking:' || NEW.date::text));
   IF EXISTS (
     SELECT 1 FROM public.bookings b
     WHERE b.date = NEW.date
@@ -128,7 +128,7 @@ BEGIN
       AND b.time < NEW.ends_at_minute
       AND NEW.time < COALESCE(b.ends_at_minute, b.time + b.slots * 30)
   ) THEN
-    RAISE EXCEPTION 'HB_SLOT_TAKEN' USING ERRCODE = 'P0001', HINT = 'That time was just booked.';
+    RAISE EXCEPTION 'BK_SLOT_TAKEN' USING ERRCODE = 'P0001', HINT = 'That time was just booked.';
   END IF;
   RETURN NEW;
 END $$;

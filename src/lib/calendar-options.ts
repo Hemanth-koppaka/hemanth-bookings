@@ -1,7 +1,7 @@
 import { closureOn, EXCEPTIONS, fromISO, isClosed, SERVICE_RULES } from "./salon";
 import { onlyAwayOn } from "./service-rules";
 
-/** The "only one stylist" rule among these services (Kiran's Signature → Kiran). */
+/** The "only one stylist" rule among these services (Lumen Signature → Kiran). */
 export function onlyRuleFor(serviceIds: string[] = []) {
   for (const id of serviceIds) if (SERVICE_RULES[id]?.only) return SERVICE_RULES[id]!;
   return null;

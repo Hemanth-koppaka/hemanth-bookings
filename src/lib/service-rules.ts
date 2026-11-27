@@ -1,5 +1,5 @@
 // Who may perform a service. Most services use every qualified stylist
-// ("any"); some prefer one stylist, e.g. Kiran's Signature → Kiran. A
+// ("any"); some prefer one stylist, e.g. Lumen Signature → Kiran. A
 // preferred service is booked with that stylist unless the guest explicitly
 // chooses another stylist from its fallback pool (never substituted silently).
 
@@ -26,7 +26,7 @@ export function onlyAwayOn(rule: ServiceRule | null | undefined, iso: string): b
   return Boolean(rule.off) || (rule.away ?? []).some((a) => a.start <= iso && iso <= a.end);
 }
 
-export const SIGNATURE_RE = /kiran.?s signature/i;
+export const SIGNATURE_RE = /lumen signature/i;
 
 /** The preferred stylist across these services (first preferred rule wins). */
 export function preferredFor(

@@ -8,14 +8,17 @@ import { adminGetRules, adminSaveRules } from "@/lib/admin-ops.functions";
 import type { BookingRules } from "@/lib/engine.server";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/rules")({
+export const Route = createFileRoute("/admin/rules")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Booking rules \u2014 Hair by Kiran" },
-      { property: "og:description", content: "How and when guests can book, cancel and reschedule." },
+      { property: "og:title", content: "Booking rules \u2014 Lumen Studio" },
+      {
+        property: "og:description",
+        content: "How and when guests can book, cancel and reschedule.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Booking rules — Hair by Kiran" },
+      { title: "Booking rules — Lumen Studio" },
       { name: "description", content: "How and when guests can book, cancel and reschedule." },
       { name: "robots", content: "noindex" },
     ],

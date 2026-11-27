@@ -232,7 +232,7 @@ export function GlobalSearch({
                 key={c.id}
                 onClick={() => {
                   onOpenChange(false);
-                  void navigate({ to: "/hb-desk-7392/customers", search: { id: c.id } as never });
+                  void navigate({ to: "/admin/customers", search: { id: c.id } as never });
                 }}
                 className="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left hover:bg-foreground/[0.04]"
               >
@@ -574,7 +574,7 @@ export function BookingDrawer({
                     </button>
                     {b.customerId ? (
                       <Link
-                        to="/hb-desk-7392/customers"
+                        to="/admin/customers"
                         search={{ id: b.customerId } as never}
                         className={ACTION}
                       >

@@ -18,14 +18,14 @@ import type { NotifySettings } from "@/lib/notify/service.server";
 import { cn } from "@/lib/utils";
 import { PhoneAlertsPanel } from "@/components/phone-alerts";
 
-export const Route = createFileRoute("/hb-desk-7392/notifications")({
+export const Route = createFileRoute("/admin/notifications")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Notifications \u2014 Hair by Kiran" },
+      { property: "og:title", content: "Notifications \u2014 Lumen Studio" },
       { property: "og:description", content: "Booking emails, reminders and delivery status." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Notifications — Hair by Kiran" },
+      { title: "Notifications — Lumen Studio" },
       {
         name: "description",
         content: "Booking emails, reminders and delivery status.",
@@ -190,7 +190,7 @@ function ProviderStatus({ info }: { info: Info }) {
       label: "Reminder schedule",
       ok: st.cronSecret,
       text: st.cronSecret ? "Ready" : "Not configured",
-      detail: `Schedule POST ${origin}/api/notifications/dispatch every 10 minutes (Supabase pg_cron job "hb-notifications", see docs/hosting.md).`,
+      detail: `Schedule POST ${origin}/api/notifications/dispatch every 10 minutes (Supabase pg_cron job "bk-notifications", see docs/hosting.md).`,
     },
     {
       label: "Email (free)",
@@ -311,7 +311,7 @@ function EmailSettings({
             className={inputClass}
             value={s.email.fromName}
             onChange={(e) => set({ email: { ...s.email, fromName: e.target.value } })}
-            placeholder="Hair by Kiran"
+            placeholder="Lumen Studio"
           />
         </Field>
       </div>

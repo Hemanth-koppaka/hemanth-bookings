@@ -26,7 +26,7 @@ export type WaBooking = {
 /** What the guest sends to the salon after booking (their copy stays in the chat). */
 export function guestToSalonText(b: WaBooking) {
   return [
-    "Hi Hair by Kiran! I've just booked an appointment:",
+    "Hi Lumen Studio! I've just booked an appointment:",
     "",
     `Booking ID: ${b.reference}`,
     `Name: ${b.name}`,

@@ -27,17 +27,17 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-export const Route = createFileRoute("/hb-desk-7392/customers")({
+export const Route = createFileRoute("/admin/customers")({
   validateSearch: (s: Record<string, unknown>): { id?: string } =>
     typeof s["id"] === "string" && /^[0-9a-f-]{36}$/i.test(s["id"]) ? { id: s["id"] } : {},
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Customers — Hair by Kiran" },
+      { title: "Customers — Lumen Studio" },
       { name: "description", content: "Customer records, visits and notes." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Customers — Hair by Kiran" },
+      { property: "og:title", content: "Customers — Lumen Studio" },
       { property: "og:description", content: "Customer records." },
     ],
   }),
@@ -74,14 +74,16 @@ function CustomersScreen() {
   useEffect(() => {
     let live = true;
     setLoading(true);
-    Promise.all(Array.from({ length: page + 1 }, (_, index) =>
-      adminCustomers({ data: { pin, page: index, audience: who, ...(term ? { q: term } : {}) } }),
-    ))
+    Promise.all(
+      Array.from({ length: page + 1 }, (_, index) =>
+        adminCustomers({ data: { pin, page: index, audience: who, ...(term ? { q: term } : {}) } }),
+      ),
+    )
       .then((pages) => {
         if (!live) return;
         const r = pages[pages.length - 1];
         if (!r) return;
-        setList(pages.flatMap(result => result.customers));
+        setList(pages.flatMap((result) => result.customers));
         setMore(r.more);
         setCounts(r.counts);
         setUnavailable(r.unavailable);
@@ -101,7 +103,7 @@ function CustomersScreen() {
 
   useEffect(() => {
     const refresh = () => {
-      if (document.visibilityState === "visible") setVersion(v => v + 1);
+      if (document.visibilityState === "visible") setVersion((v) => v + 1);
     };
     const timer = window.setInterval(refresh, 30_000);
     window.addEventListener("focus", refresh);
@@ -115,7 +117,7 @@ function CustomersScreen() {
 
   const shown = list;
   const open = (cid: string | null) =>
-    void navigate({ to: "/hb-desk-7392/customers", search: cid ? { id: cid } : {}, replace: true });
+    void navigate({ to: "/admin/customers", search: cid ? { id: cid } : {}, replace: true });
 
   return (
     <AdminShell
@@ -138,7 +140,12 @@ function CustomersScreen() {
             key={k}
             type="button"
             active={who === k}
-            onClick={() => { setWho(k); setPage(0); setList([]); setMore(false); }}
+            onClick={() => {
+              setWho(k);
+              setPage(0);
+              setList([]);
+              setMore(false);
+            }}
             tone={who === k ? "primary" : "default"}
           >
             {k === "all" ? "All" : k === "men" ? "Men" : "Women"}
@@ -162,7 +169,7 @@ function CustomersScreen() {
                 ? `No customers match “${term}”.`
                 : who !== "all"
                   ? `No ${who === "men" ? "men's" : "women's"} customers yet.`
-                : "No customers yet. They're added with their first booking."
+                  : "No customers yet. They're added with their first booking."
             }
           />
         ) : !loading && !error && list.length && !shown.length ? (
@@ -358,7 +365,10 @@ function Profile({
                     href={`mailto:${c.email}`}
                     className="flex items-center gap-2 break-all text-[0.9rem] hover:underline"
                   >
-                    <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                    <Mail
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      strokeWidth={1.5}
+                    />
                     {c.email}
                   </a>
                 ) : (

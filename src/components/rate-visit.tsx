@@ -9,7 +9,7 @@ import { sfx } from "@/lib/sfx";
 import { googleReviewLink } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-const RATED_KEY = (ref: string) => `hb.rated.${ref}`;
+const RATED_KEY = (ref: string) => `bk.rated.${ref}`;
 
 /** Ended (salon time) and not cancelled: a visit that can be rated. */
 export function visitOver(b: Pick<Booking, "date" | "time" | "status">, minutes = 30) {
@@ -95,7 +95,7 @@ export function RateVisit({ booking, className }: { booking: Booking; className?
             Thank you. Your rating helps other guests choose.
           </p>
           {/* All guests can share an honest Google review. */}
-          {(
+          {
             <div className="mt-4 border-t border-bronze/20 pt-4">
               <p className="text-[0.9rem] leading-relaxed text-muted-foreground">
                 Would you share it on Google? A few words there help new guests find us.
@@ -112,7 +112,7 @@ export function RateVisit({ booking, className }: { booking: Booking; className?
                 Write a Google review
               </a>
             </div>
-          )}
+          }
         </>
       ) : (
         <>

@@ -9,7 +9,7 @@ import { pushPublicKey, remindMeOnPhone } from "@/lib/salon.functions";
 import { haptic, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const KEY = (ref: string) => `hb.remind.${ref}`;
+const KEY = (ref: string) => `bk.remind.${ref}`;
 
 const keyBytes = (b64: string) => {
   const t = b64.replace(/-/g, "+").replace(/_/g, "/");
@@ -94,9 +94,9 @@ export function RemindMe({
   return (
     <div className={className}>
       {prompt && state !== "on" && state !== "blocked" && state !== "hidden" ? (
-        <div className={cn("mb-3", dark ? "text-[#E8E1D8]" : "text-foreground")}>
+        <div className={cn("mb-3", dark ? "text-[#DAE5E1]" : "text-foreground")}>
           <p className="font-display text-xl">Your booking is confirmed. Turn on alerts?</p>
-          <p className={cn("mt-1 text-sm", dark ? "text-[#E8E1D8]/65" : "text-muted-foreground")}>
+          <p className={cn("mt-1 text-sm", dark ? "text-[#DAE5E1]/65" : "text-muted-foreground")}>
             Get reminders and updates if the salon changes your time, stylist or price. After your
             visit, we’ll invite you to rate the service. Alerts are optional; your booking stays
             confirmed either way.
@@ -107,22 +107,22 @@ export function RemindMe({
         <p
           className={cn(
             "flex items-center gap-2 text-[0.85rem]",
-            dark ? "text-[#E8E1D8]/80" : "text-muted-foreground",
+            dark ? "text-[#DAE5E1]/80" : "text-muted-foreground",
           )}
         >
           <Check
-            className={cn("h-4 w-4", dark ? "text-[#E8E1D8]" : "text-foreground")}
+            className={cn("h-4 w-4", dark ? "text-[#DAE5E1]" : "text-foreground")}
             strokeWidth={2}
           />{" "}
           Booking alerts are enabled on this phone, including reminders and appointment updates.
         </p>
       ) : state === "blocked" ? (
-        <p className={cn("text-[0.82rem]", dark ? "text-[#E8E1D8]/65" : "text-muted-foreground")}>
+        <p className={cn("text-[0.82rem]", dark ? "text-[#DAE5E1]/65" : "text-muted-foreground")}>
           Notifications are blocked for this site, so we can't remind you here. Add it to your
           calendar instead.
         </p>
       ) : state === "hidden" ? (
-        <p className={cn("text-sm", dark ? "text-[#E8E1D8]/65" : "text-muted-foreground")}>
+        <p className={cn("text-sm", dark ? "text-[#DAE5E1]/65" : "text-muted-foreground")}>
           This browser cannot receive phone alerts. On iPhone, add the site to your Home Screen
           first, or add your appointment to your calendar.
         </p>
@@ -135,7 +135,7 @@ export function RemindMe({
           className={cn(
             "press flex min-h-12 w-full items-center justify-center gap-2.5 rounded-sm border px-5 text-[0.72rem] uppercase tracking-[0.2em] disabled:opacity-60",
             dark
-              ? "border-[#E8E1D8]/28 bg-transparent text-[#E8E1D8] hover:border-[#E8E1D8]/55 hover:bg-white/5 hover:text-[#E8E1D8]"
+              ? "border-[#DAE5E1]/28 bg-transparent text-[#DAE5E1] hover:border-[#DAE5E1]/55 hover:bg-white/5 hover:text-[#DAE5E1]"
               : "border-foreground/20 hover:border-foreground/45",
           )}
         >
@@ -151,7 +151,7 @@ export function RemindMe({
         <Button
           variant="ghost"
           size="sm"
-          className={cn("mt-2", dark && "text-[#E8E1D8]/75 hover:bg-white/5 hover:text-[#E8E1D8]")}
+          className={cn("mt-2", dark && "text-[#DAE5E1]/75 hover:bg-white/5 hover:text-[#DAE5E1]")}
           onClick={() => setDismissed(true)}
         >
           Not now

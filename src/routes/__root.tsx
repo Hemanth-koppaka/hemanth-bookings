@@ -79,17 +79,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { title: "Hair by Kiran — Reserve your chair" },
+      { title: "Lumen Studio — Book your moment" },
       { name: "author", content: "Hemanth Koppaka" },
       {
         name: "description",
         content:
-          "Book hair, beauty and makeover appointments with B. Kiran at Sector 9, Midtown, Hyderabad.",
+          "Book cut, colour and care appointments with Kiran Rao at Sector 9, Midtown, Metro City.",
       },
       { name: "google-site-verification", content: "-E2n6oC7-8kwVVCbhPLKbJ3KZgGBIlxC1ig4witN4K0" },
-      { property: "og:site_name", content: "Hair by Kiran" },
+      { property: "og:site_name", content: "Lumen Studio" },
       { property: "og:locale", content: "en_IN" },
-      { name: "theme-color", content: "#FBF8F3" },
+      { name: "theme-color", content: "#F4FAF8" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -99,7 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Jost:wght@300;400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Manrope:wght@300;400;500&display=swap",
       },
       { rel: "icon", type: "image/x-icon", href: "/favicon.ico?v=3" },
       { rel: "icon", type: "image/png", sizes: "48x48", href: "/icons/favicon-48.png?v=3" },
@@ -139,7 +139,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var k='hb-intro',r=document.documentElement,m=matchMedia('(prefers-reduced-motion: reduce)').matches||localStorage.getItem('hb-reduced-motion')==='reduce';if(m)r.classList.add('reduced-motion');if(m||sessionStorage.getItem(k)||location.pathname!=='/')r.classList.add('intro-seen');sessionStorage.setItem(k,'1')}catch(e){document.documentElement.classList.add('intro-seen')}",
+              "try{var k='bk-intro',r=document.documentElement,m=matchMedia('(prefers-reduced-motion: reduce)').matches||localStorage.getItem('bk-reduced-motion')==='reduce';if(m)r.classList.add('reduced-motion');if(m||sessionStorage.getItem(k)||location.pathname!=='/')r.classList.add('intro-seen');sessionStorage.setItem(k,'1')}catch(e){document.documentElement.classList.add('intro-seen')}",
           }}
         />
         <HeadContent />
@@ -196,7 +196,7 @@ function SoundDirector() {
   useEffect(() => {
     const from = prev.current;
     prev.current = path;
-    if (from === null || from === path || path.startsWith("/hb-desk-7392")) return;
+    if (from === null || from === path || path.startsWith("/admin")) return;
     const a = FLOW[from];
     const b = FLOW[path];
     if (a !== undefined && b !== undefined) {

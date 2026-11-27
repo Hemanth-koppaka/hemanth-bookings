@@ -28,5 +28,5 @@ test("every day of a salon closure is unselectable, including both endpoints", (
 
 test("the weekly closed day is unselectable", () => {
   applyConfig(defaultConfig());
-  strictEqual(calendarDays(7, new Date(2026, 10, 8)).find((day) => day.iso === "2026-11-10")?.selectable, false);
+  strictEqual(calendarDays(7, new Date(2026, 10, 8)).find((day) => day.iso === "2026-11-09")?.selectable, false);
 });

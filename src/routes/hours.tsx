@@ -17,13 +17,13 @@ export const Route = createFileRoute("/hours")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Opening hours — Hair by Kiran" },
+      { title: "Opening hours — Lumen Studio" },
       {
         name: "description",
         content:
-          "Hair by Kiran is open Wednesday to Monday, 10:00 AM to 8:00 PM. Closed on Tuesdays. Sector 9, Midtown.",
+          "Lumen Studio is open Wednesday to Monday, 10:00 AM to 8:00 PM. Closed on Tuesdays. Sector 9, Midtown.",
       },
-      { property: "og:title", content: "Opening hours — Hair by Kiran" },
+      { property: "og:title", content: "Opening hours — Lumen Studio" },
       { property: "og:description", content: "Open Wednesday to Monday, 10:00 AM to 8:00 PM." },
     ],
   }),

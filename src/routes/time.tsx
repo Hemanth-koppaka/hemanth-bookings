@@ -51,13 +51,13 @@ import {
 export const Route = createFileRoute("/time")({
   head: () => ({
     meta: [
-      { title: "Pick a date and time — Hair by Kiran" },
+      { title: "Pick a date and time — Lumen Studio" },
       {
         name: "description",
         content:
-          "Choose your date and a genuinely available appointment time at Hair by Kiran, with live stylist availability and clear holiday closures.",
+          "Choose your date and a genuinely available appointment time at Lumen Studio, with live stylist availability and clear holiday closures.",
       },
-      { property: "og:title", content: "Pick a date and time — Hair by Kiran" },
+      { property: "og:title", content: "Pick a date and time — Lumen Studio" },
       { property: "og:description", content: "Only genuinely free 30-minute slots are shown." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -82,7 +82,7 @@ function TimeScreen() {
       ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [draft.date, hydrated]);
 
-  // a service only one stylist performs (Kiran's Signature) can't be booked on their leave days
+  // a service only one stylist performs (Lumen Signature) can't be booked on their leave days
   const days = useMemo(
     () =>
       calendarDays(56, now).map((d) =>
@@ -147,7 +147,7 @@ function TimeScreen() {
       .map((d) => d.iso);
   }, [days, draft.date]);
   const rawDay = useDayAvailability(draft.date, draft.audience, draft.serviceIds, ahead);
-  // a service with a preferred stylist (Kiran's Signature) shows that stylist's times
+  // a service with a preferred stylist (Lumen Signature) shows that stylist's times
   const day = forStylist(
     rawDay,
     draft.staffId ?? rawDay.data?.preferred?.id,
@@ -429,7 +429,7 @@ function StylistPicker({ day }: { day: DayState }) {
                   <span
                     className={
                       "h-1.5 w-1.5 shrink-0 rounded-full " +
-                      (away ? "bg-[#c2554a]" : "bg-emerald-600")
+                      (away ? "bg-[#009470]" : "bg-emerald-600")
                     }
                   />
                 ) : null}
@@ -637,7 +637,7 @@ function BreakDivider({ start, end }: { start: number; end: number }) {
 }
 
 /**
- * Services with a preferred stylist (Kiran's Signature): the stylist is set,
+ * Services with a preferred stylist (Lumen Signature): the stylist is set,
  * not chosen. If the guest explicitly continued with another stylist, say so
  * and offer the way back.
  */

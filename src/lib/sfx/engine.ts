@@ -1,4 +1,4 @@
-// Hair by Kiran: procedural interface sound.
+// Lumen Studio: procedural interface sound.
 //
 // One shared AudioContext, created only after the guest's first real gesture.
 // Every sound is synthesised on the fly from a handful of primitives (filtered
@@ -79,7 +79,7 @@ type Noise = {
 };
 type Voice = { t: number; v: { p: number; g: number }; arg?: number | undefined };
 
-const PREF_KEY = "hb.sound";
+const PREF_KEY = "bk.sound";
 const isBrowser = () => typeof window !== "undefined" && typeof document !== "undefined";
 
 class SoundEngine {
@@ -1283,7 +1283,7 @@ class SoundEngine {
     };
   }
 
-  /* ── "Your chair is being reserved" ─────────────────────────────────── */
+  /* ── "Saving your spot" ─────────────────────────────────── */
 
   /** Leaving the tools: cloth moving, a hint of metal, a low transition breath. */
   chairEnter() {

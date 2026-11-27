@@ -69,7 +69,7 @@ export const adminPushTest = createServerFn({ method: "POST" })
       {
         title: "Booking alerts are on",
         body: "New bookings, moves and cancellations will appear here.",
-        url: "/hb-desk-7392",
+        url: "/admin",
         tag: "test",
       },
       { ownersOnly: true },

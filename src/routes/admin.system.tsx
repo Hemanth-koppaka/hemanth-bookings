@@ -12,14 +12,17 @@ import {
 } from "@/lib/admin-system.functions";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/system")({
+export const Route = createFileRoute("/admin/system")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "System health \u2014 Hair by Kiran" },
-      { property: "og:description", content: "Database, scheduled jobs, messaging, storage and security status." },
+      { property: "og:title", content: "System health \u2014 Lumen Studio" },
+      {
+        property: "og:description",
+        content: "Database, scheduled jobs, messaging, storage and security status.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "System health — Hair by Kiran" },
+      { title: "System health — Lumen Studio" },
       {
         name: "description",
         content: "Database, scheduled jobs, messaging, storage and security status.",
@@ -213,7 +216,7 @@ function SystemScreen() {
             </ul>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
-                to="/hb-desk-7392/settings"
+                to="/admin/settings"
                 hash="access"
                 className="press inline-flex min-h-9 items-center rounded-md border border-foreground/15 px-3 text-[0.8rem] hover:border-foreground/45"
               >

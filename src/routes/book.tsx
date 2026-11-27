@@ -9,13 +9,13 @@ import type { Audience } from "@/lib/salon";
 export const Route = createFileRoute("/book")({
   head: () => ({
     meta: [
-      { title: "Book an appointment — Hair by Kiran" },
+      { title: "Book an appointment — Lumen Studio" },
       {
         name: "description",
-        content: "Start your reservation at Hair by Kiran. Choose men's or women's services.",
+        content: "Start your reservation at Lumen Studio. Choose men's or women's services.",
       },
-      { property: "og:title", content: "Book an appointment — Hair by Kiran" },
-      { property: "og:description", content: "Start your reservation at Hair by Kiran." },
+      { property: "og:title", content: "Book an appointment — Lumen Studio" },
+      { property: "og:description", content: "Start your reservation at Lumen Studio." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

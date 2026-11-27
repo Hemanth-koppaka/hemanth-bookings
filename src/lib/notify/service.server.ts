@@ -110,7 +110,7 @@ export function settingsFromRow(r: Row): NotifySettings {
     email: {
       provider: (r["email_provider"] as string) === "resend" ? "resend" : "brevo",
       from: (r["email_from"] as string) || "",
-      fromName: (r["email_from_name"] as string) || "Hair by Kiran",
+      fromName: (r["email_from_name"] as string) || "Lumen Studio",
     },
   };
 }
@@ -299,7 +299,7 @@ async function attemptEmail(
   const tries = row.attempt_count + 1;
   const r = await sendEmail(s.email, {
     to: row.recipient_email ?? "",
-    subject: row.payload.subject ?? "Hair by Kiran",
+    subject: row.payload.subject ?? "Lumen Studio",
     html: row.payload.html ?? "",
     text: row.payload.text ?? "",
   });
@@ -946,8 +946,8 @@ export async function morningSummary(s: NotifySettings, force = false): Promise<
   });
   const total = lines.reduce((n, l) => n + l.total, 0);
   const subject = list.length
-    ? `Today at Hair by Kiran: ${list.length} appointment${list.length > 1 ? "s" : ""}`
-    : "Today at Hair by Kiran: no appointments yet";
+    ? `Today at Lumen Studio: ${list.length} appointment${list.length > 1 ? "s" : ""}`
+    : "Today at Lumen Studio: no appointments yet";
   const text = [
     `${day}`,
     list.length
@@ -959,10 +959,10 @@ export async function morningSummary(s: NotifySettings, force = false): Promise<
         `${l.time}  ${l.name}${l.stylist ? ` · ${l.stylist}` : ""}\n  ${l.services}${l.phone ? ` · ${l.phone}` : ""}`,
     ),
   ].join("\n");
-  const html = `<div style="font-family:Georgia,serif;color:#1c1611;max-width:560px">
-<p style="font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#8a6a4f;margin:0">Today at the salon</p>
+  const html = `<div style="font-family:Georgia,serif;color:#121916;max-width:560px">
+<p style="font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#537B6D;margin:0">Today at the salon</p>
 <h1 style="font-weight:400;font-size:26px;margin:6px 0 4px">${esc(day)}</h1>
-<p style="font-family:Arial,sans-serif;font-size:14px;color:#6b625a;margin:0 0 18px">${
+<p style="font-family:Arial,sans-serif;font-size:14px;color:#5C6762;margin:0 0 18px">${
     list.length
       ? `${list.length} appointment${list.length > 1 ? "s" : ""} · expected ₹${total.toLocaleString("en-IN")}`
       : "No appointments booked yet."
@@ -971,9 +971,9 @@ ${lines
   .map(
     (
       l,
-    ) => `<div style="border-top:1px solid #e8e1d6;padding:10px 0;font-family:Arial,sans-serif;font-size:14px">
-<b>${esc(l.time)}</b> &nbsp; ${esc(l.name)}${l.stylist ? ` <span style="color:#8a6a4f">· ${esc(l.stylist)}</span>` : ""}<br>
-<span style="color:#6b625a">${esc(l.services)}${l.phone ? ` · ${esc(l.phone)}` : ""}</span></div>`,
+    ) => `<div style="border-top:1px solid #D9E5E0;padding:10px 0;font-family:Arial,sans-serif;font-size:14px">
+<b>${esc(l.time)}</b> &nbsp; ${esc(l.name)}${l.stylist ? ` <span style="color:#537B6D">· ${esc(l.stylist)}</span>` : ""}<br>
+<span style="color:#5C6762">${esc(l.services)}${l.phone ? ` · ${esc(l.phone)}` : ""}</span></div>`,
   )
   .join("\n")}
 </div>`;
@@ -1036,12 +1036,12 @@ export async function sendTest(
   if (channel !== "email" && !phone)
     return { ok: false, status: "invalid", detail: "Set a test number first." };
   const facts: BookingFacts = {
-    reference: "HB-TEST",
+    reference: "BK-TEST",
     customerName: "Test Guest",
     customerPhone: phone,
     date: new Date(Date.now() + 330 * 60_000 + 86_400_000).toISOString().slice(0, 10),
     time: 16 * 60 + 30,
-    services: ["Kiran's Signature"],
+    services: ["Lumen Signature"],
     minutes: 30,
     price: 1000,
     priceFrom: false,
@@ -1054,7 +1054,7 @@ export async function sendTest(
     const c = emailContent(kind, "BOOKING_CONFIRMED", facts);
     const madeE = await ensureRow({
       idempotency_key: `TEST|${kind}|email|${Date.now()}`,
-      booking_id: "HB-TEST",
+      booking_id: "BK-TEST",
       event_type: "BOOKING_CONFIRMED",
       recipient_type: "test",
       recipient_phone: "",
@@ -1084,7 +1084,7 @@ export async function sendTest(
   }
   const made = await ensureRow({
     idempotency_key: `TEST|${kind}|${channel}|${Date.now()}`,
-    booking_id: "HB-TEST",
+    booking_id: "BK-TEST",
     event_type: "BOOKING_CONFIRMED",
     recipient_type: "test",
     recipient_phone: phone,

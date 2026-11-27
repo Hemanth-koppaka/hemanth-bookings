@@ -1,6 +1,5 @@
 import { SiteCredit } from "@/components/site-credit";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BookingFilm, filmPoster, playLogoSting } from "@/components/booking-film";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Copy, Download, MapPin, MessageCircle } from "lucide-react";
 import { guestToSalonText, waLink } from "@/lib/whatsapp-link";
@@ -26,13 +25,13 @@ export const Route = createFileRoute("/confirmed")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Booking confirmed — Hair by Kiran" },
+      { title: "Booking confirmed — Lumen Studio" },
       {
         name: "description",
-        content: "Your chair is reserved at Hair by Kiran, Sector 9, Midtown, Hyderabad.",
+        content: "You're booked at Lumen Studio, Sector 9, Midtown, Metro City.",
       },
-      { property: "og:title", content: "Booking confirmed — Hair by Kiran" },
-      { property: "og:description", content: "Your chair is reserved." },
+      { property: "og:title", content: "Booking confirmed — Lumen Studio" },
+      { property: "og:description", content: "You're booked." },
     ],
   }),
   component: ConfirmedScreen,
@@ -101,8 +100,8 @@ async function renderConfirmationImage(
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  const gold = "#C9A96A";
-  const ivory = "#E8E1D8";
+  const gold = "#78BFA6";
+  const ivory = "#DAE5E1";
 
   ctx.strokeStyle = "rgba(201,169,106,0.35)";
   ctx.lineWidth = 2;
@@ -119,16 +118,16 @@ async function renderConfirmationImage(
     }
     return s;
   };
-  const SERIF = "300 {s}px 'Cormorant Garamond', Georgia, serif";
-  const SANS = "400 {s}px Jost, sans-serif";
+  const SERIF = "300 {s}px 'Fraunces', Georgia, serif";
+  const SANS = "400 {s}px Manrope, sans-serif";
   const MAXW = W - 220;
 
   ctx.fillStyle = gold;
-  ctx.font = "500 26px Jost, sans-serif";
+  ctx.font = "500 26px Manrope, sans-serif";
   ctx.fillText("H A I R   B Y   B H A R G A V", W / 2, 170);
 
   ctx.fillStyle = ivory;
-  ctx.font = "300 74px 'Cormorant Garamond', Georgia, serif";
+  ctx.font = "300 74px 'Fraunces', Georgia, serif";
   ctx.fillText("Booking Confirmed", W / 2, 268);
   ctx.fillStyle = "rgba(201,169,106,0.5)";
   ctx.fillRect(W / 2 - 60, 306, 120, 1);
@@ -149,7 +148,7 @@ async function renderConfirmationImage(
   let y = 400;
   for (const [label, value] of rows) {
     ctx.fillStyle = "rgba(232,225,216,0.5)";
-    ctx.font = "400 21px Jost, sans-serif";
+    ctx.font = "400 21px Manrope, sans-serif";
     ctx.fillText(label.split("").join(" "), W / 2, y);
     ctx.fillStyle = ivory;
     fit(value, MAXW, 46, SERIF);
@@ -159,13 +158,13 @@ async function renderConfirmationImage(
 
   // studio
   ctx.fillStyle = "rgba(232,225,216,0.5)";
-  ctx.font = "400 21px Jost, sans-serif";
+  ctx.font = "400 21px Manrope, sans-serif";
   ctx.fillText("S T U D I O", W / 2, 972);
   ctx.fillStyle = ivory;
-  ctx.font = "300 38px 'Cormorant Garamond', Georgia, serif";
-  ctx.fillText("Hair by Kiran", W / 2, 1018);
+  ctx.font = "300 38px 'Fraunces', Georgia, serif";
+  ctx.fillText("Lumen Studio", W / 2, 1018);
   ctx.fillStyle = "rgba(232,225,216,0.72)";
-  const where = BUSINESS.locationShort || "Sector 9, Midtown, Hyderabad";
+  const where = BUSINESS.locationShort || "Sector 9, Midtown, Metro City";
   fit(where, MAXW, 26, SANS, 18);
   ctx.fillText(where, W / 2, 1058);
 
@@ -173,11 +172,11 @@ async function renderConfirmationImage(
   ctx.fillRect(W / 2 - 160, 1104, 320, 1);
 
   ctx.fillStyle = ivory;
-  ctx.font = "italic 300 50px 'Cormorant Garamond', Georgia, serif";
-  ctx.fillText("Your chair is waiting.", W / 2, 1182);
+  ctx.font = "italic 300 50px 'Fraunces', Georgia, serif";
+  ctx.fillText("See you soon.", W / 2, 1182);
   ctx.fillStyle = gold;
-  ctx.font = "300 32px 'Cormorant Garamond', Georgia, serif";
-  ctx.fillText(withKiran ? "— Kiran" : "— Hair by Kiran", W / 2, 1234);
+  ctx.font = "300 32px 'Fraunces', Georgia, serif";
+  ctx.fillText(withKiran ? "— Kiran" : "— Lumen Studio", W / 2, 1234);
 
   try {
     return await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/png"));
@@ -207,7 +206,7 @@ async function deliverImage(
   const touch = window.matchMedia?.("(pointer: coarse)").matches;
   if (touch && navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: "Hair by Kiran: booking confirmed" });
+      await navigator.share({ files: [file], title: "Lumen Studio: booking confirmed" });
       return "shared";
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return "cancelled";
@@ -236,20 +235,12 @@ function ConfirmedScreen() {
   const withKiran = isKiranBooking(booking);
   const cinematic = seq === 1 && withKiran;
   const [stage, setStage] = useState(cinematic ? 0 : FINAL);
-  // the film (Kiran getting ready → the reserved chair) opens a fresh
-  // confirmation on every screen; the booking ID follows it. It is framed for
-  // phones (9:16); wide screens show it centred over a soft blurred backdrop.
-  const [film, setFilm] = useState<"on" | "leaving" | "off">(cinematic ? "on" : "off");
-  // skipping fades the film's sound and picture into the confirmation
-  const skipFilm = useCallback(() => {
-    setFilm((f) => (f === "on" ? "leaving" : f));
-    window.setTimeout(() => setFilm("off"), 700);
-  }, []);
+  // no film in this version: the confirmation animation plays straight away
+  const film = "off" as "on" | "off";
 
   // another stylist or "any available": the simple confirmation, straight away
   useEffect(() => {
     if (booking && !withKiran) {
-      setFilm("off");
       setStage(FINAL);
     }
   }, [booking, withKiran]);
@@ -281,8 +272,7 @@ function ConfirmedScreen() {
     if (!cinematic || film === "on") return;
     if (stage >= 1 && heard.current < 1) {
       heard.current = 1;
-      // the logo's own sound (readied by the Confirm tap); the interface chime otherwise
-      if (!playLogoSting()) sfx.bookingConfirm();
+      sfx.bookingConfirm();
     }
     if (stage >= 3 && stage < FINAL && heard.current < 3) {
       heard.current = 3;
@@ -357,7 +347,7 @@ function ConfirmedScreen() {
       return;
     }
     card.current = blob;
-    const name = `hair-by-kiran-${booking.reference}.png`;
+    const name = `lumen-studio-${booking.reference}.png`;
     const how = await deliverImage(blob, name);
     if (how === "shared" || how === "cancelled") return;
     if (how === "downloaded") {
@@ -373,8 +363,8 @@ function ConfirmedScreen() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-[100svh] items-center justify-center bg-[#0B0B0B] text-[#E8E1D8]">
-        <p className="animate-pulse text-[0.62rem] uppercase tracking-[0.3em] text-[#E8E1D8]/40">
+      <div className="flex min-h-[100svh] items-center justify-center bg-[#0B0B0B] text-[#DAE5E1]">
+        <p className="animate-pulse text-[0.62rem] uppercase tracking-[0.3em] text-[#DAE5E1]/40">
           Preparing your confirmation
         </p>
       </div>
@@ -385,7 +375,7 @@ function ConfirmedScreen() {
     return (
       <div className="flex min-h-[100svh] items-center justify-center bg-background px-6 text-foreground">
         <div className="text-center">
-          <div className="eyebrow">Hair by Kiran</div>
+          <div className="eyebrow">Lumen Studio</div>
           <h1 className="font-display text-4xl">Booking not found</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             We couldn't find that reference on this device.
@@ -414,7 +404,7 @@ function ConfirmedScreen() {
   return (
     <div
       onClick={() => setStage(FINAL)}
-      className="relative min-h-[100svh] overflow-hidden bg-[#0B0B0B] text-[#E8E1D8]"
+      className="relative min-h-[100svh] overflow-hidden bg-[#0B0B0B] text-[#DAE5E1]"
     >
       {/* 4 — Kiran, cinematic black & white (only when the guest chose him) */}
       {withKiran ? (
@@ -468,12 +458,12 @@ function ConfirmedScreen() {
           >
             <Link
               to="/"
-              aria-label="Hair by Kiran: go to home"
-              className="rounded-sm transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#C9A96A] active:scale-[0.97]"
+              aria-label="Lumen Studio: go to home"
+              className="rounded-sm transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#78BFA6] active:scale-[0.97]"
             >
               <img
                 src={logo.url}
-                alt="Hair by Kiran"
+                alt="Lumen Studio"
                 className="h-12 w-auto object-contain brightness-0 invert [@media(max-width:639px)_and_(max-height:800px)]:h-10 lg:h-14"
               />
             </Link>
@@ -485,10 +475,10 @@ function ConfirmedScreen() {
             <h1 className="font-display text-[3.2rem] leading-none tracking-wide [@media(max-width:639px)_and_(max-height:800px)]:text-[2.75rem] sm:text-6xl lg:text-[4.75rem]">
               You're booked.
             </h1>
-            <p className="mt-4 font-display text-2xl italic text-[#E8E1D8]/80 [@media(max-width:639px)_and_(max-height:800px)]:mt-2.5 [@media(max-width:639px)_and_(max-height:800px)]:text-xl lg:text-[2rem]">
-              Your chair is reserved.
+            <p className="mt-4 font-display text-2xl italic text-[#DAE5E1]/80 [@media(max-width:639px)_and_(max-height:800px)]:mt-2.5 [@media(max-width:639px)_and_(max-height:800px)]:text-xl lg:text-[2rem]">
+              You're booked.
             </p>
-            <p className="mt-3 text-[0.7rem] uppercase tracking-[0.3em] text-[#C9A96A] [@media(max-width:639px)_and_(max-height:800px)]:mt-2">
+            <p className="mt-3 text-[0.7rem] uppercase tracking-[0.3em] text-[#78BFA6] [@media(max-width:639px)_and_(max-height:800px)]:mt-2">
               {/^kiran\b/i.test(booking.stylist ?? "")
                 ? "Kiran is waiting for you"
                 : "We’re waiting for you"}
@@ -513,8 +503,8 @@ function ConfirmedScreen() {
                     : "transform 1500ms cubic-bezier(0.22,0.61,0.36,1) 350ms, opacity 1100ms ease 350ms",
               }}
             >
-              <div className="relative overflow-hidden rounded-md border border-[#C9A96A]/30 bg-gradient-to-br from-[#1b1916] via-[#141312] to-[#0f0e0d] p-1.5 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]">
-                <div className="rounded-[3px] border border-[#C9A96A]/15 px-6 py-7 sm:px-8 lg:px-10 lg:py-9">
+              <div className="relative overflow-hidden rounded-md border border-[#78BFA6]/30 bg-gradient-to-br from-[#171A19] via-[#141312] to-[#0f0e0d] p-1.5 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9)]">
+                <div className="rounded-[3px] border border-[#78BFA6]/15 px-6 py-7 sm:px-8 lg:px-10 lg:py-9">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -523,7 +513,7 @@ function ConfirmedScreen() {
                         window.setTimeout(() => setCopied(false), 1600);
                       });
                     }}
-                    className="press flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.3em] text-[#C9A96A]"
+                    className="press flex items-center gap-2 text-[0.62rem] uppercase tracking-[0.3em] text-[#78BFA6]"
                     aria-label="Copy booking reference"
                   >
                     Reservation · {booking.reference}
@@ -542,15 +532,15 @@ function ConfirmedScreen() {
                       month: "long",
                     })}
                   </div>
-                  <div className="mt-1 font-display text-[1.5rem] italic text-[#E8D9B6] lg:text-[1.7rem]">
+                  <div className="mt-1 font-display text-[1.5rem] italic text-[#BEE4D6] lg:text-[1.7rem]">
                     {minuteLabel(booking.time)} · {formatDuration(totalMinutes || 30)}
                   </div>
-                  <div className="my-6 h-px bg-gradient-to-r from-[#C9A96A]/40 via-[#C9A96A]/15 to-transparent" />
+                  <div className="my-6 h-px bg-gradient-to-r from-[#78BFA6]/40 via-[#78BFA6]/15 to-transparent" />
                   <dl className="space-y-4">
                     <Row label="Service" value={serviceLine} />
                     {booking.stylist ? <Row label="Stylist" value={booking.stylist} /> : null}
                     <Row label="Guest" value={booking.customer.name} />
-                    <Row label="Studio" value="Hair by Kiran" sub={BUSINESS.address} />
+                    <Row label="Studio" value="Lumen Studio" sub={BUSINESS.address} />
                   </dl>
                 </div>
                 {/* light sweep once the card lands */}
@@ -616,12 +606,12 @@ function ConfirmedScreen() {
                   () => {},
                 );
               }}
-              className="press flex min-h-13 w-full items-center justify-center gap-3 rounded-sm bg-[#E8E1D8] px-6 text-[0.66rem] font-medium uppercase tracking-[0.2em] text-[#14110F] hover:opacity-90"
+              className="press flex min-h-13 w-full items-center justify-center gap-3 rounded-sm bg-[#DAE5E1] px-6 text-[0.66rem] font-medium uppercase tracking-[0.2em] text-[#0F1311] hover:opacity-90"
             >
               <MessageCircle className="h-4 w-4" strokeWidth={1.25} />
               Confirm on WhatsApp
             </a>
-            <p className="text-center text-[0.7rem] text-[#E8E1D8]/70">
+            <p className="text-center text-[0.7rem] text-[#DAE5E1]/70">
               Please tap Confirm on WhatsApp so the salon has your booking.
             </p>
             <RemindMe booking={booking} tone="dark" prompt />
@@ -631,7 +621,7 @@ function ConfirmedScreen() {
               <button
                 onClick={() => void onSave()}
                 data-sfx="secondary"
-                className="press flex min-h-13 items-center justify-center gap-2.5 rounded-sm border border-[#E8E1D8]/28 px-4 text-[0.66rem] uppercase tracking-[0.2em] text-[#E8E1D8] hover:border-[#E8E1D8]/70"
+                className="press flex min-h-13 items-center justify-center gap-2.5 rounded-sm border border-[#DAE5E1]/28 px-4 text-[0.66rem] uppercase tracking-[0.2em] text-[#DAE5E1] hover:border-[#DAE5E1]/70"
               >
                 <Download className="h-4 w-4" strokeWidth={1.25} />
                 Save image
@@ -640,7 +630,7 @@ function ConfirmedScreen() {
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(BUSINESS.mapsQuery)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="press flex min-h-13 items-center justify-center gap-2.5 rounded-sm border border-[#E8E1D8]/28 px-4 text-[0.66rem] uppercase tracking-[0.2em] text-[#E8E1D8] hover:border-[#E8E1D8]/70"
+                className="press flex min-h-13 items-center justify-center gap-2.5 rounded-sm border border-[#DAE5E1]/28 px-4 text-[0.66rem] uppercase tracking-[0.2em] text-[#DAE5E1] hover:border-[#DAE5E1]/70"
               >
                 <MapPin className="h-4 w-4" strokeWidth={1.25} />
                 Directions
@@ -649,26 +639,26 @@ function ConfirmedScreen() {
             {saveNote || waNote ? (
               <p
                 role="status"
-                className="text-center text-[0.78rem] leading-relaxed text-[#E8E1D8]/70"
+                className="text-center text-[0.78rem] leading-relaxed text-[#DAE5E1]/70"
               >
                 {waNote || saveNote}
               </p>
             ) : null}
             {/* the salon's request: keep the appointment, or free the chair in advance */}
-            <p className="pt-1 text-center text-[0.78rem] leading-relaxed text-[#E8E1D8]/60">
+            <p className="pt-1 text-center text-[0.78rem] leading-relaxed text-[#DAE5E1]/60">
               Can't make it? Change or cancel in Manage booking at least {changeDeadline} before, so
-              someone else can have your chair.
+              someone else can take the slot.
             </p>
             <div className="flex items-center justify-center gap-6">
               <Link
                 to="/manage"
-                className="py-2 text-[0.68rem] uppercase tracking-[0.22em] text-[#E8E1D8]/55 transition-colors hover:text-[#E8E1D8]"
+                className="py-2 text-[0.68rem] uppercase tracking-[0.22em] text-[#DAE5E1]/55 transition-colors hover:text-[#DAE5E1]"
               >
                 Manage booking
               </Link>
               <Link
                 to="/"
-                className="py-2 text-[0.68rem] uppercase tracking-[0.22em] text-[#E8E1D8]/55 transition-colors hover:text-[#E8E1D8]"
+                className="py-2 text-[0.68rem] uppercase tracking-[0.22em] text-[#DAE5E1]/55 transition-colors hover:text-[#DAE5E1]"
               >
                 Back to home
               </Link>
@@ -693,13 +683,13 @@ function ConfirmedScreen() {
           toActions();
         }}
         className={
-          "fixed inset-x-0 bottom-5 z-40 mx-auto flex w-max items-center gap-2 rounded-full border border-[#C9A96A]/40 bg-[#141210]/90 px-4 py-2.5 text-[0.62rem] uppercase tracking-[0.22em] text-[#E8E1D8] shadow-[0_12px_30px_-12px_rgba(0,0,0,0.8)] backdrop-blur transition-all duration-700 " +
+          "fixed inset-x-0 bottom-5 z-40 mx-auto flex w-max items-center gap-2 rounded-full border border-[#78BFA6]/40 bg-[#141210]/90 px-4 py-2.5 text-[0.62rem] uppercase tracking-[0.22em] text-[#DAE5E1] shadow-[0_12px_30px_-12px_rgba(0,0,0,0.8)] backdrop-blur transition-all duration-700 " +
           (scrollHint ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0")
         }
       >
         Calendar · WhatsApp · Save
         <ChevronDown
-          className="h-4 w-4 text-[#C9A96A] motion-safe:animate-bounce"
+          className="h-4 w-4 text-[#78BFA6] motion-safe:animate-bounce"
           strokeWidth={1.5}
         />
       </button>
@@ -713,52 +703,24 @@ function ConfirmedScreen() {
         >
           <img
             src={preview.url}
-            alt="Hair by Kiran booking confirmation"
+            alt="Lumen Studio booking confirmation"
             className="max-h-[78svh] w-auto max-w-full rounded-sm shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
-          <p className="max-w-sm text-center text-[0.82rem] text-[#E8E1D8]/80">{preview.note}</p>
+          <p className="max-w-sm text-center text-[0.82rem] text-[#DAE5E1]/80">{preview.note}</p>
           <button
             type="button"
             onClick={() => setPreview(null)}
-            className="press rounded-sm border border-[#E8E1D8]/30 px-5 py-2 text-[0.66rem] uppercase tracking-[0.2em] text-[#E8E1D8]"
+            className="press rounded-sm border border-[#DAE5E1]/30 px-5 py-2 text-[0.66rem] uppercase tracking-[0.2em] text-[#DAE5E1]"
           >
             Close
           </button>
         </div>
       ) : null}
 
-      {film !== "off" ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B0B0B] transition-opacity duration-700 ease-out"
-          style={{ opacity: film === "leaving" ? 0 : 1 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            skipFilm();
-          }}
-        >
-          {/* wide screens: the film's own first frame, blurred, fills the sides */}
-          <img
-            src={filmPoster(booking?.audience)}
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover opacity-35 blur-2xl"
-          />
-          <BookingFilm
-            audience={booking?.audience}
-            className="absolute inset-0 mx-auto h-full w-[min(100vw,calc(100svh*9/16))]"
-            stopping={film === "leaving"}
-            onDone={() => setFilm("off")}
-          />
-          {/* top of the screen, so it never sits on the film's own line at the bottom */}
-          <div className="pointer-events-none absolute inset-x-0 top-[max(1.25rem,env(safe-area-inset-top))] z-10 text-center text-[0.6rem] uppercase tracking-[0.3em] text-[#E8E1D8]/55 [text-shadow:0_1px_10px_rgb(0_0_0/0.6)]">
-            {film === "on" ? "Tap to skip" : ""}
-          </div>
-        </div>
-      ) : null}
 
       {stage < FINAL ? (
-        <div className="absolute inset-x-0 bottom-6 z-30 text-center text-[0.6rem] uppercase tracking-[0.3em] text-[#E8E1D8]/35">
+        <div className="absolute inset-x-0 bottom-6 z-30 text-center text-[0.6rem] uppercase tracking-[0.3em] text-[#DAE5E1]/35">
           Tap to skip
         </div>
       ) : null}
@@ -775,16 +737,16 @@ function Seal() {
       aria-hidden
       className="seal-stamp absolute -top-9 -right-4 h-24 w-24 sm:-right-7 lg:-top-11 lg:-right-10 lg:h-28 lg:w-28"
     >
-      <span className="seal-burst absolute inset-0 rounded-full border border-[#C9A96A]/70" />
+      <span className="seal-burst absolute inset-0 rounded-full border border-[#78BFA6]/70" />
       <svg
         viewBox="0 0 100 100"
         className="h-full w-full drop-shadow-[0_10px_18px_rgba(0,0,0,0.6)]"
       >
         <defs>
           <radialGradient id="seal-fill" cx="35%" cy="30%" r="75%">
-            <stop offset="0%" stopColor="#E3C88E" />
-            <stop offset="55%" stopColor="#C9A96A" />
-            <stop offset="100%" stopColor="#8E7243" />
+            <stop offset="0%" stopColor="#9BDBC4" />
+            <stop offset="55%" stopColor="#78BFA6" />
+            <stop offset="100%" stopColor="#4D8471" />
           </radialGradient>
           <path id="seal-ring" d="M50 50 m-35 0 a35 35 0 1 1 70 0 a35 35 0 1 1 -70 0" />
         </defs>
@@ -813,9 +775,9 @@ function Seal() {
             fillOpacity="0.78"
             fontSize="7.4"
             letterSpacing="2.6"
-            fontFamily="Jost, sans-serif"
+            fontFamily="Manrope, sans-serif"
           >
-            <textPath href="#seal-ring">CONFIRMED · HAIR BY KIRAN ·</textPath>
+            <textPath href="#seal-ring">CONFIRMED · LUMEN STUDIO ·</textPath>
           </text>
         </g>
         <path
@@ -846,9 +808,9 @@ function reveal(on: boolean, y: number, ms: number) {
 function Row({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div>
-      <dt className="text-[0.6rem] uppercase tracking-[0.28em] text-[#E8E1D8]/45">{label}</dt>
-      <dd className="mt-1.5 font-display text-xl leading-snug text-[#E8E1D8]">{value}</dd>
-      {sub ? <dd className="mt-1 text-[0.75rem] text-[#E8E1D8]/55">{sub}</dd> : null}
+      <dt className="text-[0.6rem] uppercase tracking-[0.28em] text-[#DAE5E1]/45">{label}</dt>
+      <dd className="mt-1.5 font-display text-xl leading-snug text-[#DAE5E1]">{value}</dd>
+      {sub ? <dd className="mt-1 text-[0.75rem] text-[#DAE5E1]/55">{sub}</dd> : null}
     </div>
   );
 }

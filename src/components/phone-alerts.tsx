@@ -206,7 +206,7 @@ function Body({ a }: { a: ReturnType<typeof usePhoneAlerts> }) {
           Share, then <b className="font-medium">Add to Home Screen</b>.
         </li>
         <li>
-          2. Open <b className="font-medium">HB Salon</b> from your Home Screen and sign in.
+          2. Open <b className="font-medium">Salon Admin</b> from your Home Screen and sign in.
         </li>
         <li>3. Come back here and tap “Turn on alerts on this phone”.</li>
       </ol>
@@ -222,7 +222,7 @@ function Body({ a }: { a: ReturnType<typeof usePhoneAlerts> }) {
     return (
       <p className="text-[0.88rem] text-muted-foreground">
         Notifications are blocked for this site. Allow them in the phone's settings for this site
-        (or the HB Salon app), then come back.
+        (or the Salon Admin app), then come back.
       </p>
     );
   if (a.state === "on")
@@ -272,7 +272,7 @@ export function PhoneAlertsNudge() {
   const [hidden, setHidden] = useState(true);
   useEffect(() => {
     try {
-      setHidden(localStorage.getItem("hb.alerts.nudge") === "off");
+      setHidden(localStorage.getItem("bk.alerts.nudge") === "off");
     } catch {
       setHidden(false);
     }
@@ -281,7 +281,7 @@ export function PhoneAlertsNudge() {
   const dismiss = () => {
     setHidden(true);
     try {
-      localStorage.setItem("hb.alerts.nudge", "off");
+      localStorage.setItem("bk.alerts.nudge", "off");
     } catch {
       /* ignore */
     }
@@ -293,7 +293,7 @@ export function PhoneAlertsNudge() {
         <b className="font-medium">Get booking alerts on this phone</b>
         <span className="block text-[0.78rem] text-muted-foreground">
           {a.state === "ios-home"
-            ? "On iPhone: Share → Add to Home Screen, open HB Salon, then turn alerts on."
+            ? "On iPhone: Share → Add to Home Screen, open Salon Admin, then turn alerts on."
             : "Free. New bookings, moves and cancellations pop up instantly."}
         </span>
       </div>

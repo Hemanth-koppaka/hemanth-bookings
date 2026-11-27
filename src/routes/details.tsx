@@ -31,12 +31,12 @@ export const Route = createFileRoute("/details")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Your details — Hair by Kiran" },
+      { title: "Your details — Lumen Studio" },
       {
         name: "description",
-        content: "Tell us who the appointment is for so we can hold your chair at Hair by Kiran.",
+        content: "Tell us who the appointment is for so we can hold your spot at Lumen Studio.",
       },
-      { property: "og:title", content: "Your details — Hair by Kiran" },
+      { property: "og:title", content: "Your details — Lumen Studio" },
       { property: "og:description", content: "Name, phone and any notes for your stylist." },
     ],
   }),

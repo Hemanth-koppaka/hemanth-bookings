@@ -7,7 +7,7 @@ test("holiday reason and weekly closure are distinguished", () => {
   try {
     applyConfig({ ...defaultConfig(), exceptions: { "2026-11-12": { closed: true, note: "Salon holiday" } } });
     deepStrictEqual(closedDateInfo("2026-11-12"), { label: "Holiday", reason: "Salon holiday" });
-    strictEqual(closedDateInfo("2026-11-10")?.reason, "Weekly closure · Tuesday");
+    strictEqual(closedDateInfo("2026-11-09")?.reason, "Weekly closure · Monday");
     strictEqual(closedDateInfo("2026-11-13"), null);
   } finally { applyConfig(defaultConfig()); }
 });

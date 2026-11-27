@@ -249,7 +249,7 @@ export function CinematicKit({
   return (
     <div
       ref={frame}
-      className={cn("relative aspect-[9/16] w-full overflow-hidden bg-[#120d09]", className)}
+      className={cn("relative aspect-[9/16] w-full overflow-hidden bg-[#0A100D]", className)}
       role="img"
       aria-label={alt}
     >

@@ -7,7 +7,7 @@ ALTER TABLE public.notification_settings
   ADD COLUMN IF NOT EXISTS admin_notification_email text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS email_provider text NOT NULL DEFAULT 'brevo',
   ADD COLUMN IF NOT EXISTS email_from text NOT NULL DEFAULT '',
-  ADD COLUMN IF NOT EXISTS email_from_name text NOT NULL DEFAULT 'Hair by Kiran';
+  ADD COLUMN IF NOT EXISTS email_from_name text NOT NULL DEFAULT 'Lumen Studio';
 
 -- email messages are logged like WhatsApp/SMS, addressed by email instead of phone
 ALTER TABLE public.notification_logs

@@ -7,11 +7,7 @@ import { ScissorsLine, useRewindBack } from "@/components/scissors-line";
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <img
-      src={logo.url}
-      alt="Hair by Kiran"
-      className={cn("h-9 w-auto object-contain", className)}
-    />
+    <img src={logo.url} alt="Lumen Studio" className={cn("h-9 w-auto object-contain", className)} />
   );
 }
 
@@ -41,7 +37,7 @@ export function ScreenHeader({
           <span className="h-10 w-10" />
         )}
         <div className="min-w-0 text-center">
-          <Link to="/" aria-label="Hair by Kiran" className="inline-flex">
+          <Link to="/" aria-label="Lumen Studio" className="inline-flex">
             <Wordmark className="h-7 soft-fade" />
           </Link>
           {title || step ? (
@@ -206,7 +202,7 @@ export function StepHeader({
         >
           <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.25} />
         </Link>
-        <Link to="/" aria-label="Hair by Kiran" className="mx-auto inline-flex">
+        <Link to="/" aria-label="Lumen Studio" className="mx-auto inline-flex">
           <Wordmark className="h-8" />
         </Link>
         <span className="label-caps justify-self-end whitespace-nowrap pr-1 text-[0.6rem] tabular-nums text-foreground/60">

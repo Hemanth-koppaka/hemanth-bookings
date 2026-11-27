@@ -29,30 +29,36 @@ export function emailSubject(
     return `New appointment: ${f.customerName}, ${when} (${f.reference})`;
   }
   switch (event) {
-    case "BOOKING_UPDATED": return `Appointment details updated — Hair by Kiran`;
-    case "BOOKING_COMPLETED": return `Appointment completed — Hair by Kiran`;
-    case "NO_SHOW": return `Appointment marked not attended — Hair by Kiran`;
+    case "BOOKING_UPDATED":
+      return `Appointment details updated — Lumen Studio`;
+    case "BOOKING_COMPLETED":
+      return `Appointment completed — Lumen Studio`;
+    case "NO_SHOW":
+      return `Appointment marked not attended — Lumen Studio`;
     case "BOOKING_PRICE_CHANGED":
-      return `Appointment price updated: ${fmtPrice(f.price)} — Hair by Kiran`;
+      return `Appointment price updated: ${fmtPrice(f.price)} — Lumen Studio`;
     case "BOOKING_RESCHEDULED":
       return `Your appointment has moved to ${when}`;
     case "BOOKING_CANCELLED":
       return `Your appointment on ${fmtDate(f.date)} is cancelled`;
     case "BOOKING_REMINDER_24H":
-      return `See you tomorrow at ${fmtTime(f.time)} — Hair by Kiran`;
+      return `See you tomorrow at ${fmtTime(f.time)} — Lumen Studio`;
     case "BOOKING_REMINDER_2H":
-      return `See you at ${fmtTime(f.time)} today — Hair by Kiran`;
+      return `See you at ${fmtTime(f.time)} today — Lumen Studio`;
     default:
-      return `Booking confirmed: ${when} — Hair by Kiran`;
+      return `Booking confirmed: ${when} — Lumen Studio`;
   }
 }
 
 function heading(recipient: Recipient | "test", event: NotifyEvent): [string, string] {
   if (recipient === "admin") return ["Salon alert", EVENT_LABEL[event]];
   switch (event) {
-    case "BOOKING_UPDATED": return ["Updated", "Your appointment details have changed."];
-    case "BOOKING_COMPLETED": return ["Completed", "Your appointment is marked completed."];
-    case "NO_SHOW": return ["Not attended", "Your appointment is marked not attended."];
+    case "BOOKING_UPDATED":
+      return ["Updated", "Your appointment details have changed."];
+    case "BOOKING_COMPLETED":
+      return ["Completed", "Your appointment is marked completed."];
+    case "NO_SHOW":
+      return ["Not attended", "Your appointment is marked not attended."];
     case "BOOKING_PRICE_CHANGED":
       return ["Price updated", "Your updated appointment total."];
     case "BOOKING_RESCHEDULED":
@@ -63,7 +69,7 @@ function heading(recipient: Recipient | "test", event: NotifyEvent): [string, st
     case "BOOKING_REMINDER_2H":
       return ["Reminder", "We'll see you soon."];
     default:
-      return ["Confirmed", "Your chair is reserved."];
+      return ["Confirmed", "You're booked."];
   }
 }
 
@@ -72,8 +78,17 @@ export function emailContent(recipient: Recipient | "test", event: NotifyEvent, 
   const [eyebrow, title] = heading(recipient, event);
   const rows: [string, string][] = [
     ["Booking ID", f.reference],
-    ...(event === "BOOKING_PRICE_CHANGED" && f.previousPrice != null ? [["Previous total", fmtPrice(f.previousPrice)] as [string, string]] : []),
-    ...(event === "BOOKING_RESCHEDULED" && f.previous ? [["Previously", `${fmtDate(f.previous.date)}, ${fmtTime(f.previous.time)}`] as [string, string]] : []),
+    ...(event === "BOOKING_PRICE_CHANGED" && f.previousPrice != null
+      ? [["Previous total", fmtPrice(f.previousPrice)] as [string, string]]
+      : []),
+    ...(event === "BOOKING_RESCHEDULED" && f.previous
+      ? [
+          ["Previously", `${fmtDate(f.previous.date)}, ${fmtTime(f.previous.time)}`] as [
+            string,
+            string,
+          ],
+        ]
+      : []),
     ...(recipient === "admin"
       ? ([["Customer", `${f.customerName} · ${f.customerPhone}`]] as [string, string][])
       : []),
@@ -98,29 +113,32 @@ export function emailContent(recipient: Recipient | "test", event: NotifyEvent, 
         ? `Hi ${esc(f.customerName)}, your appointment has been cancelled. We hope to see you soon.`
         : event === "BOOKING_PRICE_CHANGED"
           ? `Hi ${esc(f.customerName)}, the price of your upcoming appointment has changed. Your updated total is ${fmtPrice(f.price)}.`
-        : event === "BOOKING_RESCHEDULED"
-          ? `Hi ${esc(f.customerName)}, your appointment has been rescheduled.`
-          : event.startsWith("BOOKING_REMINDER")
-            ? `Hi ${esc(f.customerName)}, a reminder of your appointment ${event === "BOOKING_REMINDER_2H" ? "today" : "tomorrow"}.`
-            : event === "BOOKING_UPDATED" ? `Hi ${esc(f.customerName)}, your appointment details have been updated.`
-            : event === "BOOKING_COMPLETED" ? `Hi ${esc(f.customerName)}, your appointment is marked completed.`
-            : event === "NO_SHOW" ? `Hi ${esc(f.customerName)}, your appointment is marked not attended.`
-            : `Hi ${esc(f.customerName)}, your appointment is confirmed. We look forward to seeing you.`;
+          : event === "BOOKING_RESCHEDULED"
+            ? `Hi ${esc(f.customerName)}, your appointment has been rescheduled.`
+            : event.startsWith("BOOKING_REMINDER")
+              ? `Hi ${esc(f.customerName)}, a reminder of your appointment ${event === "BOOKING_REMINDER_2H" ? "today" : "tomorrow"}.`
+              : event === "BOOKING_UPDATED"
+                ? `Hi ${esc(f.customerName)}, your appointment details have been updated.`
+                : event === "BOOKING_COMPLETED"
+                  ? `Hi ${esc(f.customerName)}, your appointment is marked completed.`
+                  : event === "NO_SHOW"
+                    ? `Hi ${esc(f.customerName)}, your appointment is marked not attended.`
+                    : `Hi ${esc(f.customerName)}, your appointment is confirmed. We look forward to seeing you.`;
   const button =
     recipient !== "admin" && f.manageUrl && event !== "BOOKING_CANCELLED"
-      ? `<tr><td style="padding:28px 0 0"><a href="${esc(f.manageUrl)}" style="display:inline-block;background:#1a1612;color:#f7f3ec;text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:14px 24px;border-radius:2px">Manage your booking</a></td></tr>`
+      ? `<tr><td style="padding:28px 0 0"><a href="${esc(f.manageUrl)}" style="display:inline-block;background:#131816;color:#EEF6F2;text-decoration:none;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:14px 24px;border-radius:2px">Manage your booking</a></td></tr>`
       : "";
-  const html = `<!doctype html><html><body style="margin:0;background:#f7f3ec;font-family:Georgia,'Times New Roman',serif;color:#1a1612">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f3ec;padding:32px 16px"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffdf9;border:1px solid #e8e0d4;padding:36px 32px">
-<tr><td style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#8a6a4a;font-family:Arial,sans-serif">Hair by Kiran · ${esc(eyebrow)}</td></tr>
+  const html = `<!doctype html><html><body style="margin:0;background:#EEF6F2;font-family:Georgia,'Times New Roman',serif;color:#131816">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF6F2;padding:32px 16px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffdf9;border:1px solid #D7E5DF;padding:36px 32px">
+<tr><td style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#4F7C6C;font-family:Arial,sans-serif">Lumen Studio · ${esc(eyebrow)}</td></tr>
 <tr><td style="padding:10px 0 0;font-size:30px;line-height:1.15">${esc(title)}</td></tr>
-${greet ? `<tr><td style="padding:14px 0 0;font-size:15px;line-height:1.6;color:#5b5047;font-family:Arial,sans-serif">${greet}</td></tr>` : ""}
-<tr><td style="padding:24px 0 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e8e0d4">
-${rows.map(([k, v]) => `<tr><td style="padding:11px 0;border-bottom:1px solid #e8e0d4;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#8a7f74;font-family:Arial,sans-serif;width:38%">${esc(k)}</td><td style="padding:11px 0;border-bottom:1px solid #e8e0d4;font-size:15px;font-family:Arial,sans-serif">${esc(v)}</td></tr>`).join("")}
+${greet ? `<tr><td style="padding:14px 0 0;font-size:15px;line-height:1.6;color:#495651;font-family:Arial,sans-serif">${greet}</td></tr>` : ""}
+<tr><td style="padding:24px 0 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #D7E5DF">
+${rows.map(([k, v]) => `<tr><td style="padding:11px 0;border-bottom:1px solid #D7E5DF;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#76857F;font-family:Arial,sans-serif;width:38%">${esc(k)}</td><td style="padding:11px 0;border-bottom:1px solid #D7E5DF;font-size:15px;font-family:Arial,sans-serif">${esc(v)}</td></tr>`).join("")}
 </table></td></tr>
 ${button}
-<tr><td style="padding:28px 0 0;font-size:12px;line-height:1.6;color:#8a7f74;font-family:Arial,sans-serif">Booking message from Hair by Kiran, ${esc(f.location)}. Not a promotion.</td></tr>
+<tr><td style="padding:28px 0 0;font-size:12px;line-height:1.6;color:#76857F;font-family:Arial,sans-serif">Booking message from Lumen Studio, ${esc(f.location)}. Not a promotion.</td></tr>
 </table></td></tr></table></body></html>`;
   return { subject: emailSubject(recipient, event, f), text, html };
 }

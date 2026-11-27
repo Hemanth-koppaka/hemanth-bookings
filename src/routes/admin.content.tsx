@@ -15,14 +15,17 @@ import type { SiteContent } from "@/lib/site-content";
 import { BUSINESS } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/content")({
+export const Route = createFileRoute("/admin/content")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Site content \u2014 Hair by Kiran" },
-      { property: "og:description", content: "Homepage wording, announcement and booking policies." },
+      { property: "og:title", content: "Site content \u2014 Lumen Studio" },
+      {
+        property: "og:description",
+        content: "Homepage wording, announcement and booking policies.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Site content — Hair by Kiran" },
+      { title: "Site content — Lumen Studio" },
       { name: "description", content: "Homepage wording, announcement and booking policies." },
       { name: "robots", content: "noindex" },
     ],
@@ -333,9 +336,9 @@ function Preview({ c, device }: { c: SiteContent; device: "phone" | "laptop" }) 
             phone ? "text-[2.4rem]" : "text-[3.4rem]",
           )}
         >
-          {headline || "Reserve"}
+          {headline || "Book"}
           {phone ? " " : <br />}
-          <span className="italic text-bronze">{accent || "your chair."}</span>
+          <span className="italic text-bronze">{accent || "your moment."}</span>
         </div>
         <p
           className={cn(

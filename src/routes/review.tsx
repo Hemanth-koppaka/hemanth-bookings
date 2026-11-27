@@ -39,20 +39,18 @@ import {
   minuteLabel,
 } from "@/lib/salon";
 import { preferredFor } from "@/lib/service-rules";
-import { primeBookingFilm, warmBookingFilm } from "@/components/booking-film";
 
 export const Route = createFileRoute("/review")({
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Review your appointment — Hair by Kiran" },
+      { title: "Review your appointment — Lumen Studio" },
       {
         name: "description",
-        content:
-          "Check your services, date, time and details before confirming with Hair by Kiran.",
+        content: "Check your services, date, time and details before confirming with Lumen Studio.",
       },
-      { property: "og:title", content: "Review your appointment — Hair by Kiran" },
+      { property: "og:title", content: "Review your appointment — Lumen Studio" },
       { property: "og:description", content: "One last look before you confirm." },
     ],
   }),
@@ -92,12 +90,6 @@ function ReviewScreen() {
   // the guest's promise to come, or to tell the salon in advance
   const [pledged, setPledged] = useState(false);
 
-  // Start downloading the confirmation film only once the guest is about to book
-  // (they've ticked the promise, which Confirm needs), so people who just look
-  // at this page don't spend mobile data on it. The Confirm tap starts it too.
-  useEffect(() => {
-    if (pledged) warmBookingFilm(draft.audience);
-  }, [pledged, draft.audience]);
   const [nudge, setNudge] = useState(0);
 
   // a second tap in the same instant never sends a second booking
@@ -131,8 +123,6 @@ function ReviewScreen() {
       });
       return;
     }
-    // inside the tap itself: lets the phone play the film and the logo's sound next
-    primeBookingFilm(draft.audience);
     setSaving(true);
     sending.current = true;
     setSaveError("");
@@ -375,7 +365,7 @@ function PhotoStrip() {
 }
 
 /** "with Kiran" or "any available stylist" (assigned when the booking is confirmed).
- * A service with a preferred stylist (Kiran's Signature) is with that stylist. */
+ * A service with a preferred stylist (Lumen Signature) is with that stylist. */
 const stylistLabel = (id: string | null | undefined, serviceIds: string[] = []) => {
   if (id) return `with ${STYLISTS.find((x) => x.id === id)?.name ?? "your stylist"}`;
   const pref = preferredFor(serviceIds, SERVICE_RULES);
@@ -574,7 +564,7 @@ function DesktopReview({
               >
                 <address className="text-[0.98rem] not-italic leading-relaxed">
                   <span className="block font-display text-[1.2rem] leading-tight">
-                    {BUSINESS.name || "Hair by Kiran"}
+                    {BUSINESS.name || "Lumen Studio"}
                   </span>
                   <span className="mt-1 block text-muted-foreground">
                     {line1},
@@ -676,7 +666,7 @@ function AttendancePledge({
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
-          className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--ink,#1a1410)]"
+          className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--ink,#101715)]"
         />
         <span className="text-[0.92rem] leading-snug lg:text-[1rem]">
           I'll be there on time, or I'll change or cancel at least {deadline} before.
@@ -684,7 +674,7 @@ function AttendancePledge({
       </label>
       <p className="mt-4 text-[0.8rem] italic text-muted-foreground">
         Thank you for respecting each other's time.{" "}
-        <span className="not-italic text-bronze">Hair by Kiran</span>
+        <span className="not-italic text-bronze">Lumen Studio</span>
       </p>
     </section>
   );

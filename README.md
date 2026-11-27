@@ -5,10 +5,9 @@ online in under a minute, the owner runs the day from an admin dashboard, and
 stylists see their own appointments on their phones. It runs entirely on free
 tiers (Cloudflare Workers + Supabase).
 
-The demo brand in this repository, **"Hair by Kiran"**, is fictional. Replace
+The demo brand in this repository, **"Lumen Studio"**, is fictional. Replace
 the name, menu, photos and contact details with your own salon's.
 
-> Built for a real salon in Hyderabad and released here as open source.
 > Designed and built by **Hemanth Koppaka**, using AI coding tools (Claude, Lovable).
 
 ## Features
@@ -68,8 +67,8 @@ Then:
 3. **Your salon:** edit `src/lib/salon.ts` (name, phone, address, menu) and
    replace the placeholder images in `public/`. Most of it can also be changed
    later from the admin dashboard (services, hours, wording, staff).
-4. **Admin:** the dashboard lives at `/hb-desk-7392`. Rename that route to a
-   path of your own before going live, and set the admin code on first sign-in.
+4. **Admin:** the dashboard lives at `/admin` (protected by an admin code you
+   set on first sign-in). You can rename the route to a path of your own.
 
 Deployment to Cloudflare and the scheduled jobs are described in
 [`docs/hosting.md`](docs/hosting.md); optional SMS / WhatsApp / email
@@ -87,7 +86,7 @@ notifications in [`docs/notifications.md`](docs/notifications.md).
 ## Project layout
 
 ```
-src/routes/            pages (guest flow, /hb-desk-7392 admin, /stylist)
+src/routes/            pages (guest flow, /admin dashboard, /stylist)
 src/lib/               booking engine, availability, server functions, notifications
 src/components/        UI components
 drizzle/migrations/    database schema (SQL)

@@ -29,7 +29,7 @@ export function WaitlistOption({ date, audience, serviceIds, staffId, rescheduli
   const [error, setError] = useState("");
   const [confirmed, setConfirmed] = useState<boolean | null>(null);
   const servicesKey = serviceIds.join(",");
-  const cacheKey = `hb.wait.v2.${date}.${audience}.${servicesKey}.${staffId ?? "any"}${back ? ".back" : ""}`;
+  const cacheKey = `bk.wait.v2.${date}.${audience}.${servicesKey}.${staffId ?? "any"}${back ? ".back" : ""}`;
   useEffect(() => {
     const removed = (event: Event) => {
       if ((event as CustomEvent<string>).detail !== cacheKey) return;

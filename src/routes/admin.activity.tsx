@@ -7,14 +7,14 @@ import { useAdmin } from "@/lib/admin-store";
 import { adminActivity, type ActivityEntry } from "@/lib/admin-ops.functions";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/activity")({
+export const Route = createFileRoute("/admin/activity")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Activity \u2014 Hair by Kiran" },
+      { property: "og:title", content: "Activity \u2014 Lumen Studio" },
       { property: "og:description", content: "Every change made in the console, newest first." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Activity — Hair by Kiran" },
+      { title: "Activity — Lumen Studio" },
       { name: "description", content: "Every change made in the console, newest first." },
       { name: "robots", content: "noindex" },
     ],

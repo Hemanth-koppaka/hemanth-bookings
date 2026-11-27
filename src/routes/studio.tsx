@@ -19,13 +19,13 @@ export const Route = createFileRoute("/studio")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "The studio — Hair by Kiran" },
+      { title: "The studio — Lumen Studio" },
       {
         name: "description",
         content:
-          "Four chairs, two wash stations, a private room and full air conditioning at Sector 9, Midtown, Hyderabad.",
+          "Four chairs, two wash stations, a private room and full air conditioning at Sector 9, Midtown, Metro City.",
       },
-      { property: "og:title", content: "The studio — Hair by Kiran" },
+      { property: "og:title", content: "The studio — Lumen Studio" },
       { property: "og:description", content: "Inside the salon at Sector 9, Midtown." },
     ],
   }),

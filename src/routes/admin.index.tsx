@@ -35,15 +35,15 @@ import { adminUpsertBooking } from "@/lib/salon.functions";
 import { formatDuration, inr, minuteLabel } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Today at the salon — Hair by Kiran" },
+      { title: "Today at the salon — Lumen Studio" },
       { name: "description", content: "Live view of today's chair, arrivals and takings." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Today at the salon — Hair by Kiran" },
+      { property: "og:title", content: "Today at the salon — Lumen Studio" },
       { property: "og:description", content: "Live view of today's appointments." },
     ],
   }),
@@ -725,9 +725,9 @@ function TimelineRow({
 const TONES = {
   blue: { bg: "linear-gradient(135deg,#2a78d6 0%,#3f8ee8 100%)", ink: "#fff" },
   aqua: { bg: "linear-gradient(135deg,#118a5f 0%,#1baf7a 100%)", ink: "#fff" },
-  orange: { bg: "linear-gradient(135deg,#dc5524 0%,#f27a45 100%)", ink: "#fff" },
+  orange: { bg: "linear-gradient(135deg,#00A477 0%,#00BD93 100%)", ink: "#fff" },
   violet: { bg: "linear-gradient(135deg,#5141c4 0%,#7465e0 100%)", ink: "#fff" },
-  yellow: { bg: "linear-gradient(135deg,#eda100 0%,#f6bd32 100%)", ink: "#1c1611" },
+  yellow: { bg: "linear-gradient(135deg,#24CFA4 0%,#4EE4B9 100%)", ink: "#121916" },
 } as const;
 
 /** A bold, colourful headline number (the dashboard's top row). */

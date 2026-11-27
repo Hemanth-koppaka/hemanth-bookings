@@ -113,8 +113,8 @@ export async function timeFreedOn(date: string) {
           ? `${w.back} is back ${label} · first free time ${clock(slot.minute)}`
           : `A time just opened: ${label}, ${clock(slot.minute)}`,
         body: w.back
-          ? "Tap to book your appointment · Hair by Kiran"
-          : "Tap to book it before someone else does · Hair by Kiran",
+          ? "Tap to book your appointment · Lumen Studio"
+          : "Tap to book it before someone else does · Lumen Studio",
         url,
         tag: `wait-${date}`,
       });

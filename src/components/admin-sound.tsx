@@ -80,7 +80,7 @@ export function SoundSettingsPanel() {
           value={Math.round(s.volume * 100)}
           disabled={!s.enabled}
           onChange={(e) => set({ volume: Number(e.target.value) / 100 })}
-          className="min-w-0 flex-1 accent-[var(--bronze,#8a6a4a)] disabled:opacity-40"
+          className="min-w-0 flex-1 accent-[var(--bronze,#4F7C6C)] disabled:opacity-40"
           aria-label="Master volume"
         />
         <span className="w-10 text-right text-[0.8rem] tabular-nums text-muted-foreground">
@@ -109,7 +109,7 @@ export function SoundSettingsPanel() {
                   name="sound-preset"
                   checked={s.preset === p.key}
                   onChange={() => set({ preset: p.key })}
-                  className="accent-[var(--bronze,#8a6a4a)]"
+                  className="accent-[var(--bronze,#4F7C6C)]"
                 />
                 {p.label}
               </span>

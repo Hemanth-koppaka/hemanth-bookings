@@ -200,7 +200,7 @@ export const adminDashboard = createServerFn({ method: "POST" })
       alerts.push({
         level: "warn",
         text: "Online bookings are paused.",
-        to: "/hb-desk-7392/settings",
+        to: "/admin/settings",
       });
     // stylists in parallel needs database update 0009; say so plainly when it's missing
     const { hasPerStylistGuard } = await import("./staff-store.server");
@@ -208,14 +208,14 @@ export const adminDashboard = createServerFn({ method: "POST" })
       alerts.push({
         level: "warn",
         text: "Only one booking per time slot: the database update for stylists working in parallel (0009) isn't applied yet.",
-        to: "/hb-desk-7392/system",
+        to: "/admin/system",
       });
     const pending = all.filter((b) => b.status === "pending" && b.date >= today).length;
     if (pending)
       alerts.push({
         level: "warn",
         text: `${pending} booking${pending > 1 ? "s" : ""} waiting for confirmation.`,
-        to: "/hb-desk-7392/appointments",
+        to: "/admin/appointments",
       });
     const overlapping = todays
       .filter(active)
@@ -232,14 +232,14 @@ export const adminDashboard = createServerFn({ method: "POST" })
       alerts.push({
         level: "warn",
         text: "Two of today's appointments overlap.",
-        to: "/hb-desk-7392/calendar",
+        to: "/admin/calendar",
       });
     const tomorrow = all.filter((b) => b.date === addDays(today, 1) && active(b)).length;
     if (tomorrow)
       alerts.push({
         level: "info",
         text: `Tomorrow has ${tomorrow} booking${tomorrow > 1 ? "s" : ""}.`,
-        to: "/hb-desk-7392/calendar",
+        to: "/admin/calendar",
       });
     // booking emails (free): set up, and did any fail in the last day?
     if (ns) {
@@ -249,14 +249,14 @@ export const adminDashboard = createServerFn({ method: "POST" })
         alerts.push({
           level: "info",
           text: "Booking emails are switched on but the email service isn't set up yet.",
-          to: "/hb-desk-7392/notifications",
+          to: "/admin/notifications",
         });
       const failedCount = (failed.data ?? []).length;
       if (failedCount)
         alerts.push({
           level: "warn",
           text: `${failedCount} booking email${failedCount > 1 ? "s" : ""} failed in the last 24 hours.`,
-          to: "/hb-desk-7392/notifications",
+          to: "/admin/notifications",
         });
     }
 
@@ -657,7 +657,9 @@ function summarise(c: Row, bookings: AdminBooking[]): AdminCustomer {
     lastVisit: dates[dates.length - 1] ?? null,
     favourite,
     audiences: [...new Set(bookings.map((b) => b.audience))],
-    bookingNumbers: [...new Set(bookings.flatMap(b => b.bookingNo == null ? [] : [b.bookingNo]))].sort((a, b) => a - b),
+    bookingNumbers: [
+      ...new Set(bookings.flatMap((b) => (b.bookingNo == null ? [] : [b.bookingNo]))),
+    ].sort((a, b) => a - b),
   };
 }
 
@@ -703,22 +705,38 @@ export const adminCustomers = createServerFn({ method: "POST" })
     }
     const audienceRows: { customerId: string | null; audience: string; createdAt: string }[] = [];
     for (let offset = 0; ; offset += 500) {
-      const { data: rows, error } = await sb.from("bookings")
-        .select("customer_id, audience, created_at").order("reference").range(offset, offset + 499);
+      const { data: rows, error } = await sb
+        .from("bookings")
+        .select("customer_id, audience, created_at")
+        .order("reference")
+        .range(offset, offset + 499);
       if (error) throw new Error("Couldn't load customer filters");
       const batch = (rows ?? []) as Row[];
-      audienceRows.push(...batch.map((r) => ({ customerId: r["customer_id"] as string | null, audience: r["audience"] as string, createdAt: r["created_at"] as string })));
+      audienceRows.push(
+        ...batch.map((r) => ({
+          customerId: r["customer_id"] as string | null,
+          audience: r["audience"] as string,
+          createdAt: r["created_at"] as string,
+        })),
+      );
       if (batch.length < 500) break;
     }
-    const ordered = customersNewestBookingFirst(matched.map((r) => ({ ...r, id: r["id"] as string })), audienceRows);
+    const ordered = customersNewestBookingFirst(
+      matched.map((r) => ({ ...r, id: r["id"] as string })),
+      audienceRows,
+    );
     const filtered = customerPage(ordered, audienceRows, data.audience, data.page, PAGE);
     const list: Row[] = filtered.customers;
     const ids = list.map((c) => c["id"] as string);
     const bk: Row[] = [];
     if (ids.length) {
       for (let offset = 0; ; offset += 500) {
-        const { data: rows, error } = await sb.from("bookings").select("*")
-          .in("customer_id" as never, ids as never).order("reference").range(offset, offset + 499);
+        const { data: rows, error } = await sb
+          .from("bookings")
+          .select("*")
+          .in("customer_id" as never, ids as never)
+          .order("reference")
+          .range(offset, offset + 499);
         if (error) throw new Error("Couldn't load customer visits");
         const batch = (rows ?? []) as Row[];
         bk.push(...batch);
@@ -945,7 +963,7 @@ export const adminExportCsv = createServerFn({ method: "POST" })
         entity: "export",
         summary: `Exported ${list.length} bookings${data.from ? ` from ${data.from}` : ""}${data.to ? ` to ${data.to}` : ""}`,
       });
-      return { filename: `hair-by-kiran-bookings-${stamp}.csv`, csv, rows: list.length };
+      return { filename: `lumen-studio-bookings-${stamp}.csv`, csv, rows: list.length };
     }
     const { data: cust, error } = await sb
       .from("customers" as never)
@@ -1005,5 +1023,5 @@ export const adminExportCsv = createServerFn({ method: "POST" })
       entity: "export",
       summary: `Exported ${rows.length} customers`,
     });
-    return { filename: `hair-by-kiran-customers-${stamp}.csv`, csv, rows: rows.length };
+    return { filename: `lumen-studio-customers-${stamp}.csv`, csv, rows: rows.length };
   });

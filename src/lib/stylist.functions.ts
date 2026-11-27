@@ -341,7 +341,7 @@ export const stylistAway = createServerFn({ method: "POST" })
             body: affected.length
               ? `${affected.length} booking(s) in that time: ${affected.map((a) => `${clockLabel(a.time)} ${a.name}`).join(", ")}`
               : "No bookings in that time.",
-            url: "/hb-desk-7392",
+            url: "/admin",
           },
           { ownersOnly: true },
         ),

@@ -23,7 +23,7 @@ export function CalendarClosureNotes({
       d.info?.label === "Holiday" ? [{ iso: d.iso, reason: d.info.reason }] : [],
     ),
   );
-  // a stylist-only service (Kiran's Signature): the days that stylist is away
+  // a stylist-only service (Lumen Signature): the days that stylist is away
   const away = groupClosureDates(
     closed.flatMap((d) =>
       d.info?.label === "Away" ? [{ iso: d.iso, reason: d.info.reason }] : [],

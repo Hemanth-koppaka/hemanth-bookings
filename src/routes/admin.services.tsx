@@ -41,15 +41,15 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/services")({
+export const Route = createFileRoute("/admin/services")({
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Catalogue — Hair by Kiran" },
+      { title: "Catalogue — Lumen Studio" },
       { name: "description", content: "Services, categories, prices, durations and photos." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Catalogue — Hair by Kiran" },
+      { property: "og:title", content: "Catalogue — Lumen Studio" },
       { property: "og:description", content: "The salon's service catalogue." },
     ],
   }),

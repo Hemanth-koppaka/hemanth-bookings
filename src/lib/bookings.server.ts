@@ -25,7 +25,7 @@ export async function engine(fresh = false) {
 type Sb = Awaited<ReturnType<typeof db>>;
 
 /**
- * A new booking ID the guest sees, e.g. HB-7KQ2MX: random, so it never tells
+ * A new booking ID the guest sees, e.g. BK-7KQ2MX: random, so it never tells
  * anyone how many clients the salon has. The salon's own running number
  * (booking_no) is kept alongside for the admin console only.
  */
@@ -39,7 +39,7 @@ async function nextReference(sb: Sb) {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   for (let attempt = 0; attempt < 5; attempt++) {
     const bytes = crypto.getRandomValues(new Uint8Array(6));
-    const reference = "HB-" + Array.from(bytes, (x) => chars[x % chars.length]).join("");
+    const reference = "BK-" + Array.from(bytes, (x) => chars[x % chars.length]).join("");
     const { data: taken } = await sb
       .from("bookings")
       .select("reference")
@@ -111,7 +111,11 @@ export async function insertBooking(
   const E = await engine(true);
   const rules = await E.loadRules();
   if (!options.staff) {
-    if (!isValidMobile(b.customer.phone)) return { ok: false, error: "Enter a complete 10-digit Indian mobile number; +91 and spaces are accepted." };
+    if (!isValidMobile(b.customer.phone))
+      return {
+        ok: false,
+        error: "Enter a complete 10-digit Indian mobile number; +91 and spaces are accepted.",
+      };
     b = { ...b, customer: { ...b.customer, phone: mobileDigits(b.customer.phone) } };
     if (!rules.accepting) return { ok: false, error: rules.pauseMessage };
     if (!rules.allowMultiple && b.serviceIds.length > 1)
@@ -300,7 +304,8 @@ async function guestGuard(
     return (
       last10(((r["customer"] as { phone?: string }) ?? {}).phone ?? "") === phone &&
       !["cancelled", "no-show", "completed"].includes(st) &&
-      ((r["date"] as string) > today || (r["time"] as number) >= now.getUTCHours() * 60 + now.getUTCMinutes())
+      ((r["date"] as string) > today ||
+        (r["time"] as number) >= now.getUTCHours() * 60 + now.getUTCMinutes())
     );
   });
   const sameIds = (r: Record<string, unknown>) =>
@@ -341,8 +346,12 @@ async function guestGuard(
         error: `You already have a booking at this time (${r["reference"] as string}). Change it in Manage booking, or call us.`,
       };
   }
-  if (!b.allowRepeat && mine.some(r => sameIds(r)))
-    return { ok: false, error: "You already have an upcoming appointment for these services. Reschedule it in Manage booking, or confirm you want another booking." };
+  if (!b.allowRepeat && mine.some((r) => sameIds(r)))
+    return {
+      ok: false,
+      error:
+        "You already have an upcoming appointment for these services. Reschedule it in Manage booking, or confirm you want another booking.",
+    };
   // repeat no-shows book by calling the salon (who can still book them in)
   {
     const since = new Date(now.getTime() - 365 * 86_400_000).toISOString().slice(0, 10);

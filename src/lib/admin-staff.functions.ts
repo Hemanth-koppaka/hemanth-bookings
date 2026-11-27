@@ -836,7 +836,7 @@ export const adminReopen = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/* ── a service's stylist rule (e.g. Kiran's Signature → Kiran) ── */
+/* ── a service's stylist rule (e.g. Lumen Signature → Kiran) ── */
 
 /** The stylist rule for one service record, with the stylists to choose from. */
 export const adminServiceRule = createServerFn({ method: "POST" })

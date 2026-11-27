@@ -17,18 +17,18 @@ import founder from "@/assets/founder.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Hair by Kiran — Reserve your chair" },
+      { title: "Lumen Studio — Book your moment" },
       {
         name: "description",
         content:
-          "Hair, beauty and makeover by B. Kiran. Choose a service, pick a time that is genuinely free, and you're booked. Sector 9, Midtown, Hyderabad.",
+          "Cuts, colour and care by Kiran Rao. Choose a service, pick a time that is genuinely free, and you're booked. Sector 9, Midtown, Metro City.",
       },
-      { property: "og:title", content: "Hair by Kiran — Reserve your chair" },
+      { property: "og:title", content: "Lumen Studio — Book your moment" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
-        content: "Hair, beauty and makeover by B. Kiran. A calm, private booking experience.",
+        content: "Cuts, colour and care by Kiran Rao. A calm, private booking experience.",
       },
     ],
   }),
@@ -375,7 +375,7 @@ function MobileHome() {
         <Link
           to="/artist"
           className="press group relative min-h-[120px] flex-1 overflow-hidden rounded-xl bg-ink"
-          aria-label="Meet B. Kiran"
+          aria-label="Meet Kiran Rao"
         >
           <img
             src={founder.url}
@@ -465,7 +465,7 @@ function DesktopHome() {
     <div className="hidden min-h-[100svh] flex-col bg-background lg:flex">
       {/* three columns, so the menu sits at the true centre of the page */}
       <header className="mx-8 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-8 hairline-b px-6 py-5 xl:mx-10 xl:px-16">
-        <Link to="/" aria-label="Hair by Kiran" className="inline-flex justify-self-start">
+        <Link to="/" aria-label="Lumen Studio" className="inline-flex justify-self-start">
           <span data-hero-logo className="after-intro-logo inline-flex">
             <LogoReveal className="h-14" />
           </span>
@@ -544,7 +544,7 @@ function DesktopHome() {
         <Link
           to="/artist"
           className="group relative h-[clamp(420px,64svh,640px)] overflow-hidden rounded-xl bg-ink shadow-[0_40px_80px_-48px_color-mix(in_oklab,var(--ink)_80%,transparent)]"
-          aria-label="Meet B. Kiran — read the story"
+          aria-label="Meet Kiran Rao — read the story"
         >
           <img
             src={founder.url}

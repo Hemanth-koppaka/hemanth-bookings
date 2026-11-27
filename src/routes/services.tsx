@@ -44,13 +44,13 @@ import { sortServices, popularServiceIds, type SortKey } from "@/lib/service-pop
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Choose your services — Hair by Kiran" },
+      { title: "Choose your services — Lumen Studio" },
       {
         name: "description",
         content:
-          "Browse the full menu of hair, colour, beauty and makeover services at Hair by Kiran and build your appointment.",
+          "Browse the full menu of hair, colour, beauty and makeover services at Lumen Studio and build your appointment.",
       },
-      { property: "og:title", content: "Choose your services — Hair by Kiran" },
+      { property: "og:title", content: "Choose your services — Lumen Studio" },
       { property: "og:description", content: "Build your appointment from the full service menu." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -223,7 +223,7 @@ function ServicesScreen() {
                       }
                     >
                       {c.icon ? (
-                        <span className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f3ece1]">
+                        <span className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E4F0EB]">
                           <img src={c.icon} alt="" className="h-5 w-5 object-contain" />
                         </span>
                       ) : (
@@ -363,7 +363,7 @@ function ServicesScreen() {
  * first time someone adds a service, a quiet note says so (once per device,
  * gone after a few seconds, on tap, or when they add a second service).
  */
-const MULTI_HINT_KEY = "hb.hint.multi";
+const MULTI_HINT_KEY = "bk.hint.multi";
 function useMultiHint(count: number) {
   const [show, setShow] = useState(false);
   useEffect(() => {
@@ -493,7 +493,7 @@ function DesktopServices({
                       icon={c.icon}
                       active={on}
                       size="sm"
-                      className={on ? "bg-[#f3ece1]" : ""}
+                      className={on ? "bg-[#E4F0EB]" : ""}
                     />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[0.95rem]">{c.title}</span>
@@ -551,7 +551,7 @@ function DesktopServices({
                     }
                   >
                     {c.icon ? (
-                      <span className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f3ece1]">
+                      <span className="-ml-1.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E4F0EB]">
                         <img src={c.icon} alt="" className="h-5 w-5 object-contain" />
                       </span>
                     ) : (
@@ -698,8 +698,8 @@ function DesktopServices({
             }
             sub={
               men
-                ? "Precision cuts. Modern styles. Timeless confidence."
-                : "Colour. Care. Makeover. Made for you."
+                ? "Clean lines, easy upkeep, your best everyday look."
+                : "Colour, care and glow, tailored to you."
             }
           />
         )}

@@ -33,21 +33,21 @@ export const Route = createFileRoute("/stylist")({
     meta: [
       {
         name: "description",
-        content: "Private daily appointment schedule for Hair by Kiran stylists.",
+        content: "Private daily appointment schedule for Lumen Studio stylists.",
       },
-      { property: "og:title", content: "My day \u2014 Hair by Kiran" },
+      { property: "og:title", content: "My day \u2014 Lumen Studio" },
       {
         property: "og:description",
-        content: "Private daily appointment schedule for Hair by Kiran stylists.",
+        content: "Private daily appointment schedule for Lumen Studio stylists.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "My day — Hair by Kiran" },
+      { title: "My day — Lumen Studio" },
       { name: "robots", content: "noindex" },
-      { name: "theme-color", content: "#1c1611" },
+      { name: "theme-color", content: "#121916" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "HB My day" },
+      { name: "apple-mobile-web-app-title", content: "My Day" },
     ],
     links: [
       { rel: "manifest", href: "/stylist.webmanifest" },
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/stylist")({
   component: StylistScreen,
 });
 
-const KEY = "hb.stylist.v1";
+const KEY = "bk.stylist.v1";
 type Session = { token: string; expiresAt: number; name: string };
 
 function readSession(): Session | null {
@@ -464,7 +464,7 @@ function AwayToday({ token, name }: { token: string; name: string }) {
   };
   const note = (a: { name: string; time: number; reference: string }) =>
     [
-      `Hello ${a.name || "there"}, this is Hair by Kiran.`,
+      `Hello ${a.name || "there"}, this is Lumen Studio.`,
       `We're sorry, ${name} has been held up today, so your ${minuteLabel(a.time)} appointment needs a new time.`,
       `Please choose one here: ${window.location.origin}/manage?ref=${encodeURIComponent(a.reference)}`,
       "Or reply to this message and we'll arrange it. Thank you!",
@@ -570,7 +570,7 @@ function MyAlerts({ token }: { token: string }) {
       .register("/admin-sw.js")
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) =>
-        setState(sub && localStorage.getItem("hb.stylist.alerts") === "1" ? "on" : "off"),
+        setState(sub && localStorage.getItem("bk.stylist.alerts") === "1" ? "on" : "off"),
       )
       .catch(() => setState("off"));
   }, []);
@@ -599,7 +599,7 @@ function MyAlerts({ token }: { token: string }) {
           origin: location.origin,
         },
       });
-      localStorage.setItem("hb.stylist.alerts", "1");
+      localStorage.setItem("bk.stylist.alerts", "1");
       setState("on");
     } catch {
       setState("off");

@@ -325,7 +325,7 @@ async function buildConfig(): Promise<Record<string, unknown>> {
         services: can.get(r["id"] as string) ?? [],
       }));
   }
-  // each service's stylist rule (e.g. Kiran's Signature → Kiran), for the screens
+  // each service's stylist rule (e.g. Lumen Signature → Kiran), for the screens
   {
     const { resolveRules } = await import("./service-rules.server");
     config["serviceRules"] = resolveRules(

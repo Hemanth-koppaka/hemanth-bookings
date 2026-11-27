@@ -250,7 +250,7 @@ async function deviceKey(): Promise<string> {
       ""
     ).trim();
     if (!ip) return "unknown";
-    const d = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(`hb-guard:${ip}`)));
+    const d = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(`bk-guard:${ip}`)));
     return Array.from(d.slice(0, 10), (x) => x.toString(16).padStart(2, "0")).join("");
   } catch {
     return "unknown";

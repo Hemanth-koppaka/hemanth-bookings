@@ -5,7 +5,7 @@ lives in your own Supabase project.
 
 | Part | Service | Where it's set up |
 |---|---|---|
-| Database, photos | Supabase project `hair-by-kiran` (`YOUR-PROJECT`, Mumbai) | supabase.com |
+| Database, photos | Supabase project `lumen-studio` (`YOUR-PROJECT`, Mumbai) | supabase.com |
 | Website + server | Cloudflare Workers (free plan) | dash.cloudflare.com |
 | Scheduled jobs | Supabase `pg_cron` + `pg_net` (free) | Supabase SQL editor |
 | Domain | `salon.example.com` | DNS points to Cloudflare |
@@ -37,30 +37,30 @@ the database and doesn't change.
 
 ## 2. Scheduled jobs (Supabase SQL editor, once)
 
-Already set up on the `hair-by-kiran` project (jobs `hb-notifications`,
-`hb-waitlist`, `hb-photo-sweep`; secret `hb_cron_secret` in Vault). The SQL
+Already set up on the `lumen-studio` project (jobs `bk-notifications`,
+`bk-waitlist`, `bk-photo-sweep`; secret `bk_cron_secret` in Vault). The SQL
 below is kept for reference, e.g. to rebuild a project. The secret must equal
 `LOVABLE_CRON_SECRET` on Cloudflare.
 
 ```sql
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
-select vault.create_secret('<CRON SECRET>', 'hb_cron_secret');
+select vault.create_secret('<CRON SECRET>', 'bk_cron_secret');
 
-create or replace function public.hb_call(path text) returns bigint
+create or replace function public.bk_call(path text) returns bigint
 language sql security definer set search_path = public as $$
   select net.http_post(
     url := 'https://salon.example.com' || path,
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'hb_cron_secret')),
+      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'bk_cron_secret')),
     body := '{}'::jsonb);
 $$;
-revoke execute on function public.hb_call(text) from public, anon, authenticated;
+revoke execute on function public.bk_call(text) from public, anon, authenticated;
 
-select cron.schedule('hb-notifications', '*/10 * * * *', $$ select public.hb_call('/api/notifications/dispatch') $$);
-select cron.schedule('hb-waitlist',      '*/5 * * * *',  $$ select public.hb_call('/api/public/waitlist-dispatch') $$);
-select cron.schedule('hb-photo-sweep',   '17 * * * *',   $$ select public.hb_call('/api/photo-sweep') $$);
+select cron.schedule('bk-notifications', '*/10 * * * *', $$ select public.bk_call('/api/notifications/dispatch') $$);
+select cron.schedule('bk-waitlist',      '*/5 * * * *',  $$ select public.bk_call('/api/public/waitlist-dispatch') $$);
+select cron.schedule('bk-photo-sweep',   '17 * * * *',   $$ select public.bk_call('/api/photo-sweep') $$);
 ```
 
 ## Free-plan limits to know

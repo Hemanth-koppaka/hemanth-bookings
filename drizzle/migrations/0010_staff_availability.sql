@@ -164,7 +164,7 @@ BEGIN
      AND OLD.archived_at IS NULL THEN
     RETURN NEW;
   END IF;
-  PERFORM pg_advisory_xact_lock(hashtext('hb-booking:' || COALESCE(NEW.staff_id::text, 'salon') || ':' || NEW.date::text));
+  PERFORM pg_advisory_xact_lock(hashtext('bk-booking:' || COALESCE(NEW.staff_id::text, 'salon') || ':' || NEW.date::text));
   IF EXISTS (
     SELECT 1 FROM public.bookings b
     WHERE b.date = NEW.date
@@ -176,7 +176,7 @@ BEGIN
       AND b.time < NEW.ends_at_minute
       AND NEW.time < COALESCE(b.ends_at_minute, b.time + b.slots * 30)
   ) THEN
-    RAISE EXCEPTION 'HB_SLOT_TAKEN' USING ERRCODE = 'P0001', HINT = 'That time was just booked.';
+    RAISE EXCEPTION 'BK_SLOT_TAKEN' USING ERRCODE = 'P0001', HINT = 'That time was just booked.';
   END IF;
   RETURN NEW;
 END $$;

@@ -6,9 +6,9 @@
 export type SiteContent = {
   announcement: { enabled: boolean; text: string };
   home: {
-    /** First part of the headline, e.g. "Reserve". */
+    /** First part of the headline, e.g. "Book". */
     headline: string;
-    /** Second part, set in bronze italics, e.g. "your chair." */
+    /** Second part, set in bronze italics, e.g. "your moment." */
     headlineAccent: string;
     /** Short line under the headline on phones. */
     intro: string;
@@ -27,12 +27,12 @@ export type SiteContent = {
 export const DEFAULT_CONTENT: SiteContent = {
   announcement: { enabled: false, text: "" },
   home: {
-    headline: "Reserve",
-    headlineAccent: "your chair.",
+    headline: "Book",
+    headlineAccent: "your moment.",
     intro:
-      "Hair, beauty and makeover. Pick a time that's genuinely free — booked in under a minute.",
+      "Cuts, colour and care. Pick a time that's genuinely free — booked in under a minute.",
     introLong:
-      "Hair, beauty and makeover by B. Kiran. Choose a service, pick a time that is genuinely free, and you're booked.",
+      "Cuts, colour and care by Kiran Rao. Choose a service, pick a time that is genuinely free, and you're booked.",
     ctaLabel: "Book an appointment",
   },
   policies: {

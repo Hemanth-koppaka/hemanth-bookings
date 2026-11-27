@@ -62,17 +62,17 @@ const toLog = (r: Record<string, unknown>): NotifyLog => ({
 });
 
 const SAMPLE: BookingFacts = {
-  reference: "HB-7KQ2MX",
+  reference: "BK-7KQ2MX",
   customerName: "Arjun",
   customerPhone: "+919876543210",
   date: "2026-11-12",
   time: 16 * 60 + 30,
-  services: ["Kiran's Signature"],
+  services: ["Lumen Signature"],
   minutes: 30,
   price: 1000,
   priceFrom: false,
-  location: "Sector 9, Midtown, Hyderabad",
-  manageUrl: "https://your-site/manage?ref=HB-7KQ2MX",
+  location: "Sector 9, Midtown, Metro City",
+  manageUrl: "https://your-site/manage?ref=BK-7KQ2MX",
   previous: { date: "2026-11-11", time: 15 * 60 },
 };
 
@@ -213,7 +213,7 @@ export const adminSaveNotifySettings = createServerFn({ method: "POST" })
       admin_notification_email: x.adminEmailAddress,
       email_provider: x.email.provider,
       email_from: x.email.from,
-      email_from_name: x.email.fromName || "Hair by Kiran",
+      email_from_name: x.email.fromName || "Lumen Studio",
     };
     const { data: before } = await sb
       .from("notification_settings" as never)

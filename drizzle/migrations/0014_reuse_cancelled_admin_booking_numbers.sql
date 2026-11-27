@@ -2,7 +2,7 @@ CREATE OR REPLACE FUNCTION public.assign_admin_booking_number()
 RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 DECLARE candidate bigint;
 BEGIN
-  PERFORM pg_advisory_xact_lock(hashtext('hb-admin-booking-number'));
+  PERFORM pg_advisory_xact_lock(hashtext('bk-admin-booking-number'));
   IF NEW.status = 'cancelled' OR coalesce(NEW.meta->>'status', '') IN ('cancelled', 'no-show') THEN
     NEW.booking_no := NULL;
     RETURN NEW;

@@ -8,7 +8,7 @@ import { SALON_LAT, SALON_LON } from "./sun";
 const hhmm = (m: number) =>
   `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
-/** "Plot 1143, …, Midtown, Hyderabad – 500000" → schema.org PostalAddress. */
+/** "Plot 1143, …, Midtown, Metro City – 500000" → schema.org PostalAddress. */
 function postalAddress(address: string) {
   const pin = /(\d{6})/.exec(address)?.[1];
   const parts = address
@@ -19,7 +19,7 @@ function postalAddress(address: string) {
   return {
     "@type": "PostalAddress",
     streetAddress: parts.slice(0, Math.max(1, parts.length - 2)).join(", "),
-    addressLocality: "Hyderabad",
+    addressLocality: "Metro City",
     addressRegion: "Telangana",
     ...(pin ? { postalCode: pin } : {}),
     addressCountry: "IN",
@@ -36,17 +36,24 @@ export function salonJsonLd(configJson: string, origin: string) {
   const b = { ...BUSINESS, ...(cfg.business ?? {}) };
   const week = (cfg.week ?? []) as WeekDay[];
   const hours = week.flatMap((d) => {
-    if (d.closed) return [{
-      "@type": "OpeningHoursSpecification", dayOfWeek: `https://schema.org/${d.day}`,
-      opens: "00:00", closes: "00:00",
-    }];
+    if (d.closed)
+      return [
+        {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: `https://schema.org/${d.day}`,
+          opens: "00:00",
+          closes: "00:00",
+        },
+      ];
     if (d.open == null || d.close == null) return [];
-    return [{
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: `https://schema.org/${d.day}`,
-      opens: hhmm(d.open),
-      closes: hhmm(d.close),
-    }];
+    return [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: `https://schema.org/${d.day}`,
+        opens: hhmm(d.open),
+        closes: hhmm(d.close),
+      },
+    ];
   });
   const offers = [
     ...((cfg.menMenu ?? []).map((c) => ({ c, who: "Men" })) ?? []),
@@ -68,13 +75,15 @@ export function salonJsonLd(configJson: string, origin: string) {
     "@id": `${origin || "https://salon.example.com"}/#salon`,
     name: b.name,
     alternateName: b.brand,
-    description: `Hair, beauty and makeover by ${b.founder} at ${b.locationShort}. Book online in under a minute.`,
+    description: `Cuts, colour and care by ${b.founder} at ${b.locationShort}. Book online in under a minute.`,
     ...(origin
-      ? { url: origin, image: abs("/brand/hb-emblem.webp"), logo: abs("/icons/app-512.png") }
+      ? { url: origin, image: abs("/brand/brand-emblem.webp"), logo: abs("/icons/app-512.png") }
       : {}),
     telephone: b.phones?.[0],
     contactPoint: (b.phones ?? []).map((phone) => ({
-      "@type": "ContactPoint", telephone: phone, contactType: "reservations",
+      "@type": "ContactPoint",
+      telephone: phone,
+      contactType: "reservations",
     })),
     address: postalAddress(b.address),
     geo: { "@type": "GeoCoordinates", latitude: SALON_LAT, longitude: SALON_LON },

@@ -14,17 +14,17 @@ import {
 import { fromISO, minuteLabel } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/closures")({
+export const Route = createFileRoute("/admin/closures")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Salon closures \u2014 Hair by Kiran" },
+      { property: "og:title", content: "Salon closures \u2014 Lumen Studio" },
       {
         property: "og:description",
         content: "Close the whole salon for hours, days or until further notice.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Salon closures — Hair by Kiran" },
+      { title: "Salon closures — Lumen Studio" },
       {
         name: "description",
         content: "Close the whole salon for hours, days or until further notice.",

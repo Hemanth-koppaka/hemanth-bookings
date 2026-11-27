@@ -416,7 +416,7 @@ export type DayAvailability = {
   /** Stylists who can do the chosen services (multi-stylist salons). */
   stylists?: Stylist[];
   /**
-   * The chosen services prefer one stylist (e.g. Kiran's Signature → Kiran):
+   * The chosen services prefer one stylist (e.g. Lumen Signature → Kiran):
    * booked with them unless the guest explicitly picks another stylist.
    */
   preferred?: { id: string; name: string };
@@ -497,7 +497,7 @@ export async function availability(
     now: date === now.iso ? now.minute : null,
     notice: options.staff ? 0 : rules.minNoticeMinutes,
   };
-  // a service only one stylist performs (Kiran's Signature) is closed on days
+  // a service only one stylist performs (Lumen Signature) is closed on days
   // they aren't working: on leave, their day off, or not taking bookings
   if (team && pref?.only && !plan.closed && !team.working.some((w) => w.id === pref.preferred)) {
     const svcName = signatureName(options.serviceIds ?? [], svcRules);
@@ -568,7 +568,7 @@ export async function checkTime(
     exclude?: string[];
   } = {},
 ): Promise<{ ok: true; staffId?: string | null } | { ok: false; error: string }> {
-  // A service with a preferred stylist (Kiran's Signature → Kiran) is booked
+  // A service with a preferred stylist (Lumen Signature → Kiran) is booked
   // with that stylist unless the guest explicitly chose someone from its pool:
   // "any" never quietly becomes someone else.
   let implicitPreferred: ServiceRule | null = null;
@@ -623,7 +623,7 @@ export async function checkTime(
 
 /** True when the database refused a write because the slot was taken in the meantime. */
 export const isSlotTaken = (e: { message?: string } | null | undefined) =>
-  Boolean(e?.message?.includes("HB_SLOT_TAKEN"));
+  Boolean(e?.message?.includes("BK_SLOT_TAKEN"));
 
 /* ── activity log ─────────────────────────────────────────────── */
 

@@ -1,6 +1,6 @@
 // Resolves each service's stylist rule from the salon's settings
 // ("service_rules": { [serviceId]: { mode, stylist } }) and the staff store.
-// Defaults: Kiran's Signature is only with Kiran (closed while he's away);
+// Defaults: Lumen Signature is only with Kiran (closed while he's away);
 // everything else is "any".
 // The fallback pool = other active stylists who already offer a service in the
 // same category of the same gender's menu (the hairstylists for that menu).

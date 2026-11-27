@@ -11,13 +11,13 @@ export const Route = createFileRoute("/contact")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Contact — Hair by Kiran" },
+      { title: "Contact — Lumen Studio" },
       {
         name: "description",
         content:
-          "Call or WhatsApp Hair by Kiran at Sector 9, Midtown, Hyderabad, or book online in under a minute.",
+          "Call or WhatsApp Lumen Studio at Sector 9, Midtown, Metro City, or book online in under a minute.",
       },
-      { property: "og:title", content: "Contact — Hair by Kiran" },
+      { property: "og:title", content: "Contact — Lumen Studio" },
       { property: "og:description", content: "Call, WhatsApp or find us in Sector 9." },
     ],
   }),

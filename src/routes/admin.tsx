@@ -6,28 +6,28 @@ import { inputClass } from "@/components/admin";
 import { Toaster } from "@/components/ui/sonner";
 import { AdminAssistant } from "@/components/admin-assistant";
 
-export const Route = createFileRoute("/hb-desk-7392")({
+export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Salon operations — Hair by Kiran" },
+      { title: "Salon operations — Lumen Studio" },
       {
         name: "description",
-        content: "Private operations console for managing appointments at Hair by Kiran.",
+        content: "Private operations console for managing appointments at Lumen Studio.",
       },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Salon operations — Hair by Kiran" },
+      { property: "og:title", content: "Salon operations — Lumen Studio" },
       { property: "og:description", content: "Private operations console." },
       // installable on phones (iPhone needs this for booking alerts)
-      { name: "theme-color", content: "#1c1611" },
+      { name: "theme-color", content: "#121916" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "HB Salon" },
+      { name: "apple-mobile-web-app-title", content: "Salon Admin" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
     ],
     links: [
-      { rel: "manifest", href: "/hb-desk-7392.webmanifest" },
+      { rel: "manifest", href: "/admin.webmanifest" },
       { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
     ],
   }),

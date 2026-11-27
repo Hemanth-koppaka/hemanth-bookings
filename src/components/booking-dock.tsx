@@ -27,7 +27,7 @@ export function YourAppointment({
 }) {
   const { selected, removeService, totalMinutes, totalPrice, hasFromPricing } = useBooking();
   return (
-    <div className={cn("fade-rise rounded-2xl border border-[#DEDAD2] bg-[#FBF9F5]", className)}>
+    <div className={cn("fade-rise rounded-2xl border border-[#D4DDD9] bg-[#FBF9F5]", className)}>
       <div className="flex items-center justify-between px-4 pt-3.5 lg:px-5">
         <span className="flex items-center gap-2 text-[0.66rem] uppercase tracking-[0.28em] text-foreground/70">
           <CalendarCheck2 className="h-4 w-4" strokeWidth={1.2} /> Your appointment
@@ -95,7 +95,7 @@ export function YourAppointment({
           data-sfx="primary"
           onClick={onContinue}
           disabled={!selected.length}
-          className="press flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1c1611] text-[0.66rem] uppercase tracking-[0.18em] text-ivory disabled:opacity-40"
+          className="press flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#121916] text-[0.66rem] uppercase tracking-[0.18em] text-ivory disabled:opacity-40"
         >
           {continueLabel} <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />
         </button>
@@ -163,7 +163,7 @@ export function BookingDock({
       {open && sheet ? (
         sheet
       ) : (
-        <div className="fade-rise mx-auto flex h-16 max-w-3xl items-center gap-2 rounded-2xl border border-[#DEDAD2] bg-[#FBF9F5]/95 p-2 pl-3 shadow-[0_12px_30px_-20px_rgba(40,25,10,0.5)] backdrop-blur-sm">
+        <div className="fade-rise mx-auto flex h-16 max-w-3xl items-center gap-2 rounded-2xl border border-[#D4DDD9] bg-[#FBF9F5]/95 p-2 pl-3 shadow-[0_12px_30px_-20px_rgba(40,25,10,0.5)] backdrop-blur-sm">
           {summary ?? (
             <button
               type="button"
@@ -212,7 +212,7 @@ export function BookingDock({
             data-sfx="primary"
             onClick={onAction}
             disabled={disabled}
-            className="press flex h-12 shrink-0 items-center gap-2 rounded-xl bg-[#1c1611] px-4 text-[0.7rem] uppercase tracking-[0.16em] text-ivory disabled:bg-foreground/25"
+            className="press flex h-12 shrink-0 items-center gap-2 rounded-xl bg-[#121916] px-4 text-[0.7rem] uppercase tracking-[0.16em] text-ivory disabled:bg-foreground/25"
           >
             {action}
             <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.5} />

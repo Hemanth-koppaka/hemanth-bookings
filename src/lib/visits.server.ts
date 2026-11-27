@@ -14,7 +14,7 @@ const BOT =
 
 async function visitorCode(ip: string, ua: string, iso: string) {
   const d = new Uint8Array(
-    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`hb-visit:${iso}:${ip}:${ua}`)),
+    await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`bk-visit:${iso}:${ip}:${ua}`)),
   );
   return Array.from(d.slice(0, 6), (x) => x.toString(16).padStart(2, "0")).join("");
 }

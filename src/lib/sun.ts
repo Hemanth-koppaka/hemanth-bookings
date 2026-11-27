@@ -5,7 +5,7 @@
 
 const RAD = Math.PI / 180;
 
-/** The salon's location (Midtown, Hyderabad). */
+/** The salon's location (Midtown, Metro City). */
 export const SALON_LAT = 17.4935;
 export const SALON_LON = 78.3995;
 
@@ -67,8 +67,8 @@ const SKY: [number, RGB, RGB][] = [
   [-12, hex("#0b1430"), hex("#1d2a57")], // astronomical twilight
   [-6, hex("#172b5e"), hex("#4b5596")], // nautical twilight (deep blue hour)
   [-2, hex("#2e4a8a"), hex("#c9798a")], // civil twilight: indigo over rose
-  [1, hex("#4a6fae"), hex("#f2a06b")], // sunset: blue over orange
-  [6, hex("#5d8fcf"), hex("#f6c890")], // golden hour
+  [1, hex("#4a6fae"), hex("#67CCAC")], // sunset: blue over orange
+  [6, hex("#5d8fcf"), hex("#9BE3C9")], // golden hour
   [15, hex("#5aa0e0"), hex("#cfe5f2")], // low sun, clear
   [35, hex("#3f8fdc"), hex("#bfe0f7")], // full daylight
   [90, hex("#2f86dc"), hex("#b5dcf8")], // high sun

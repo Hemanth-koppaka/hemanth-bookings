@@ -14,15 +14,15 @@ import { adminBookings, type AdminBooking } from "@/lib/admin-data.functions";
 import { fromISO, inr, minuteLabel, toISO } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/appointments")({
+export const Route = createFileRoute("/admin/appointments")({
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Bookings — Hair by Kiran" },
+      { title: "Bookings — Lumen Studio" },
       { name: "description", content: "Every booking, with filters and search." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Bookings — Hair by Kiran" },
+      { property: "og:title", content: "Bookings — Lumen Studio" },
       { property: "og:description", content: "Every booking, with filters and search." },
     ],
   }),
@@ -244,7 +244,10 @@ function BookingsScreen() {
                     <span className="hidden w-16 shrink-0 text-right text-[0.85rem] tabular-nums sm:block">
                       {inr(b.price)}
                     </span>
-                    <StatusPill status={b.status} label={b.status === "upcoming" ? "Confirmed" : STATUS_LABEL[b.status]} />
+                    <StatusPill
+                      status={b.status}
+                      label={b.status === "upcoming" ? "Confirmed" : STATUS_LABEL[b.status]}
+                    />
                   </button>
                 </div>
               );

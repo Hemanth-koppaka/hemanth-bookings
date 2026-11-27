@@ -6,15 +6,15 @@ import { SoundSettingsPanel } from "@/components/admin-sound";
 import { adminSaveBusinessHours } from "@/lib/salon.functions";
 import { BUSINESS, WEEK, type WeekDay } from "@/lib/salon";
 
-export const Route = createFileRoute("/hb-desk-7392/settings")({
+export const Route = createFileRoute("/admin/settings")({
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Settings — Hair by Kiran" },
+      { title: "Settings — Lumen Studio" },
       { name: "description", content: "Team, access code and salon preferences." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Settings — Hair by Kiran" },
+      { property: "og:title", content: "Settings — Lumen Studio" },
       { property: "og:description", content: "Team and salon preferences." },
     ],
   }),
@@ -346,7 +346,7 @@ function SettingsScreen() {
           live in Booking rules.
         </p>
         <Link
-          to="/hb-desk-7392/rules"
+          to="/admin/rules"
           className="mt-4 inline-block border-b border-foreground/30 pb-0.5 text-sm"
         >
           Open booking rules

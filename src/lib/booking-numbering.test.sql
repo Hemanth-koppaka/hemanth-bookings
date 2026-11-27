@@ -1,16 +1,16 @@
 -- Run through the authorized database query tool. Everything rolls back.
 BEGIN;
-SELECT pg_advisory_xact_lock(hashtext('hb-admin-booking-number'));
+SELECT pg_advisory_xact_lock(hashtext('bk-admin-booking-number'));
 DO $$
 DECLARE first_no bigint; second_no bigint;
 BEGIN
   IF (SELECT count(*) FROM public.bookings WHERE booking_no BETWEEN 1 AND 16) <> 16 THEN
     RAISE EXCEPTION 'Expected the 16 retained appointments numbered 1 through 16';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.bookings WHERE reference = 'HB-QMK34Y' AND meta->>'status' = 'completed') THEN
+  IF NOT EXISTS (SELECT 1 FROM public.bookings WHERE reference = 'BK-QMK34Y' AND meta->>'status' = 'completed') THEN
     RAISE EXCEPTION 'Hemanth must be completed';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.bookings WHERE reference = 'HB-JAJ4T2' AND status = 'cancelled' AND booking_no IS NULL) THEN
+  IF NOT EXISTS (SELECT 1 FROM public.bookings WHERE reference = 'BK-JAJ4T2' AND status = 'cancelled' AND booking_no IS NULL) THEN
     RAISE EXCEPTION 'Meera cancellation must release its number';
   END IF;
   INSERT INTO public.bookings(reference, audience, date, time, customer, meta, archived_at)

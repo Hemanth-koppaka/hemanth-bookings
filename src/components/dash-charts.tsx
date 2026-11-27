@@ -7,14 +7,14 @@ import { cn } from "@/lib/utils";
 /** The dashboard's colours: fixed order, one meaning each. */
 export const DASH = {
   blue: "#2a78d6",
-  orange: "#eb6834",
+  orange: "#00B386",
   aqua: "#1baf7a",
-  yellow: "#eda100",
+  yellow: "#24CFA4",
   magenta: "#e87ba4",
   violet: "#6250d6",
-  red: "#e34948",
-  grid: "#ebe6dd",
-  axis: "#8d857a",
+  red: "#00A677",
+  grid: "#DFE9E5",
+  axis: "#7D8A85",
 } as const;
 
 const shortDate = (iso: string) =>
@@ -273,7 +273,7 @@ export function StackedBars({
                   width={slot - 2}
                   height={ih}
                   rx="4"
-                  fill="#f4efe6"
+                  fill="#E8F2EE"
                 />
               ) : null}
               {segs.map(({ s, v }, k) => {
@@ -302,7 +302,7 @@ export function StackedBars({
                   y={H - 6}
                   textAnchor="middle"
                   fontSize="11"
-                  fill={d.date === today ? "#1c1611" : DASH.axis}
+                  fill={d.date === today ? "#121916" : DASH.axis}
                   fontWeight={d.date === today ? 600 : 400}
                 >
                   {d.date === today ? "Today" : shortDate(d.date)}

@@ -1,4 +1,4 @@
--- Kiran's Signature is a 30-minute appointment on both menus (salon request).
+-- Lumen Signature is a 30-minute appointment on both menus (salon request).
 -- Existing bookings keep the duration they were booked with.
 UPDATE public.services
 SET duration_minutes = 30

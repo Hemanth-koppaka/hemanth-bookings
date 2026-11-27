@@ -10,14 +10,17 @@ import type { Report } from "@/lib/analytics";
 import { fromISO, inr, toISO } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/hb-desk-7392/reports")({
+export const Route = createFileRoute("/admin/reports")({
   head: () => ({
     meta: [
-      { property: "og:title", content: "Reports \u2014 Hair by Kiran" },
-      { property: "og:description", content: "Revenue, busiest hours, top services and customer return rate." },
+      { property: "og:title", content: "Reports \u2014 Lumen Studio" },
+      {
+        property: "og:description",
+        content: "Revenue, busiest hours, top services and customer return rate.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { title: "Reports — Hair by Kiran" },
+      { title: "Reports — Lumen Studio" },
       {
         name: "description",
         content: "Revenue, busiest hours, top services and customer return rate.",

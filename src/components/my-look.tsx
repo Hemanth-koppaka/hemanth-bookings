@@ -242,7 +242,7 @@ function LookRow({
       className={cn(
         "press fade-rise flex min-h-14 w-full items-center gap-3 rounded-sm border py-2 pl-3 pr-4 text-left disabled:opacity-70",
         dark
-          ? "border-[#E8E1D8]/20 bg-white/[0.03] text-[#E8E1D8]"
+          ? "border-[#DAE5E1]/20 bg-white/[0.03] text-[#DAE5E1]"
           : "border-foreground/12 bg-card/70",
         className,
       )}
@@ -428,7 +428,7 @@ export function BookingLook({
       className={cn(
         "rounded-sm border p-4",
         dark
-          ? "border-[#E8E1D8]/20 bg-white/[0.03] text-[#E8E1D8]"
+          ? "border-[#DAE5E1]/20 bg-white/[0.03] text-[#DAE5E1]"
           : "border-foreground/12 bg-card/70",
         className,
       )}
@@ -438,7 +438,7 @@ export function BookingLook({
         <span
           className={cn(
             "text-[0.75rem] tabular-nums",
-            dark ? "text-[#E8E1D8]/55" : "text-muted-foreground",
+            dark ? "text-[#DAE5E1]/55" : "text-muted-foreground",
           )}
         >
           {photos.length}/{MAX_PHOTOS}
@@ -447,7 +447,7 @@ export function BookingLook({
       <p
         className={cn(
           "mb-3 text-[0.8rem] leading-relaxed",
-          dark ? "text-[#E8E1D8]/65" : "text-muted-foreground",
+          dark ? "text-[#DAE5E1]/65" : "text-muted-foreground",
         )}
       >
         {photos.length
@@ -489,7 +489,7 @@ export function BookingLook({
                 key={`busy-${i}`}
                 className={cn(
                   "flex h-20 w-20 items-center justify-center rounded-md border",
-                  dark ? "border-[#E8E1D8]/20 bg-white/[0.04]" : "border-hairline bg-card",
+                  dark ? "border-[#DAE5E1]/20 bg-white/[0.04]" : "border-hairline bg-card",
                 )}
               >
                 <Loader2
@@ -510,7 +510,7 @@ export function BookingLook({
             className={cn(
               "press flex h-20 w-20 flex-col items-center justify-center gap-1.5 rounded-md border border-dashed",
               dark
-                ? "border-[#E8E1D8]/35 bg-transparent text-[#E8E1D8]/80 hover:border-[#C9A96E] hover:text-[#C9A96E]"
+                ? "border-[#DAE5E1]/35 bg-transparent text-[#DAE5E1]/80 hover:border-[#7BBEA6] hover:text-[#7BBEA6]"
                 : "border-foreground/25 bg-card text-foreground/70 hover:border-bronze hover:text-bronze",
             )}
           >

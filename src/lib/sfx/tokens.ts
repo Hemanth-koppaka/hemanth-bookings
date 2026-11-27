@@ -1,4 +1,4 @@
-// Sound-design tokens for Hair by Kiran's interface sounds.
+// Sound-design tokens for Lumen Studio's interface sounds.
 // Every level, envelope and filter value lives here so the whole palette can
 // be tuned in one place. Levels are relative: the master volume (set by the
 // salon in the console) scales all of them.

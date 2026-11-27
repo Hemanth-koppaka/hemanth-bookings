@@ -4,7 +4,7 @@ import type { SoundSettings } from "./sfx/tokens";
 import type { ServiceRule } from "./service-rules";
 import { CATEGORY_ICON_BY_ID, SERVICE_ICON_BY_ID } from "./service-icons";
 
-// Business, menu and availability data for The Hair By Kiran Unisex Salon.
+// Business, menu and availability data for Lumen Studio.
 // Service names and prices are taken verbatim from the official Service Menu.
 // `slots` = number of consecutive 30-minute booking slots the service occupies.
 
@@ -44,15 +44,15 @@ export type Category = {
 export const SLOT_MINUTES = 30;
 
 export const BUSINESS = {
-  name: "The Hair By Kiran Unisex Salon",
-  brand: "Hair by Kiran",
-  tagline: "Hair · Beauty · Makeover",
-  founder: "B. Kiran",
-  locationShort: "Sector 9 · Midtown · Hyderabad",
+  name: "Lumen Studio",
+  brand: "Lumen Studio",
+  tagline: "Cut · Colour · Care",
+  founder: "Kiran Rao",
+  locationShort: "Sector 9 · Midtown · Metro City",
   address:
-    "Plot No. 12, Lotus Residency, Park Lane, Green Avenue, Sector 9, Midtown, Hyderabad – 500000",
+    "Plot No. 12, Lotus Residency, Park Lane, Green Avenue, Sector 9, Midtown, Metro City – 500000",
   mapsQuery:
-    "The Hair By Kiran Unisex Salon, Plot No. 12, Lotus Residency, Park Lane, Green Avenue, Sector 9, Midtown, Hyderabad 500000",
+    "Lumen Studio, Plot No. 12, Lotus Residency, Park Lane, Green Avenue, Sector 9, Midtown, Metro City 500000",
   // the business number only
   phones: ["+919000000000"],
   /**
@@ -64,13 +64,13 @@ export const BUSINESS = {
   /** Instagram: the salon's page and Kiran's own work. */
   instagram: {
     salon: {
-      handle: "hairbykiran.salon",
+      handle: "lumenstudio.salon",
       url: "https://www.instagram.com/",
     },
-    kiran: { handle: "hair.by.kiran", url: "https://www.instagram.com/" },
+    kiran: { handle: "lumen.studio", url: "https://www.instagram.com/" },
   },
-  hoursOpenDays: "Wednesday to Monday",
-  closedDay: "Tuesday",
+  hoursOpenDays: "Tuesday to Sunday",
+  closedDay: "Monday",
   firstSlot: "10:00 AM",
   lastSlot: "7:30 PM – 8:00 PM",
   facilities: [
@@ -107,8 +107,8 @@ export const EXCEPTIONS: Record<string, DateException> = {};
 export const DEFAULT_LUNCH: TimeRange = { start: 13 * 60, end: 14 * 60 };
 
 export const WEEK: WeekDay[] = [
-  { day: "Monday", closed: false, breaks: [DEFAULT_LUNCH] },
-  { day: "Tuesday", closed: true },
+  { day: "Monday", closed: true },
+  { day: "Tuesday", closed: false, breaks: [DEFAULT_LUNCH] },
   { day: "Wednesday", closed: false, breaks: [DEFAULT_LUNCH] },
   { day: "Thursday", closed: false, breaks: [DEFAULT_LUNCH] },
   { day: "Friday", closed: false, breaks: [DEFAULT_LUNCH] },
@@ -138,20 +138,20 @@ const glow = (p: string): Category => ({
   title: "Glow & Radiance",
   blurb: "Invest in your skin. It's going to represent you for a very long time.",
   services: [
-    s(p + "dtan-face", "D-Tan Face / Neck", 700, 1),
-    s(p + "dtan-hands", "Hands D-Tan", 1000, 1),
-    s(p + "bright-pack", "Brightening Pack", 1000, 1),
-    s(p + "cu-wine", "Wine Clean Up", 800, 1),
-    s(p + "cu-lotus", "Lotus Clean Up", 1000, 1),
-    s(p + "cu-o3", "o3 Clean Up", 1500, 2),
-    s(p + "cu-fruit", "Fruit Clean Up", 900, 1),
-    s(p + "fa-bright", "Brightening Facial", 1800, 2),
-    s(p + "fa-tan", "Tan Facial", 2000, 2),
-    s(p + "fa-korean", "Korean Facial", 3500, 3),
-    s(p + "fa-o3", "o3 Advance Facial", 3200, 3),
-    s(p + "fa-antiage", "Anti Ageing Facial", 2500, 2),
-    s(p + "fa-fourlayer", "Four Layer Facial", 3000, 3),
-    s(p + "fa-hb", "HB Signature Facial", 4000, 3),
+    s(p + "dtan-face", "D-Tan Face / Neck", 800, 1),
+    s(p + "dtan-hands", "Hands D-Tan", 1150, 1),
+    s(p + "bright-pack", "Brightening Pack", 1150, 1),
+    s(p + "cu-wine", "Wine Clean Up", 900, 1),
+    s(p + "cu-lotus", "Lotus Clean Up", 1150, 1),
+    s(p + "cu-o3", "o3 Clean Up", 1700, 2),
+    s(p + "cu-fruit", "Fruit Clean Up", 1050, 1),
+    s(p + "fa-bright", "Brightening Facial", 2050, 2),
+    s(p + "fa-tan", "Tan Facial", 2300, 2),
+    s(p + "fa-korean", "Korean Facial", 4000, 3),
+    s(p + "fa-o3", "o3 Advance Facial", 3700, 3),
+    s(p + "fa-antiage", "Anti Ageing Facial", 2900, 2),
+    s(p + "fa-fourlayer", "Four Layer Facial", 3450, 3),
+    s(p + "fa-sig", "Signature Facial", 4600, 3),
   ],
 });
 
@@ -160,35 +160,35 @@ const beauty = (p: string): Category => ({
   title: "Beauty Services",
   blurb: "Utmost care, for a comfortable and relatively painless experience.",
   services: [
-    s(p + "th-eyebrow", "Threading — Eyebrow", 80, 1),
-    s(p + "th-upperlip", "Threading — Upper Lip", 80, 1),
-    s(p + "th-chin", "Threading — Chin", 80, 1),
-    s(p + "th-forehead", "Threading — Forehead", 80, 1),
-    s(p + "th-sidelock", "Threading — Side Lock", 80, 1),
-    s(p + "th-fullface", "Threading — Full Face", 450, 1),
-    s(p + "wx-fullarms", "Waxing — Full Arms", 500, 1),
-    s(p + "wx-halfarms", "Waxing — Half Arms", 300, 1),
-    s(p + "wx-fulllegs", "Waxing — Full Legs", 1000, 2),
-    s(p + "wx-halflegs", "Waxing — Half Legs", 500, 1),
-    s(p + "wx-underarms", "Waxing — Under Arms", 200, 1, { note: "₹200 / ₹250" }),
-    s(p + "wx-halfback", "Waxing — Half Back", 500, 1),
-    s(p + "wx-fullback", "Waxing — Full Back", 1000, 2),
-    s(p + "wx-stomach", "Waxing — Stomach", 800, 1),
-    s(p + "wx-fullface", "Waxing — Full Face", 500, 1),
+    s(p + "th-eyebrow", "Threading — Eyebrow", 100, 1),
+    s(p + "th-upperlip", "Threading — Upper Lip", 100, 1),
+    s(p + "th-chin", "Threading — Chin", 100, 1),
+    s(p + "th-forehead", "Threading — Forehead", 100, 1),
+    s(p + "th-sidelock", "Threading — Side Lock", 100, 1),
+    s(p + "th-fullface", "Threading — Full Face", 500, 1),
+    s(p + "wx-fullarms", "Waxing — Full Arms", 600, 1),
+    s(p + "wx-halfarms", "Waxing — Half Arms", 350, 1),
+    s(p + "wx-fulllegs", "Waxing — Full Legs", 1150, 2),
+    s(p + "wx-halflegs", "Waxing — Half Legs", 600, 1),
+    s(p + "wx-underarms", "Waxing — Under Arms", 250, 1, { note: "₹200 / ₹250" }),
+    s(p + "wx-halfback", "Waxing — Half Back", 600, 1),
+    s(p + "wx-fullback", "Waxing — Full Back", 1150, 2),
+    s(p + "wx-stomach", "Waxing — Stomach", 900, 1),
+    s(p + "wx-fullface", "Waxing — Full Face", 600, 1),
     s(p + "wx-eyebrow", "Waxing — Eyebrow", 150, 1),
     s(p + "wx-upperlip", "Waxing — Upper Lip", 100, 1),
     s(p + "wx-chin", "Waxing — Chin", 100, 1),
     s(p + "wx-sidelock", "Waxing — Side Lock", 100, 1),
     s(p + "wx-forehead", "Waxing — Forehead", 100, 1),
-    s(p + "wx-fullbody", "Waxing — Full Body", 3000, 4),
+    s(p + "wx-fullbody", "Waxing — Full Body", 3450, 4),
   ],
 });
 
 const polish = (p: string): Service[] => [
-  s(p + "rf-footscrub", "Foot Scrub", 500, 1),
-  s(p + "rf-footpolish", "Foot Polish", 1500, 2),
-  s(p + "rf-handpolish", "Hand Polish", 2000, 2),
-  s(p + "rf-bodypolish", "Body Polish", 5000, 4),
+  s(p + "rf-footscrub", "Foot Scrub", 600, 1),
+  s(p + "rf-footpolish", "Foot Polish", 1700, 2),
+  s(p + "rf-handpolish", "Hand Polish", 2300, 2),
+  s(p + "rf-bodypolish", "Body Polish", 5750, 4),
 ];
 
 const packages = (p: string): Category => ({
@@ -196,13 +196,13 @@ const packages = (p: string): Category => ({
   title: "Pre Bridal / Groom Packages",
   blurb: "Complete multi-service packages. Duration is confirmed at consultation.",
   services: [
-    s(p + "pk-essentials", "Essentials", 10000, 6, {
+    s(p + "pk-essentials", "Essentials", 11500, 6, {
       note: "Enduring Facial · Flavoured Wax (Full Legs & Arms, Under Arms) · Threading · DeTan Face, Neck & Back · DeTan Full Legs & Arms · Classic Pedicure & Manicure · Hair Spa & Blowdry Curls",
     }),
-    s(p + "pk-premium", "Premium", 20000, 8, {
+    s(p + "pk-premium", "Premium", 23000, 8, {
       note: "Signature Gold Facial · Flavoured Wax Full Body · Brazilian Wax · Threading · 1 Hair Spa / Root Touchup · DeTan Face & Neck · DeTan Full Body · Bomb Pedicure & Manicure · Haircut & Styling",
     }),
-    s(p + "pk-ethereal", "Ethereal", 25000, 10, {
+    s(p + "pk-ethereal", "Ethereal", 28750, 10, {
       note: "Bridal Glow Facial · Full Body Wax · Brazilian Wax · Threading · Spa Pedicure · Spa Manicure · DeTan Face, Neck & Back · DeTan Full Body · Hair Spa / Treatment · Haircut & Global Colour",
     }),
   ],
@@ -216,14 +216,14 @@ export const MEN_MENU: Category[] = [
     title: "Hairstyles",
     blurb: "A thorough walkthrough and a hair do that accentuates your personality.",
     services: [
-      s("m-cut", "Basic Haircut", 500, 1),
-      s("m-beard", "Beard Trim", 250, 1),
-      s("m-shave", "Shave", 300, 1),
-      s("m-signature", "Kiran's Signature", 1000, 1, {
+      s("m-cut", "Basic Haircut", 600, 1),
+      s("m-beard", "Beard Trim", 300, 1),
+      s("m-shave", "Shave", 350, 1),
+      s("m-signature", "Lumen Signature", 1150, 1, {
         note: "Consultation, haircut, beard trim, wash & styling",
       }),
-      s("m-kids", "Kids (U-14)", 300, 1),
-      s("m-wash", "Wash and Blast Dry", 300, 1),
+      s("m-kids", "Kids (U-14)", 350, 1),
+      s("m-wash", "Wash and Blast Dry", 350, 1),
     ],
   },
   {
@@ -231,11 +231,11 @@ export const MEN_MENU: Category[] = [
     title: "Colours",
     blurb: "Colorimetry advanced enough to propose a personalised solution for any mood.",
     services: [
-      s("m-rt-af", "Root Touchup (Ammonia Free)", 1000, 2),
-      s("m-rt-a", "Root Touchup (Ammonia)", 800, 2),
-      s("m-col-beard", "Beard / Moustache Colour", 350, 1),
-      s("m-highlights", "Highlights", 2000, 3, { from: true }),
-      s("m-global", "Global Colour", 1400, 2),
+      s("m-rt-af", "Root Touchup (Ammonia Free)", 1150, 2),
+      s("m-rt-a", "Root Touchup (Ammonia)", 900, 2),
+      s("m-col-beard", "Beard / Moustache Colour", 400, 1),
+      s("m-highlights", "Highlights", 2300, 3, { from: true }),
+      s("m-global", "Global Colour", 1600, 2),
     ],
   },
   {
@@ -243,12 +243,12 @@ export const MEN_MENU: Category[] = [
     title: "Hair Care",
     blurb: "An extra ounce of hydration and a little more protection.",
     services: [
-      s("m-spa-moist", "Hair Spa — Moisturizing", 1200, 2),
-      s("m-spa-deep", "Hair Spa — Deep Conditioning", 1200, 2),
-      s("m-spa-colour", "Hair Spa — Colour Protect", 1200, 2),
-      s("m-spa-repair", "Hair Spa — Repair & Rejuvenate", 1200, 2),
-      s("m-tr-hairfall", "Treatment — Anti Hairfall", 1500, 2),
-      s("m-tr-dandruff", "Treatment — Anti Dandruff", 1500, 2),
+      s("m-spa-moist", "Hair Spa — Moisturizing", 1400, 2),
+      s("m-spa-deep", "Hair Spa — Deep Conditioning", 1400, 2),
+      s("m-spa-colour", "Hair Spa — Colour Protect", 1400, 2),
+      s("m-spa-repair", "Hair Spa — Repair & Rejuvenate", 1400, 2),
+      s("m-tr-hairfall", "Treatment — Anti Hairfall", 1700, 2),
+      s("m-tr-dandruff", "Treatment — Anti Dandruff", 1700, 2),
     ],
   },
   {
@@ -256,8 +256,8 @@ export const MEN_MENU: Category[] = [
     title: "Hair Treatments",
     blurb: "Pricing may vary depending on hair density and length.",
     services: [
-      s("m-straight", "Straightening / Smoothening", 3500, 6),
-      s("m-keratin", "Keratin / Botox", 5000, 6),
+      s("m-straight", "Straightening / Smoothening", 4000, 6),
+      s("m-keratin", "Keratin / Botox", 5750, 6),
     ],
   },
   {
@@ -265,10 +265,10 @@ export const MEN_MENU: Category[] = [
     title: "Reflexology",
     blurb: "A revitalising body experience. Massage duration is 25 minutes.",
     services: [
-      s("m-rf-foot", "Foot Massage", 300, 1),
-      s("m-rf-head", "Head Oil Massage", 500, 1),
-      s("m-rf-hand", "Hand Massage", 300, 1),
-      s("m-rf-back", "Back Massage", 600, 1),
+      s("m-rf-foot", "Foot Massage", 350, 1),
+      s("m-rf-head", "Head Oil Massage", 600, 1),
+      s("m-rf-hand", "Hand Massage", 350, 1),
+      s("m-rf-back", "Back Massage", 700, 1),
       ...polish("m-"),
     ],
   },
@@ -285,15 +285,15 @@ export const WOMEN_MENU: Category[] = [
     title: "Hairstyles",
     blurb: "A thorough walkthrough and a hair do that accentuates your personality.",
     services: [
-      s("w-fringe", "Fringe Cut / Bangs", 350, 1),
-      s("w-cut", "Cut & Styling", 1200, 2),
-      s("w-signature", "Kiran's Signature", 1500, 1),
-      s("w-blow-straight", "Blow Dry Straight", 600, 1),
-      s("w-blow-curls", "Blow Dry Curls", 800, 2),
-      s("w-ironing", "Ironing / Tonging", 800, 2),
-      s("w-kids", "Kids (U-14)", 600, 1),
-      s("w-wash", "Wash & Blast Dry", 400, 1),
-      s("w-wash-cond", "Wash, Conditioning & Blow Dry", 600, 2),
+      s("w-fringe", "Fringe Cut / Bangs", 400, 1),
+      s("w-cut", "Cut & Styling", 1400, 2),
+      s("w-signature", "Lumen Signature", 1700, 1),
+      s("w-blow-straight", "Blow Dry Straight", 700, 1),
+      s("w-blow-curls", "Blow Dry Curls", 900, 2),
+      s("w-ironing", "Ironing / Tonging", 900, 2),
+      s("w-kids", "Kids (U-14)", 700, 1),
+      s("w-wash", "Wash & Blast Dry", 450, 1),
+      s("w-wash-cond", "Wash, Conditioning & Blow Dry", 700, 2),
     ],
   },
   {
@@ -301,12 +301,12 @@ export const WOMEN_MENU: Category[] = [
     title: "Colours",
     blurb: "Colorimetry advanced enough to propose a personalised solution for any mood.",
     services: [
-      s("w-rt-a", "Root Touchup (Ammonia)", 1200, 2),
-      s("w-rt-af", "Root Touchup (Ammonia Free)", 1500, 2),
-      s("w-global-a", "Global (Ammonia)", 4000, 4, { from: true }),
-      s("w-global-af", "Global (Ammonia Free)", 5000, 4, { from: true }),
-      s("w-highlights", "Highlights", 4000, 4, { from: true }),
-      s("w-advance", "Advance Colour", 5000, 5, { from: true }),
+      s("w-rt-a", "Root Touchup (Ammonia)", 1400, 2),
+      s("w-rt-af", "Root Touchup (Ammonia Free)", 1700, 2),
+      s("w-global-a", "Global (Ammonia)", 4600, 4, { from: true }),
+      s("w-global-af", "Global (Ammonia Free)", 5750, 4, { from: true }),
+      s("w-highlights", "Highlights", 4600, 4, { from: true }),
+      s("w-advance", "Advance Colour", 5750, 5, { from: true }),
     ],
   },
   {
@@ -314,12 +314,12 @@ export const WOMEN_MENU: Category[] = [
     title: "Hair Care",
     blurb: "An extra ounce of hydration and a little more protection.",
     services: [
-      s("w-spa-moist", "Hair Spa — Moisturizing", 1800, 2),
-      s("w-spa-deep", "Hair Spa — Deep Conditioning", 1800, 2),
-      s("w-spa-colour", "Hair Spa — Colour Protect", 1800, 2),
-      s("w-spa-repair", "Hair Spa — Repair & Rejuvenate", 1800, 2),
-      s("w-tr-hairfall", "Treatment — Anti Hairfall", 1800, 2),
-      s("w-tr-dandruff", "Treatment — Anti Dandruff", 1800, 2),
+      s("w-spa-moist", "Hair Spa — Moisturizing", 2050, 2),
+      s("w-spa-deep", "Hair Spa — Deep Conditioning", 2050, 2),
+      s("w-spa-colour", "Hair Spa — Colour Protect", 2050, 2),
+      s("w-spa-repair", "Hair Spa — Repair & Rejuvenate", 2050, 2),
+      s("w-tr-hairfall", "Treatment — Anti Hairfall", 2050, 2),
+      s("w-tr-dandruff", "Treatment — Anti Dandruff", 2050, 2),
     ],
   },
   {
@@ -327,8 +327,8 @@ export const WOMEN_MENU: Category[] = [
     title: "Hair Treatments",
     blurb: "Pricing may vary depending on hair density and length.",
     services: [
-      s("w-straight", "Straightening / Smoothening", 6000, 6),
-      s("w-keratin", "Keratin / Botox", 7000, 6),
+      s("w-straight", "Straightening / Smoothening", 6900, 6),
+      s("w-keratin", "Keratin / Botox", 8050, 6),
     ],
   },
   {
@@ -336,14 +336,14 @@ export const WOMEN_MENU: Category[] = [
     title: "Maquillage",
     blurb: "Makeup designed to compliment your lifestyle.",
     services: [
-      s("w-mk-eye", "Eye Makeup", 1500, 1),
-      s("w-mk-light", "Light Makeup", 3000, 2),
-      s("w-mk-party", "Party Makeup", 7000, 3),
-      s("w-mk-bridal", "Bridal Makeup", 20000, 6),
-      s("w-mk-outdoor", "Outdoor Charges", 3500, 1),
-      s("w-saree-salon", "Saree Draping — in Salon", 1000, 1),
-      s("w-saree-venue", "Saree Draping — at Venue", 1800, 1),
-      s("w-updo", "Hair Styling (Updo)", 2000, 2),
+      s("w-mk-eye", "Eye Makeup", 1700, 1),
+      s("w-mk-light", "Light Makeup", 3450, 2),
+      s("w-mk-party", "Party Makeup", 8050, 3),
+      s("w-mk-bridal", "Bridal Makeup", 23000, 6),
+      s("w-mk-outdoor", "Outdoor Charges", 4000, 1),
+      s("w-saree-salon", "Saree Draping — in Salon", 1150, 1),
+      s("w-saree-venue", "Saree Draping — at Venue", 2050, 1),
+      s("w-updo", "Hair Styling (Updo)", 2300, 2),
     ],
   },
   {
@@ -351,10 +351,10 @@ export const WOMEN_MENU: Category[] = [
     title: "Reflexology",
     blurb: "A revitalising body experience. Massage duration is 25 minutes.",
     services: [
-      s("w-rf-foot", "Foot Massage", 300, 1),
-      s("w-rf-head", "Head Oil Massage", 700, 1),
-      s("w-rf-hand", "Hand Massage", 300, 1),
-      s("w-rf-back", "Back Massage", 800, 1),
+      s("w-rf-foot", "Foot Massage", 350, 1),
+      s("w-rf-head", "Head Oil Massage", 800, 1),
+      s("w-rf-hand", "Hand Massage", 350, 1),
+      s("w-rf-back", "Back Massage", 900, 1),
       ...polish("w-"),
     ],
   },
@@ -515,7 +515,7 @@ export type SalonConfig = {
   closures?: Closure[];
   /** Interface sound settings from the console. */
   sound?: Partial<SoundSettings> | null;
-  /** Services with a preferred stylist (e.g. Kiran's Signature → Kiran). */
+  /** Services with a preferred stylist (e.g. Lumen Signature → Kiran). */
   serviceRules?: Record<string, ServiceRule>;
 };
 

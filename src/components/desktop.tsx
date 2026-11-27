@@ -117,7 +117,7 @@ export function DesktopStepHeader({ back, step }: { back: string; step: number }
           <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.25} />
           Back
         </Link>
-        <Link to="/" aria-label="Hair by Kiran" className="inline-flex">
+        <Link to="/" aria-label="Lumen Studio" className="inline-flex">
           <Wordmark className="h-12" />
         </Link>
         <span className="label-caps justify-self-end tabular-nums text-foreground/80">
@@ -161,7 +161,7 @@ export function DesktopStepperHeader({ step }: { step: number }) {
 
   return (
     <header className="flex shrink-0 items-center justify-between gap-6 hairline-b px-6 py-4 lg:gap-8 lg:px-10 xl:px-16">
-      <Link to="/" aria-label="Hair by Kiran" className="inline-flex shrink-0">
+      <Link to="/" aria-label="Lumen Studio" className="inline-flex shrink-0">
         <Wordmark className="h-11 lg:h-14" />
       </Link>
       <ol
@@ -290,7 +290,7 @@ export function DesktopCTA({
   );
 }
 
-/** Shown while Kiran's Signature is chosen: the high-resolution HB crown emblem,
+/** Shown while Lumen Signature is chosen: the high-resolution crown emblem,
  * large, on warm ivory, with the words below. No photograph. */
 export function SignaturePanel({ className }: { className?: string }) {
   return (
@@ -303,15 +303,13 @@ export function SignaturePanel({ className }: { className?: string }) {
       <div className="soft-fade flex min-h-0 flex-1 items-center justify-center px-10 pt-8">
         <img
           src={SIGNATURE_EMBLEM_HD}
-          alt="Hair by Kiran"
+          alt="Lumen Studio"
           className="photo-pop w-[56%] max-w-[22rem] object-contain drop-shadow-[0_18px_30px_rgba(60,40,20,0.16)]"
           decoding="async"
         />
       </div>
       <div className="stagger shrink-0 px-10 pb-12 xl:px-12">
-        <div className="text-[0.7rem] uppercase tracking-[0.32em] text-bronze">
-          Kiran's Signature
-        </div>
+        <div className="text-[0.7rem] uppercase tracking-[0.32em] text-bronze">Lumen Signature</div>
         <div className="mt-5 font-display text-[clamp(2.6rem,4vw,3.9rem)] leading-[1.02]">
           Styled by
           <br />
@@ -415,7 +413,7 @@ export function Thumb({
       alt=""
       className={cn(
         "h-24 w-24 shrink-0 rounded-sm",
-        fit === "contain" ? "bg-[#f3ece1] object-contain p-1.5" : "bg-muted object-cover",
+        fit === "contain" ? "bg-[#E4F0EB] object-contain p-1.5" : "bg-muted object-cover",
         className,
       )}
       style={{ objectPosition: pos }}

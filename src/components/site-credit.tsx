@@ -30,7 +30,7 @@ export function SiteCredit({
     <div
       className={cn(
         "flex items-center justify-center overflow-hidden whitespace-nowrap px-4 max-[359px]:px-0 text-[clamp(0.6rem,2.7vw,0.68rem)] tracking-[0.04em]",
-        dark ? "text-[#E8E1D8]/55" : "text-muted-foreground/75",
+        dark ? "text-[#DAE5E1]/55" : "text-muted-foreground/75",
         closed && "border-t border-hairline py-2.5",
         className,
       )}
@@ -38,7 +38,7 @@ export function SiteCredit({
       <p
         className={cn(
           "flex items-center gap-1.5 rounded-full border py-1 pr-3 pl-1",
-          dark ? "border-[#E8E1D8]/15" : "border-foreground/12",
+          dark ? "border-[#DAE5E1]/15" : "border-foreground/12",
         )}
       >
         <span
@@ -46,7 +46,7 @@ export function SiteCredit({
           className={cn(
             "mr-0.5 flex h-[1.9em] w-[1.9em] shrink-0 items-center justify-center rounded-full border font-display text-[1.05em] tracking-normal",
             dark
-              ? "border-[#E8E1D8]/25 text-[#E8E1D8]/80"
+              ? "border-[#DAE5E1]/25 text-[#DAE5E1]/80"
               : "border-foreground/20 text-foreground/70",
           )}
         >
@@ -60,13 +60,13 @@ export function SiteCredit({
           className={cn(
             "underline decoration-[0.5px] underline-offset-[3px] transition-colors",
             dark
-              ? "text-[#E8E1D8]/85 decoration-[#E8E1D8]/35 hover:text-[#E8E1D8]"
+              ? "text-[#DAE5E1]/85 decoration-[#DAE5E1]/35 hover:text-[#DAE5E1]"
               : "text-foreground/70 decoration-foreground/30 hover:text-foreground hover:decoration-foreground/70",
           )}
         >
           {SITE_CREDIT.name}
         </a>
-        <span aria-hidden className={dark ? "text-[#E8E1D8]/25" : "text-foreground/25"}>
+        <span aria-hidden className={dark ? "text-[#DAE5E1]/25" : "text-foreground/25"}>
           ·
         </span>
         <a
@@ -77,7 +77,7 @@ export function SiteCredit({
           className={cn(
             "inline-flex items-center gap-1 underline-offset-4 transition-colors hover:underline",
             dark
-              ? "text-[#E8E1D8]/65 hover:text-[#E8E1D8]"
+              ? "text-[#DAE5E1]/65 hover:text-[#DAE5E1]"
               : "text-foreground/55 hover:text-foreground",
           )}
         >

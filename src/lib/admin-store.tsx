@@ -80,7 +80,7 @@ const DEFAULT_STAFF: Staff[] = [
 ];
 
 const DEFAULT_SETTINGS: AdminSettings = {
-  salonName: "Hair by Kiran",
+  salonName: "Lumen Studio",
   acceptingBookings: true,
 };
 

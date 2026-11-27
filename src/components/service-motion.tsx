@@ -94,7 +94,7 @@ const BY_ICON: Record<string, MotionKind> = {
   "anti-ageing-facial": "facial",
   "brightening-facial": "facial",
   "four-layer-facial": "facial",
-  "hb-signature-facial": "facial",
+  "signature-facial": "facial",
   "korean-facial": "facial",
   "o3-advance-facial": "facial",
   "tan-facial": "facial",
@@ -125,7 +125,7 @@ const BY_ICON: Record<string, MotionKind> = {
   "bridal-makeup": "bridal-makeup",
   "saree-draping-in-salon": "drape",
   "saree-draping-at-venue": "drape",
-  "kirans-signature": "signature",
+  "lumen-signature": "signature",
   essentials: "signature",
   premium: "signature",
   ethereal: "signature",
@@ -638,14 +638,14 @@ export function ServiceMotion({ kind }: { kind: MotionKind }) {
     >
       <defs>
         <linearGradient id="sm-sheen" x1="0" x2="1">
-          <stop offset="0" stopColor="#fffaf2" stopOpacity="0" />
-          <stop offset="0.5" stopColor="#fffaf2" stopOpacity="0.75" />
-          <stop offset="1" stopColor="#fffaf2" stopOpacity="0" />
+          <stop offset="0" stopColor="#F4FDF9" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#F4FDF9" stopOpacity="0.75" />
+          <stop offset="1" stopColor="#F4FDF9" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="sm-warm" x1="0" x2="1">
-          <stop offset="0" stopColor="#b07a4f" stopOpacity="0" />
-          <stop offset="0.5" stopColor="#b07a4f" stopOpacity="0.28" />
-          <stop offset="1" stopColor="#b07a4f" stopOpacity="0" />
+          <stop offset="0" stopColor="#519880" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#519880" stopOpacity="0.28" />
+          <stop offset="1" stopColor="#519880" stopOpacity="0" />
         </linearGradient>
       </defs>
       {shapes(kind)}

@@ -42,7 +42,7 @@ export function calendarBooking(b: Booking): CalendarBooking {
 
 // Fixed order with nothing pre-picked: the guest chooses their own calendar.
 const ORDER: Option[] = ["google", "apple", "outlook", "ics"];
-const STORE = "hb.calendar.";
+const STORE = "bk.calendar.";
 const slotKey = (b: Booking) => `${b.date}T${b.time}`;
 
 function download(name: string, text: string) {
@@ -152,7 +152,7 @@ export function AddToCalendar({
 
   const dark = tone === "dark";
   const primary = dark
-    ? "bg-[#C9A96A] text-[#0B0B0B] hover:opacity-90"
+    ? "bg-[#78BFA6] text-[#0B0B0B] hover:opacity-90"
     : "bg-foreground text-background hover:bg-foreground/88";
 
   if (cancelled) {
@@ -162,7 +162,7 @@ export function AddToCalendar({
           onClick={fallbackIcs}
           className={cn(
             "press flex min-h-12 w-full items-center justify-center gap-3 rounded-sm border px-6 text-[0.68rem] uppercase tracking-[0.2em]",
-            dark ? "border-[#E8E1D8]/28 text-[#E8E1D8]" : "border-foreground/20 text-foreground/80",
+            dark ? "border-[#DAE5E1]/28 text-[#DAE5E1]" : "border-foreground/20 text-foreground/80",
           )}
         >
           <CalendarPlus className="h-4 w-4" strokeWidth={1.25} /> Remove from calendar (.ics)
@@ -170,7 +170,7 @@ export function AddToCalendar({
         <p
           className={cn(
             "mt-2 text-center text-[0.74rem]",
-            dark ? "text-[#E8E1D8]/55" : "text-muted-foreground",
+            dark ? "text-[#DAE5E1]/55" : "text-muted-foreground",
           )}
         >
           Calendars don't update by themselves — open this file or delete the event.
@@ -206,14 +206,14 @@ export function AddToCalendar({
           className={cn(
             "fade-rise z-40 mt-2 w-full overflow-hidden rounded-sm border sm:absolute sm:left-0 sm:right-0 sm:top-full",
             dark
-              ? "border-[#E8E1D8]/18 bg-[#141210] shadow-[0_18px_40px_-20px_rgba(0,0,0,0.8)]"
+              ? "border-[#DAE5E1]/18 bg-[#141210] shadow-[0_18px_40px_-20px_rgba(0,0,0,0.8)]"
               : "border-hairline bg-card shadow-lg",
           )}
         >
           <div
             className={cn(
               "px-5 pt-3 pb-1 text-[0.6rem] uppercase tracking-[0.26em]",
-              dark ? "text-[#E8E1D8]/45" : "text-muted-foreground",
+              dark ? "text-[#DAE5E1]/45" : "text-muted-foreground",
             )}
           >
             Add appointment to
@@ -226,8 +226,8 @@ export function AddToCalendar({
               onClick={() => choose(o)}
               className={cn(
                 "flex w-full items-center justify-between px-5 py-3.5 text-left text-[0.95rem] transition-colors",
-                dark ? "text-[#E8E1D8] hover:bg-[#E8E1D8]/[0.06]" : "hover:bg-foreground/[0.04]",
-                i > 0 && (dark ? "border-t border-[#E8E1D8]/10" : "border-t border-hairline"),
+                dark ? "text-[#DAE5E1] hover:bg-[#DAE5E1]/[0.06]" : "hover:bg-foreground/[0.04]",
+                i > 0 && (dark ? "border-t border-[#DAE5E1]/10" : "border-t border-hairline"),
               )}
             >
               {LABEL[o]}
@@ -241,7 +241,7 @@ export function AddToCalendar({
           role="alert"
           className={cn(
             "mt-3 text-center text-[0.8rem]",
-            dark ? "text-[#E8E1D8]/80" : "text-destructive",
+            dark ? "text-[#DAE5E1]/80" : "text-destructive",
           )}
         >
           We couldn't create the calendar event.{" "}
@@ -253,7 +253,7 @@ export function AddToCalendar({
         <p
           className={cn(
             "mt-2.5 flex items-center justify-center gap-1.5 text-[0.62rem] uppercase tracking-[0.24em]",
-            dark ? "text-[#C9A96A]" : "text-bronze",
+            dark ? "text-[#78BFA6]" : "text-bronze",
           )}
         >
           <Check className="h-3.5 w-3.5" strokeWidth={1.75} /> Added to calendar
@@ -262,7 +262,7 @@ export function AddToCalendar({
         <p
           className={cn(
             "mt-2.5 text-center text-[0.76rem]",
-            dark ? "text-[#E8E1D8]/70" : "text-muted-foreground",
+            dark ? "text-[#DAE5E1]/70" : "text-muted-foreground",
           )}
         >
           Your calendar still shows the old time — add the new time.

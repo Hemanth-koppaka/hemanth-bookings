@@ -313,7 +313,7 @@ export async function pushBookingEvent(
       body,
       url: options?.staffOnly
         ? "/stylist"
-        : `/hb-desk-7392/appointments?ref=${encodeURIComponent(reference)}`,
+        : `/admin/appointments?ref=${encodeURIComponent(reference)}`,
       tag: reference,
     },
     { staffId, staffOnly: options?.staffOnly ?? false, ownersOnly: options?.ownersOnly ?? false },
@@ -391,7 +391,7 @@ export async function guestReminders() {
     const when = `${r["date"] === today ? "today" : "tomorrow"} at ${clock(time)}`;
     const msg: PushMessage = {
       title: kind === "2h" ? `See you at ${clock(time)} today` : `Your appointment is ${when}`,
-      body: `${services || "Your appointment"}${staff ? ` with ${staff}` : ""} · Hair by Kiran. Tap to view or change.`,
+      body: `${services || "Your appointment"}${staff ? ` with ${staff}` : ""} · Lumen Studio. Tap to view or change.`,
       url: `/manage?ref=${encodeURIComponent(r["reference"] as string)}`,
       tag: `${r["reference"] as string}-${kind}`,
     };

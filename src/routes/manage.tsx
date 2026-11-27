@@ -41,20 +41,20 @@ import { isUpcomingAppointment } from "@/lib/upcoming-bookings";
 import portrait from "@/assets/portrait.jpg.asset.json";
 
 export const Route = createFileRoute("/manage")({
-  // links in booking messages carry the booking ID: /manage?ref=HB-7KQ2MX
+  // links in booking messages carry the booking ID: /manage?ref=BK-7KQ2MX
   validateSearch: (s: Record<string, unknown>): { ref?: string } =>
     typeof s["ref"] === "string" && /^[A-Z0-9-]{4,20}$/i.test(s["ref"])
       ? { ref: s["ref"].toUpperCase() }
       : {},
   head: () => ({
     meta: [
-      { title: "Manage your booking — Hair by Kiran" },
+      { title: "Manage your booking — Lumen Studio" },
       {
         name: "description",
         content:
-          "Look up your appointment with your reference and mobile number to reschedule or cancel at Hair by Kiran.",
+          "Look up your appointment with your reference and mobile number to reschedule or cancel at Lumen Studio.",
       },
-      { property: "og:title", content: "Manage your booking — Hair by Kiran" },
+      { property: "og:title", content: "Manage your booking — Lumen Studio" },
       { property: "og:description", content: "Reschedule or cancel an existing appointment." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -91,7 +91,7 @@ function ManageScreen() {
   const q = query.trim();
   const empty = hydrated && !recent.length && !matches && !q && !ref;
   const phoneDigits = phoneQuery.replace(/\D/g, "");
-  const idOk = /^HB-[A-Z0-9]{6}$/i.test(q);
+  const idOk = /^BK-[A-Z0-9]{6}$/i.test(q);
   const phoneOk = phoneDigits.length >= 10;
   const ready = idOk && phoneOk;
   // what's still needed, in plain words (shown when they tap Find, or as they type)
@@ -100,8 +100,8 @@ function ManageScreen() {
       ? "Enter your booking ID and the mobile number you booked with."
       : !idOk
         ? q
-          ? "That booking ID doesn't look right. It looks like HB-7KQ2MX."
-          : "Add your booking ID too. It starts with HB- and is in your booking confirmation."
+          ? "That booking ID doesn't look right. It looks like BK-7KQ2MX."
+          : "Add your booking ID too. It starts with BK- and is in your booking confirmation."
         : !phoneOk
           ? "Add the 10-digit mobile number you booked with."
           : "";
@@ -109,7 +109,7 @@ function ManageScreen() {
   const liveHint = phoneOk && !q ? missing : "";
   const forgotLink = waLink(
     BUSINESS.phones[0]!,
-    `Hi Hair by Kiran, I need my booking ID.${phoneOk ? ` I booked with the number ${phoneDigits.slice(-10)}.` : ""}`,
+    `Hi Lumen Studio, I need my booking ID.${phoneOk ? ` I booked with the number ${phoneDigits.slice(-10)}.` : ""}`,
   );
 
   const lookup = async (e?: FormEvent, quiet = false) => {
@@ -161,7 +161,7 @@ function ManageScreen() {
         <>
           We'll keep
           <br />
-          <span className="italic text-champagne">your chair.</span>
+          <span className="italic text-champagne">your moment.</span>
         </>
       }
       panelSub="Reschedule or cancel in a few taps."
@@ -254,7 +254,7 @@ function ManageScreen() {
                       setQuery(e.target.value);
                       setError("");
                     }}
-                    placeholder="HB-7KQ2MX"
+                    placeholder="BK-7KQ2MX"
                     autoCapitalize="characters"
                     autoComplete="off"
                     spellCheck={false}

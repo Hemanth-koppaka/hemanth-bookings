@@ -34,60 +34,60 @@
   --color-ivory: var(--ivory);
   --color-champagne: var(--champagne);
   --color-bronze: var(--bronze);
-  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
-  --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
   --radius: 3px;
 
-  --ivory: oklch(0.978 0.008 85);
+  --ivory: oklch(0.978 0.008 170);
   --ink: oklch(0.19 0.006 60);
-  --champagne: oklch(0.72 0.055 62);
+  --champagne: oklch(0.72 0.055 170);
   /* deeper champagne for italic display words — readable on ivory */
-  --bronze: oklch(0.52 0.075 55);
+  --bronze: oklch(0.52 0.075 170);
 
-  --background: oklch(0.978 0.008 85);
+  --background: oklch(0.978 0.008 170);
   --foreground: oklch(0.19 0.006 60);
   --card: oklch(0.992 0.005 90);
   --card-foreground: oklch(0.19 0.006 60);
   --popover: oklch(0.992 0.005 90);
   --popover-foreground: oklch(0.19 0.006 60);
   --primary: oklch(0.19 0.006 60);
-  --primary-foreground: oklch(0.978 0.008 85);
-  --secondary: oklch(0.945 0.01 85);
+  --primary-foreground: oklch(0.978 0.008 170);
+  --secondary: oklch(0.945 0.01 170);
   --secondary-foreground: oklch(0.19 0.006 60);
-  --muted: oklch(0.945 0.01 85);
-  --muted-foreground: oklch(0.52 0.012 70);
-  --accent: oklch(0.72 0.055 62);
+  --muted: oklch(0.945 0.01 170);
+  --muted-foreground: oklch(0.52 0.012 170);
+  --accent: oklch(0.72 0.055 170);
   --accent-foreground: oklch(0.19 0.006 60);
-  --destructive: oklch(0.47 0.13 25);
-  --destructive-foreground: oklch(0.978 0.008 85);
+  --destructive: oklch(0.47 0.13 170);
+  --destructive-foreground: oklch(0.978 0.008 170);
   --hairline: oklch(0.19 0.006 60 / 12%);
   --border: oklch(0.19 0.006 60 / 12%);
   --input: oklch(0.19 0.006 60 / 18%);
-  --ring: oklch(0.72 0.055 62);
+  --ring: oklch(0.72 0.055 170);
 }
 
 .dark {
   --background: oklch(0.19 0.006 60);
-  --foreground: oklch(0.978 0.008 85);
+  --foreground: oklch(0.978 0.008 170);
   --card: oklch(0.23 0.006 60);
-  --card-foreground: oklch(0.978 0.008 85);
+  --card-foreground: oklch(0.978 0.008 170);
   --popover: oklch(0.23 0.006 60);
-  --popover-foreground: oklch(0.978 0.008 85);
-  --primary: oklch(0.978 0.008 85);
+  --popover-foreground: oklch(0.978 0.008 170);
+  --primary: oklch(0.978 0.008 170);
   --primary-foreground: oklch(0.19 0.006 60);
   --secondary: oklch(0.27 0.006 60);
-  --secondary-foreground: oklch(0.978 0.008 85);
+  --secondary-foreground: oklch(0.978 0.008 170);
   --muted: oklch(0.27 0.006 60);
-  --muted-foreground: oklch(0.72 0.01 70);
-  --accent: oklch(0.72 0.055 62);
+  --muted-foreground: oklch(0.72 0.01 170);
+  --accent: oklch(0.72 0.055 170);
   --accent-foreground: oklch(0.19 0.006 60);
-  --hairline: oklch(0.978 0.008 85 / 14%);
-  --border: oklch(0.978 0.008 85 / 14%);
-  --input: oklch(0.978 0.008 85 / 20%);
-  --ring: oklch(0.72 0.055 62);
+  --hairline: oklch(0.978 0.008 170 / 14%);
+  --border: oklch(0.978 0.008 170 / 14%);
+  --input: oklch(0.978 0.008 170 / 20%);
+  --ring: oklch(0.72 0.055 170);
 }
 
 @layer base {
@@ -242,7 +242,7 @@
   }
 }
 
-@keyframes hb-sheen {
+@keyframes bk-sheen {
   0% {
     transform: translateX(-60%);
     opacity: 0;
@@ -1753,20 +1753,20 @@ html:not(.intro-seen) .after-intro > *:nth-child(n + 6) {
   --muted: oklch(0.28 0.04 265 / 0.6);
   --secondary: oklch(0.28 0.04 265 / 0.6);
   --muted-foreground: oklch(0.82 0.02 260);
-  --hairline: oklch(0.98 0.01 85 / 16%);
-  --border: oklch(0.98 0.01 85 / 16%);
-  --bronze: oklch(0.8 0.08 65);
+  --hairline: oklch(0.98 0.01 170 / 16%);
+  --border: oklch(0.98 0.01 170 / 16%);
+  --bronze: oklch(0.8 0.08 170);
   color: var(--foreground);
 }
 /* the phone's summary bar keeps its light day colours, so its text stays crisp */
 .sky-night [data-keep-light] {
   --foreground: oklch(0.19 0.006 60);
-  --muted-foreground: oklch(0.52 0.012 70);
+  --muted-foreground: oklch(0.52 0.012 170);
   --background: transparent;
   --card: oklch(0.992 0.005 90);
   --hairline: oklch(0.19 0.006 60 / 12%);
   --border: oklch(0.19 0.006 60 / 12%);
-  --bronze: oklch(0.52 0.075 55);
+  --bronze: oklch(0.52 0.075 170);
   color: var(--foreground);
 }
 @media (prefers-reduced-motion: reduce) {

@@ -309,7 +309,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             },
           });
           if (!res.ok) return { error: res.error };
-          booking.reference = res.reference; // issued by the salon (random, e.g. HB-7KQ2MX)
+          booking.reference = res.reference; // issued by the salon (random, e.g. BK-7KQ2MX)
           if ("snapshot" in res && res.snapshot) booking.snapshot = res.snapshot;
           if ("stylist" in res) booking.stylist = res.stylist ?? null;
           booking.stylistChosen = Boolean(draft.staffId);
