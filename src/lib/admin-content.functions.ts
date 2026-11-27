@@ -208,6 +208,9 @@ export const adminSaveService = createServerFn({ method: "POST" })
     if (error && Object.keys(extra).length && /column/i.test(error.message))
       ({ error } = await write(row));
     if (error) throw new Error("Couldn't save service");
+    if (before && before.price !== data.price) {
+      await (await import('./appointment-change.server')).dispatchAppointmentChanges().catch(() => undefined);
+    }
     const changes: string[] = [];
     const b = before as Record<string, unknown> | null;
     if (b) {
@@ -265,6 +268,8 @@ export const adminSaveHours = createServerFn({ method: "POST" })
         })),
       );
     if (error) throw new Error("Couldn't save hours");
+    const { syncWorkingHours } = await import("./business-hours.server");
+    await syncWorkingHours(data.hours);
     await audit({
       action: "hours.update",
       entity: "hours",

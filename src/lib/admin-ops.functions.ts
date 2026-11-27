@@ -205,6 +205,7 @@ export const adminSaveRules = createServerFn({ method: "POST" })
     const { error } = await sb
       .from("site_settings")
       .upsert({ key: "booking_rules", value: data.rules as never });
+    (await import("./settings-cache.server")).forgetSetting("booking_rules");
     if (error) return { ok: false as const, error: "Couldn't save booking rules." };
     // keep the legacy flag in step for older readers
     const { data: cur } = await sb

@@ -1,7 +1,7 @@
 // Brand motion: the wordmark reveal with a gold sheen.
 // (The scissors progress line lives in scissors-line.tsx.)
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.png.asset.json";
+import logo from "@/assets/hb-wordmark.png.asset.json";
 
 /** The HB wordmark, unveiled left-to-right with a single gold sheen passing over it. */
 export function LogoReveal({
@@ -28,7 +28,10 @@ export function LogoReveal({
     >
       <img
         src={logo.url}
-        alt="Hair by Bhargav"
+        alt="Hair by Kiran"
+        loading="eager"
+        decoding="sync"
+        fetchPriority="high"
         className={cn("block h-full w-auto object-contain", imgClassName)}
       />
       <span

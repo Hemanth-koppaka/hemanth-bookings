@@ -8,7 +8,7 @@ import { SALON_LAT, SALON_LON } from "./sun";
 const hhmm = (m: number) =>
   `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 
-/** "Plot 1143, …, Kukatpally, Hyderabad – 500072" → schema.org PostalAddress. */
+/** "Plot 1143, …, Midtown, Hyderabad – 500000" → schema.org PostalAddress. */
 function postalAddress(address: string) {
   const pin = /(\d{6})/.exec(address)?.[1];
   const parts = address
@@ -35,14 +35,19 @@ export function salonJsonLd(configJson: string, origin: string) {
   }
   const b = { ...BUSINESS, ...(cfg.business ?? {}) };
   const week = (cfg.week ?? []) as WeekDay[];
-  const hours = week
-    .filter((d) => !d.closed && d.open != null && d.close != null)
-    .map((d) => ({
+  const hours = week.flatMap((d) => {
+    if (d.closed) return [{
+      "@type": "OpeningHoursSpecification", dayOfWeek: `https://schema.org/${d.day}`,
+      opens: "00:00", closes: "00:00",
+    }];
+    if (d.open == null || d.close == null) return [];
+    return [{
       "@type": "OpeningHoursSpecification",
       dayOfWeek: `https://schema.org/${d.day}`,
-      opens: hhmm(d.open!),
-      closes: hhmm(d.close!),
-    }));
+      opens: hhmm(d.open),
+      closes: hhmm(d.close),
+    }];
+  });
   const offers = [
     ...((cfg.menMenu ?? []).map((c) => ({ c, who: "Men" })) ?? []),
     ...((cfg.womenMenu ?? []).map((c) => ({ c, who: "Women" })) ?? []),
@@ -60,6 +65,7 @@ export function salonJsonLd(configJson: string, origin: string) {
   const data = {
     "@context": "https://schema.org",
     "@type": "HairSalon",
+    "@id": `${origin || "https://salon.example.com"}/#salon`,
     name: b.name,
     alternateName: b.brand,
     description: `Hair, beauty and makeover by ${b.founder} at ${b.locationShort}. Book online in under a minute.`,
@@ -67,6 +73,9 @@ export function salonJsonLd(configJson: string, origin: string) {
       ? { url: origin, image: abs("/brand/hb-emblem.webp"), logo: abs("/icons/app-512.png") }
       : {}),
     telephone: b.phones?.[0],
+    contactPoint: (b.phones ?? []).map((phone) => ({
+      "@type": "ContactPoint", telephone: phone, contactType: "reservations",
+    })),
     address: postalAddress(b.address),
     geo: { "@type": "GeoCoordinates", latitude: SALON_LAT, longitude: SALON_LON },
     hasMap: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.mapsQuery)}`,
@@ -74,7 +83,7 @@ export function salonJsonLd(configJson: string, origin: string) {
     priceRange: "₹₹",
     currenciesAccepted: "INR",
     founder: { "@type": "Person", name: b.founder },
-    sameAs: [b.instagram?.salon?.url, b.instagram?.bhargav?.url].filter(Boolean),
+    sameAs: [b.instagram?.salon?.url, b.instagram?.kiran?.url].filter(Boolean),
     ...(offers.length
       ? { hasOfferCatalog: { "@type": "OfferCatalog", name: "Services", itemListElement: offers } }
       : {}),

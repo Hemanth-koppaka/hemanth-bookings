@@ -1,6 +1,8 @@
+import { stylistAwayNote } from "@/lib/calendar-options";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { warmFirstDay } from "@/lib/day-availability";
 import {
   ArrowLeft,
   ArrowRight,
@@ -37,18 +39,21 @@ import { useBooking } from "@/lib/booking-store";
 import { YourAppointment, BookingDock } from "@/components/booking-dock";
 import { getServicePopularity } from "@/lib/salon.functions";
 import { formatDuration, inr, menuFor, type Category } from "@/lib/salon";
+import { sortServices, popularServiceIds, type SortKey } from "@/lib/service-popularity";
 
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Choose your services — Hair by Bhargav" },
+      { title: "Choose your services — Hair by Kiran" },
       {
         name: "description",
         content:
-          "Browse the full menu of hair, colour, beauty and makeover services at Hair by Bhargav and build your appointment.",
+          "Browse the full menu of hair, colour, beauty and makeover services at Hair by Kiran and build your appointment.",
       },
-      { property: "og:title", content: "Choose your services — Hair by Bhargav" },
+      { property: "og:title", content: "Choose your services — Hair by Kiran" },
       { property: "og:description", content: "Build your appointment from the full service menu." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ServicesScreen,
@@ -64,6 +69,7 @@ function ServicesScreen() {
     totalPrice,
     hasFromPricing,
     update,
+    setAudience,
   } = useBooking();
   const navigate = useNavigate();
   const [active, setActive] = useState<string | null>(null);
@@ -74,9 +80,29 @@ function ServicesScreen() {
   const chipRow = useRef<HTMLDivElement>(null);
   const popularity = usePopularity();
 
+  // Start loading the Time screen's first day once the guest pauses on a choice,
+  // so its times are ready (or nearly) when they tap "Choose a time".
+  const idsKey = draft.serviceIds.join(",");
   useEffect(() => {
-    if (hydrated && !draft.audience) navigate({ to: "/book" });
-  }, [hydrated, draft.audience, navigate]);
+    if (!hydrated || !idsKey) return;
+    const t = window.setTimeout(() => warmFirstDay(draft.audience, idsKey.split(",")), 700);
+    return () => window.clearTimeout(t);
+  }, [hydrated, draft.audience, idsKey]);
+
+  // "/services?for=men" comes from the Book page's Men/Women choice when it was
+  // tapped before the page's code had loaded (a plain link then): apply it here.
+  const linked =
+    typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("for");
+  useEffect(() => {
+    if (!hydrated) return;
+    if (linked === "men" || linked === "women") {
+      // apply the choice first; tidy the address only once it has taken effect
+      if (draft.audience !== linked) setAudience(linked);
+      else window.history.replaceState(window.history.state, "", window.location.pathname);
+      return;
+    }
+    if (!draft.audience) navigate({ to: "/book" });
+  }, [hydrated, draft.audience, navigate, linked, setAudience]);
 
   const menu = draft.audience ? menuFor(draft.audience) : [];
   const popular = useMemo(() => popularIn(menu, popularity), [menu, popularity]);
@@ -277,6 +303,11 @@ function ServicesScreen() {
                           {x.category ? (
                             <span className="mt-0.5 block text-[0.64rem] uppercase tracking-[0.2em] text-bronze">
                               {x.category}
+                            </span>
+                          ) : null}
+                          {stylistAwayNote(x.id) ? (
+                            <span className="mt-0.5 block text-[0.74rem] leading-[1.5] text-bronze">
+                              {stylistAwayNote(x.id)}
                             </span>
                           ) : null}
                           {x.note ? (
@@ -617,6 +648,11 @@ function DesktopServices({
                               {x.category}
                             </span>
                           ) : null}
+                          {stylistAwayNote(x.id) ? (
+                            <span className="mt-0.5 block font-sans text-[0.8rem] text-bronze">
+                              {stylistAwayNote(x.id)}
+                            </span>
+                          ) : null}
                         </span>
                         {x.note ? (
                           <span className="col-start-2 col-end-5 row-start-2 mt-1 block text-[0.86rem] leading-[1.6] text-muted-foreground">
@@ -839,8 +875,6 @@ function NoResults({ query, onClear }: { query: string; onClear: () => void }) {
   );
 }
 
-type SortKey = "popular" | "rating" | "price-asc" | "price-desc" | "duration";
-
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "popular", label: "Popular" },
   { key: "rating", label: "Top rated" },
@@ -849,43 +883,15 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "duration", label: "Quickest first" },
 ];
 
-/** "Popular" follows what guests actually book (recent bookings); ties keep the salon's own order. */
-function sortServices<
-  T extends {
-    id: string;
-    price: number;
-    minutes: number;
-    rating?: { avg: number; count: number } | undefined;
-  },
->(list: T[], key: SortKey, popularity: Record<string, number> = {}) {
-  const out = list.map((x, i) => ({ x, i }));
-  out.sort((a, b) => {
-    if (key === "price-asc") return a.x.price - b.x.price || a.i - b.i;
-    if (key === "price-desc") return b.x.price - a.x.price || a.i - b.i;
-    if (key === "duration") return a.x.minutes - b.x.minutes || a.i - b.i;
-    // top rated: only ratings with enough guests count; then by how many
-    if (key === "rating") {
-      const r = (x: T) => (x.rating && x.rating.count >= MIN_RATINGS ? x.rating.avg : 0);
-      return r(b.x) - r(a.x) || (b.x.rating?.count ?? 0) - (a.x.rating?.count ?? 0) || a.i - b.i;
-    }
-    return (popularity[b.x.id] ?? 0) - (popularity[a.x.id] ?? 0) || a.i - b.i;
-  });
-  return out.map((o) => o.x);
-}
-
 let popularityCache: Record<string, number> | null = null;
 /** Booking counts per service, fetched once per visit and refreshed on the next one. */
 /** Only show a rating once enough guests have given one. */
 const MIN_RATINGS = 3;
-/** "Popular" = genuinely most booked (real bookings, last 120 days): top 3 of this menu, 5+ bookings. */
 function popularIn(menu: Category[], counts: Record<string, number>) {
-  const ranked = menu
-    .flatMap((c) => c.services)
-    .map((s) => ({ id: s.id, n: counts[s.id] ?? 0 }))
-    .filter((s) => s.n >= 5)
-    .sort((a, b) => b.n - a.n)
-    .slice(0, 3);
-  return new Set(ranked.map((s) => s.id));
+  return popularServiceIds(
+    menu.flatMap((c) => c.services),
+    counts,
+  );
 }
 
 /** The guests' rating for this service (only once enough guests have rated it). */
@@ -981,7 +987,6 @@ function PopularTag({ className }: { className?: string }) {
 function usePopularity() {
   const [counts, setCounts] = useState<Record<string, number>>(popularityCache ?? {});
   useEffect(() => {
-    if (popularityCache) return;
     let live = true;
     getServicePopularity()
       .then((r) => {

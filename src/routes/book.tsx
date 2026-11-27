@@ -9,13 +9,13 @@ import type { Audience } from "@/lib/salon";
 export const Route = createFileRoute("/book")({
   head: () => ({
     meta: [
-      { title: "Book an appointment — Hair by Bhargav" },
+      { title: "Book an appointment — Hair by Kiran" },
       {
         name: "description",
-        content: "Start your reservation at Hair by Bhargav. Choose men's or women's services.",
+        content: "Start your reservation at Hair by Kiran. Choose men's or women's services.",
       },
-      { property: "og:title", content: "Book an appointment — Hair by Bhargav" },
-      { property: "og:description", content: "Start your reservation at Hair by Bhargav." },
+      { property: "og:title", content: "Book an appointment — Hair by Kiran" },
+      { property: "og:description", content: "Start your reservation at Hair by Kiran." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -60,14 +60,16 @@ function BookEntry() {
           </StepIntro>
           <div className="stagger mt-[clamp(1rem,3svh,1.5rem)] flex min-h-0 flex-1 flex-col gap-3 pb-4">
             {options.map((o) => (
-              <button
+              <a
                 key={o.key}
-                onClick={() => {
+                href={`/services?for=${o.key}`}
+                onClick={(e) => {
+                  e.preventDefault();
                   haptic();
                   choose(o.key);
                 }}
                 data-sfx="primary"
-                className="press group relative min-h-[120px] w-full flex-1 overflow-hidden rounded-xl bg-ink text-left text-ivory shadow-[0_18px_36px_-24px_color-mix(in_oklab,var(--ink)_80%,transparent)]"
+                className="press group relative block min-h-[120px] w-full flex-1 overflow-hidden rounded-xl bg-ink text-left text-ivory shadow-[0_18px_36px_-24px_color-mix(in_oklab,var(--ink)_80%,transparent)]"
               >
                 <img
                   src={o.img}
@@ -90,7 +92,7 @@ function BookEntry() {
                     <ArrowRight className="h-5 w-5" strokeWidth={1.25} />
                   </span>
                 </span>
-              </button>
+              </a>
             ))}
           </div>
         </main>
@@ -121,12 +123,16 @@ function DesktopBookEntry({ choose }: { choose: (a: Audience) => void }) {
 
         <div className="stagger grid h-[min(56svh,560px)] grid-cols-2 gap-4 lg:h-full lg:max-h-[600px] lg:gap-5">
           {options.map((o) => (
-            <button
+            <a
               key={o.key}
-              onClick={() => choose(o.key)}
+              href={`/services?for=${o.key}`}
+              onClick={(e) => {
+                e.preventDefault();
+                choose(o.key);
+              }}
               data-sfx="primary"
               data-sfx-hover=""
-              className="press group relative overflow-hidden rounded-xl bg-ink text-left text-ivory transition-shadow duration-500 hover:shadow-[0_40px_80px_-40px_color-mix(in_oklab,var(--ink)_85%,transparent)] shadow-[0_24px_48px_-28px_color-mix(in_oklab,var(--ink)_70%,transparent)]"
+              className="press group relative block overflow-hidden rounded-xl bg-ink text-left text-ivory transition-shadow duration-500 hover:shadow-[0_40px_80px_-40px_color-mix(in_oklab,var(--ink)_85%,transparent)] shadow-[0_24px_48px_-28px_color-mix(in_oklab,var(--ink)_70%,transparent)]"
             >
               <img
                 src={o.img}
@@ -151,7 +157,7 @@ function DesktopBookEntry({ choose }: { choose: (a: Audience) => void }) {
                   <ArrowRight className="h-6 w-6" strokeWidth={1.25} />
                 </span>
               </span>
-            </button>
+            </a>
           ))}
         </div>
       </main>

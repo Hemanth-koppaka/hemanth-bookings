@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Scheduled every 10 minutes (Lovable cron, Bearer LOVABLE_CRON_SECRET):
+// Scheduled every 10 minutes (Supabase pg_cron job, Bearer LOVABLE_CRON_SECRET):
 // sends due 24 h / 2 h reminders, retries failed messages after back-off and
 // resolves messages interrupted mid-request. POST /api/notifications/dispatch
 export const Route = createFileRoute("/api/notifications/dispatch")({

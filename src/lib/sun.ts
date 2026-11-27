@@ -5,7 +5,7 @@
 
 const RAD = Math.PI / 180;
 
-/** The salon's location (Kukatpally, Hyderabad). */
+/** The salon's location (Midtown, Hyderabad). */
 export const SALON_LAT = 17.4935;
 export const SALON_LON = 78.3995;
 

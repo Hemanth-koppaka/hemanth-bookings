@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { staffChoiceOf, staffIdOf } from "./booking-staff";
+import { customerPage, customersNewestBookingFirst } from "./customer-filters";
+import { bookingStatus } from "./booking-status";
 
 // Read side of the admin console: everything is queried on demand (by day,
 // range or page) instead of downloading the whole booking history. Every call
@@ -11,7 +13,11 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 async function admin(token: string) {
   const { assertAdmin } = await import("./admin-auth.server");
-  return assertAdmin(token);
+  const sb = await assertAdmin(token);
+  // Reconcile elapsed visits before status pagination/revenue reads, even between hourly runs.
+  const { error } = await sb.rpc("complete_elapsed_confirmed_visits", {});
+  if (error) throw new Error("Couldn't update elapsed appointment status. Please try again.");
+  return sb;
 }
 
 async function engine() {
@@ -80,7 +86,6 @@ function toAdmin(
         ...(menuLookup(r["audience"] as string, id) ?? { name: id, price: 0, minutes: 30 }),
       }));
   const minutes = (r["duration_minutes"] as number | null) ?? (r["slots"] as number) * 30;
-  const cancelled = r["status"] === "cancelled";
   return {
     reference: r["reference"] as string,
     bookingNo: (r["booking_no"] as number | null) ?? null,
@@ -88,7 +93,7 @@ function toAdmin(
     time: r["time"] as number,
     end: (r["ends_at_minute"] as number | null) ?? (r["time"] as number) + minutes,
     minutes,
-    status: cancelled ? "cancelled" : ((meta["status"] as AdminStatus) ?? "upcoming"),
+    status: bookingStatus(r["status"], meta["status"]),
     audience: r["audience"] as "men" | "women",
     serviceIds: ids,
     services,
@@ -239,7 +244,7 @@ export const adminDashboard = createServerFn({ method: "POST" })
     // booking emails (free): set up, and did any fail in the last day?
     if (ns) {
       const { canSendEmail } = await import("./notify/email.server");
-      const emailOn = ns.customerEmail || ns.adminEmail;
+      const emailOn = false; // email turned off by owner choice
       if (emailOn && !canSendEmail(ns.email).ok)
         alerts.push({
           level: "info",
@@ -459,7 +464,11 @@ export const adminBookings = createServerFn({ method: "POST" })
     if (data.to) q = q.lte("date", data.to);
     if (data.source) q = q.eq("source", data.source);
     if (data.status === "cancelled") q = q.eq("status", "cancelled");
-    else if (data.status) q = q.neq("status", "cancelled");
+    else if (data.status === "upcoming") {
+      q = q.neq("status", "cancelled").or("meta->>status.is.null,meta->>status.eq.upcoming");
+    } else if (data.status) {
+      q = q.neq("status", "cancelled").eq("meta->>status", data.status);
+    }
     const term = data.q?.trim();
     if (term) {
       const t = term.replace(/[%_,()]/g, "");
@@ -472,12 +481,10 @@ export const adminBookings = createServerFn({ method: "POST" })
         ].join(","),
       );
     }
-    // status lives partly in meta; filter after fetching a page window
+    // Apply workflow filters before pagination so matching visits are not skipped.
     const { data: rows, error } = await q.range(data.page * PAGE, data.page * PAGE + PAGE - 1);
     if (error) throw new Error("Couldn't load bookings");
-    let list = (rows ?? []).map((r) => toAdmin(r as Row, L));
-    if (data.status && data.status !== "cancelled")
-      list = list.filter((b) => b.status === data.status);
+    const list = (rows ?? []).map((r) => toAdmin(r as Row, L));
     return { bookings: list, more: (rows ?? []).length === PAGE };
   });
 
@@ -623,6 +630,8 @@ export type AdminCustomer = {
   firstVisit: string | null;
   lastVisit: string | null;
   favourite: string | null;
+  audiences: ("men" | "women")[];
+  bookingNumbers: number[];
 };
 
 function summarise(c: Row, bookings: AdminBooking[]): AdminCustomer {
@@ -647,6 +656,8 @@ function summarise(c: Row, bookings: AdminBooking[]): AdminCustomer {
     firstVisit: dates[0] ?? null,
     lastVisit: dates[dates.length - 1] ?? null,
     favourite,
+    audiences: [...new Set(bookings.map((b) => b.audience))],
+    bookingNumbers: [...new Set(bookings.flatMap(b => b.bookingNo == null ? [] : [b.bookingNo]))].sort((a, b) => a - b),
   };
 }
 
@@ -656,6 +667,7 @@ export const adminCustomers = createServerFn({ method: "POST" })
       .object({
         pin,
         q: z.string().max(80).optional(),
+        audience: z.enum(["all", "men", "women"]).default("all"),
         page: z.number().int().min(0).max(1000).default(0),
       })
       .parse(d),
@@ -679,16 +691,40 @@ export const adminCustomers = createServerFn({ method: "POST" })
         ].join(","),
       );
     }
-    const { data: rows, error } = await q.range(data.page * PAGE, data.page * PAGE + PAGE - 1);
-    if (error) return { customers: [] as AdminCustomer[], more: false, unavailable: true };
-    const list = rows as Row[];
+    // Read every matching record on the server, not just the browser's loaded page.
+    // Explicit batches avoid the Data API's default row limit.
+    const matched: Row[] = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data: rows, error } = await q.order("id").range(offset, offset + 499);
+      if (error) throw new Error("Couldn't load customers");
+      const batch = (rows ?? []) as Row[];
+      matched.push(...batch);
+      if (batch.length < 500) break;
+    }
+    const audienceRows: { customerId: string | null; audience: string; createdAt: string }[] = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data: rows, error } = await sb.from("bookings")
+        .select("customer_id, audience, created_at").order("reference").range(offset, offset + 499);
+      if (error) throw new Error("Couldn't load customer filters");
+      const batch = (rows ?? []) as Row[];
+      audienceRows.push(...batch.map((r) => ({ customerId: r["customer_id"] as string | null, audience: r["audience"] as string, createdAt: r["created_at"] as string })));
+      if (batch.length < 500) break;
+    }
+    const ordered = customersNewestBookingFirst(matched.map((r) => ({ ...r, id: r["id"] as string })), audienceRows);
+    const filtered = customerPage(ordered, audienceRows, data.audience, data.page, PAGE);
+    const list: Row[] = filtered.customers;
     const ids = list.map((c) => c["id"] as string);
-    const { data: bk } = ids.length
-      ? await sb
-          .from("bookings")
-          .select("*")
-          .in("customer_id" as never, ids as never)
-      : { data: [] };
+    const bk: Row[] = [];
+    if (ids.length) {
+      for (let offset = 0; ; offset += 500) {
+        const { data: rows, error } = await sb.from("bookings").select("*")
+          .in("customer_id" as never, ids as never).order("reference").range(offset, offset + 499);
+        if (error) throw new Error("Couldn't load customer visits");
+        const batch = (rows ?? []) as Row[];
+        bk.push(...batch);
+        if (batch.length < 500) break;
+      }
+    }
     const byCustomer = new Map<string, AdminBooking[]>();
     for (const r of (bk ?? []) as Row[]) {
       const b = toAdmin(r, L);
@@ -697,7 +733,8 @@ export const adminCustomers = createServerFn({ method: "POST" })
     }
     return {
       customers: list.map((c) => summarise(c, byCustomer.get(c["id"] as string) ?? [])),
-      more: list.length === PAGE,
+      more: filtered.more,
+      counts: filtered.counts,
       unavailable: false,
     };
   });
@@ -908,7 +945,7 @@ export const adminExportCsv = createServerFn({ method: "POST" })
         entity: "export",
         summary: `Exported ${list.length} bookings${data.from ? ` from ${data.from}` : ""}${data.to ? ` to ${data.to}` : ""}`,
       });
-      return { filename: `hair-by-bhargav-bookings-${stamp}.csv`, csv, rows: list.length };
+      return { filename: `hair-by-kiran-bookings-${stamp}.csv`, csv, rows: list.length };
     }
     const { data: cust, error } = await sb
       .from("customers" as never)
@@ -968,5 +1005,5 @@ export const adminExportCsv = createServerFn({ method: "POST" })
       entity: "export",
       summary: `Exported ${rows.length} customers`,
     });
-    return { filename: `hair-by-bhargav-customers-${stamp}.csv`, csv, rows: rows.length };
+    return { filename: `hair-by-kiran-customers-${stamp}.csv`, csv, rows: rows.length };
   });

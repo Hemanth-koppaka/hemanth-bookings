@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarPlus, MessageCircle, Phone, Search } from "lucide-react";
+import { CalendarPlus, Mail, MessageCircle, Phone, Search } from "lucide-react";
 import { AdminShell, Empty, StatusPill, TinyButton, inputClass } from "@/components/admin";
 import {
   BookingDrawer,
@@ -18,6 +18,7 @@ import {
   type AdminCustomer,
 } from "@/lib/admin-data.functions";
 import { inr, minuteLabel } from "@/lib/salon";
+import type { CustomerCounts } from "@/lib/customer-filters";
 import {
   Sheet,
   SheetContent,
@@ -31,10 +32,12 @@ export const Route = createFileRoute("/hb-desk-7392/customers")({
     typeof s["id"] === "string" && /^[0-9a-f-]{36}$/i.test(s["id"]) ? { id: s["id"] } : {},
   head: () => ({
     meta: [
-      { title: "Customers — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Customers — Hair by Kiran" },
       { name: "description", content: "Customer records, visits and notes." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Customers — Hair by Bhargav" },
+      { property: "og:title", content: "Customers — Hair by Kiran" },
       { property: "og:description", content: "Customer records." },
     ],
   }),
@@ -46,9 +49,11 @@ function CustomersScreen() {
   const { id } = Route.useSearch();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const [who, setWho] = useState<"all" | "men" | "women">("all");
   const [term, setTerm] = useState("");
   const [page, setPage] = useState(0);
   const [list, setList] = useState<AdminCustomer[]>([]);
+  const [counts, setCounts] = useState<CustomerCounts | null>(null);
   const [more, setMore] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,6 +64,9 @@ function CustomersScreen() {
     const t = window.setTimeout(() => {
       setTerm(q.trim());
       setPage(0);
+      setList([]);
+      setCounts(null);
+      setMore(false);
     }, 280);
     return () => window.clearTimeout(t);
   }, [q]);
@@ -66,11 +74,16 @@ function CustomersScreen() {
   useEffect(() => {
     let live = true;
     setLoading(true);
-    adminCustomers({ data: { pin, page, ...(term ? { q: term } : {}) } })
-      .then((r) => {
+    Promise.all(Array.from({ length: page + 1 }, (_, index) =>
+      adminCustomers({ data: { pin, page: index, audience: who, ...(term ? { q: term } : {}) } }),
+    ))
+      .then((pages) => {
         if (!live) return;
-        setList((prev) => (page === 0 ? r.customers : [...prev, ...r.customers]));
+        const r = pages[pages.length - 1];
+        if (!r) return;
+        setList(pages.flatMap(result => result.customers));
         setMore(r.more);
+        setCounts(r.counts);
         setUnavailable(r.unavailable);
         setError("");
       })
@@ -84,8 +97,23 @@ function CustomersScreen() {
     return () => {
       live = false;
     };
-  }, [pin, term, page, version, signOut]);
+  }, [pin, term, who, page, version, signOut]);
 
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") setVersion(v => v + 1);
+    };
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
+
+  const shown = list;
   const open = (cid: string | null) =>
     void navigate({ to: "/hb-desk-7392/customers", search: cid ? { id: cid } : {}, replace: true });
 
@@ -104,6 +132,21 @@ function CustomersScreen() {
         />
       </label>
 
+      <div role="group" aria-label="Filter customers" className="mt-3 flex gap-2">
+        {(["all", "men", "women"] as const).map((k) => (
+          <TinyButton
+            key={k}
+            type="button"
+            active={who === k}
+            onClick={() => { setWho(k); setPage(0); setList([]); setMore(false); }}
+            tone={who === k ? "primary" : "default"}
+          >
+            {k === "all" ? "All" : k === "men" ? "Men" : "Women"}
+            <span className="min-w-4 text-center tabular-nums">{counts?.[k] ?? "—"}</span>
+          </TinyButton>
+        ))}
+      </div>
+
       <div className="mt-4">
         <LoadState
           loading={loading && !list.length}
@@ -117,11 +160,15 @@ function CustomersScreen() {
             title={
               term
                 ? `No customers match “${term}”.`
+                : who !== "all"
+                  ? `No ${who === "men" ? "men's" : "women's"} customers yet.`
                 : "No customers yet. They're added with their first booking."
             }
           />
+        ) : !loading && !error && list.length && !shown.length ? (
+          <Empty title={`No ${who === "men" ? "men's" : "women's"} customers in this list yet.`} />
         ) : null}
-        {list.length ? (
+        {shown.length ? (
           <div className="overflow-hidden rounded-md border border-hairline bg-card">
             <div className="hidden grid-cols-[minmax(0,1fr)_8rem_4rem_6rem_7rem] gap-3 border-b border-hairline px-4 py-2 text-[0.62rem] uppercase tracking-[0.18em] text-muted-foreground md:grid">
               <span>Customer</span>
@@ -130,14 +177,16 @@ function CustomersScreen() {
               <span className="text-right">Spent</span>
               <span className="text-right">Last visit</span>
             </div>
-            {list.map((c) => (
+            {shown.map((c) => (
               <button
                 key={c.id}
                 onClick={() => open(c.id)}
                 className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-hairline px-4 py-3 text-left last:border-0 hover:bg-foreground/[0.02] md:grid-cols-[minmax(0,1fr)_8rem_4rem_6rem_7rem]"
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-[0.92rem]">{c.name}</span>
+                  <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <span className="min-w-0 break-words text-[0.92rem]">{c.name}</span>
+                  </span>
                   <span className="block truncate text-[0.75rem] text-muted-foreground md:hidden">
                     {c.phone}
                   </span>
@@ -293,6 +342,33 @@ function Profile({
                 <p className="text-[0.85rem] text-muted-foreground">Most booked: {c.favourite}</p>
               ) : null}
 
+              <div className="space-y-1.5 rounded-md border border-hairline px-3 py-2.5">
+                <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
+                  Contact
+                </div>
+                <a
+                  href={`tel:${c.phone}`}
+                  className="flex items-center gap-2 text-[0.9rem] hover:underline"
+                >
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                  {c.phone}
+                </a>
+                {c.email ? (
+                  <a
+                    href={`mailto:${c.email}`}
+                    className="flex items-center gap-2 break-all text-[0.9rem] hover:underline"
+                  >
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                    {c.email}
+                  </a>
+                ) : (
+                  <p className="flex items-center gap-2 text-[0.85rem] text-muted-foreground">
+                    <Mail className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />
+                    No email on record
+                  </p>
+                )}
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 <TinyButton tone="primary" onClick={() => setBooking(true)}>
                   <CalendarPlus className="h-4 w-4" /> Book again
@@ -367,7 +443,7 @@ function Profile({
 
               <div>
                 <div className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
-                  Appointments
+                  Appointments ({data!.bookings.length})
                 </div>
                 {data!.bookings.length ? (
                   <ul className="mt-2 divide-y divide-hairline rounded-md border border-hairline">
@@ -381,8 +457,14 @@ function Profile({
                             {dateLabel(b.date, { day: "numeric", month: "short", year: "2-digit" })}{" "}
                             · {minuteLabel(b.time)}
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-[0.85rem]">
-                            {b.services.map((s) => s.name).join(", ")}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[0.85rem]">
+                              {b.services.map((s) => s.name).join(", ")}
+                            </span>
+                            <span className="block truncate text-[0.72rem] text-muted-foreground">
+                              {b.staffName ? `${b.staffName} · ` : ""}
+                              {inr(b.price)}
+                            </span>
                           </span>
                           <StatusPill status={b.status} />
                         </button>

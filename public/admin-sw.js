@@ -6,7 +6,7 @@ self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener("push", (event) => {
-  let m = { title: "Hair by Bhargav", body: "Something changed in the diary.", url: "/" };
+  let m = { title: "Hair by Kiran", body: "Something changed in the diary.", url: "/" };
   try {
     if (event.data) m = { ...m, ...event.data.json() };
   } catch (_) {

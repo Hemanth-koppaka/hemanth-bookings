@@ -35,7 +35,12 @@ export function emailStatus(cfg: EmailConfig) {
   };
 }
 
-export function canSendEmail(cfg: EmailConfig): { ok: true } | { ok: false; reason: string } {
+// Email is switched off by owner choice: customers confirm on WhatsApp and turn on booking alerts instead.
+export function canSendEmail(_cfg: EmailConfig): { ok: true } | { ok: false; reason: string } {
+  return { ok: false, reason: "Email is turned off; WhatsApp and booking alerts are used instead" };
+}
+
+export function emailWouldBeReady(cfg: EmailConfig): { ok: true } | { ok: false; reason: string } {
   const st = emailStatus(cfg);
   return st.configured
     ? { ok: true }

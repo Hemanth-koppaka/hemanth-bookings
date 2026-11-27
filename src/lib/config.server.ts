@@ -1,7 +1,7 @@
 // Server-only: builds the live salon configuration (menu, hours, breaks,
 // closures, media) from the database for every screen and the booking engine.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { loadStore, stable, storeFromValue } from "./staff-store.server";
+import { loadStore, stable, staffTablesExist, storeFromValue } from "./staff-store.server";
 
 async function db() {
   return supabaseAdmin;
@@ -16,21 +16,22 @@ const toMin = (t: string | null | undefined) => {
 
 type PersistedBreaks = Record<string, { start: string; end: string }[]>;
 
-// Numbers the salon has retired: never shown anywhere on the site, whatever
-// older saved settings or wording still contain.
-const RETIRED_NUMBERS = ["9642260785", "8125391998"];
-const RETIRED = new RegExp(
-  RETIRED_NUMBERS.map((n) => `(?:\\+?91[\\s-]*)?${n.slice(0, 5)}[\\s-]*${n.slice(5)}`).join("|"),
-  "g",
-);
-// The founder is B. Bhargav: older saved details or wording that still say
-// "D. Bhargav" are corrected wherever they appear.
-const OLD_NAME = /\bD\.?\s+(Bhargav|BHARGAV)\b/g;
+// Numbers the salon has retired (10 digits, e.g. "9000000001"): never shown
+// anywhere on the site, whatever older saved settings or wording still contain.
+const RETIRED_NUMBERS: string[] = [];
+const RETIRED = RETIRED_NUMBERS.length
+  ? new RegExp(
+      RETIRED_NUMBERS.map((n) => `(?:\\+?91[\\s-]*)?${n.slice(0, 5)}[\\s-]*${n.slice(5)}`).join(
+        "|",
+      ),
+      "g",
+    )
+  : null;
 /** Removes retired numbers from saved details and wording (phone lists drop them). */
 function scrubRetired<T>(v: T): T {
   if (typeof v === "string") {
-    let text: string = v;
-    text = text.replace(OLD_NAME, "B. $1");
+    const text: string = v;
+    if (!RETIRED) return text as T;
     RETIRED.lastIndex = 0;
     if (!RETIRED.test(text)) return text as T;
     return text
@@ -298,7 +299,9 @@ async function buildConfig(): Promise<Record<string, unknown>> {
   }
   // stylists guests can choose (multi-stylist) and whole-day salon closures
   // (the store came with the settings read above; only a first visit seeds it)
-  const store = storeFromValue(set["staff_store"]) ?? (await loadStore());
+  const store = (await staffTablesExist())
+    ? await loadStore()
+    : (storeFromValue(set["staff_store"]) ?? (await loadStore()));
   const [st, ss, cl] = await Promise.all([
     stable("staff", store)
       .select("id, name, gender, specialties, bookable, active, archived_at, display_order")
@@ -322,7 +325,7 @@ async function buildConfig(): Promise<Record<string, unknown>> {
         services: can.get(r["id"] as string) ?? [],
       }));
   }
-  // each service's stylist rule (e.g. Bhargav's Signature → Bhargav), for the screens
+  // each service's stylist rule (e.g. Kiran's Signature → Kiran), for the screens
   {
     const { resolveRules } = await import("./service-rules.server");
     config["serviceRules"] = resolveRules(

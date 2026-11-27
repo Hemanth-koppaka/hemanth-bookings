@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 // Scheduled clean-up of guests' reference photos (finished visits and abandoned
-// uploads). Call with the Lovable cron secret: POST /api/photo-sweep
+// uploads). Call with the cron secret (LOVABLE_CRON_SECRET): POST /api/photo-sweep
 // The same sweep also runs, at most hourly, whenever bookings are made or the
 // admin console is open, so photos are removed even without a schedule.
 export const Route = createFileRoute("/api/photo-sweep")({

@@ -18,7 +18,11 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/hb-desk-7392/content")({
   head: () => ({
     meta: [
-      { title: "Site content — Hair by Bhargav" },
+      { property: "og:title", content: "Site content \u2014 Hair by Kiran" },
+      { property: "og:description", content: "Homepage wording, announcement and booking policies." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Site content — Hair by Kiran" },
       { name: "description", content: "Homepage wording, announcement and booking policies." },
       { name: "robots", content: "noindex" },
     ],

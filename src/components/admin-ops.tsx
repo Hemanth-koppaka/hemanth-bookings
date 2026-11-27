@@ -53,8 +53,12 @@ import {
   type AdminCustomer,
 } from "@/lib/admin-data.functions";
 import { adminUpsertBooking } from "@/lib/salon.functions";
-import { adminSaveBlock } from "@/lib/admin-ops.functions";
-import { adminAddClosure } from "@/lib/admin-staff.functions";
+import { adminArchiveBlock, adminSaveBlock } from "@/lib/admin-ops.functions";
+import {
+  adminAddClosure,
+  adminAddStaffBlock,
+  adminRemoveStaffTime,
+} from "@/lib/admin-staff.functions";
 import { adminSaveException } from "@/lib/admin-content.functions";
 import type { Slot } from "@/lib/availability";
 import { adminReferencePhotos } from "@/lib/photos.functions";
@@ -366,10 +370,6 @@ export function BookingDrawer({
             {b ? (
               <>
                 <StatusDot status={b.status} /> {b.reference}
-                {/* the salon's own running number (never shown to guests) */}
-                {b.bookingNo != null ? (
-                  <span className="text-muted-foreground">· booking #{b.bookingNo}</span>
-                ) : null}
                 {b.source !== "online" ? (
                   <span className="text-muted-foreground">· {b.source}</span>
                 ) : null}
@@ -1636,145 +1636,680 @@ const timeOptions = (from = 8 * 60, to = 22 * 60, step = 15) => {
   return out;
 };
 
+type DaySnap = Awaited<ReturnType<typeof adminDay>>;
+type CellState = "free" | "booked" | "blocked" | "break" | "off" | "past";
+type Cell = { m: number; state: CellState; label: string };
+type Run = { start: number; end: number };
+
+const isLive = (s: string) => s !== "cancelled" && s !== "no-show";
+const overlaps = (a: number, b: number, s: number, e: number) => a < e && s < b;
+const pickable = (c: Cell) => c.state === "free" || c.state === "booked";
+const DAY_PARTS = [
+  { key: "morning", label: "Morning", from: 0, to: 13 * 60 },
+  { key: "afternoon", label: "Afternoon", from: 13 * 60, to: 17 * 60 },
+  { key: "evening", label: "Evening", from: 17 * 60, to: 24 * 60 },
+] as const;
+
+/** Picked slot starts → continuous stretches ("3:00–4:00" and "5:30–6:00"). */
+function toRuns(picked: number[], step: number): Run[] {
+  const out: Run[] = [];
+  for (const m of [...picked].sort((a, b) => a - b)) {
+    const last = out[out.length - 1];
+    if (last && last.end === m) last.end = m + step;
+    else out.push({ start: m, end: m + step });
+  }
+  return out;
+}
+const runLabel = (r: Run) => `${minuteLabel(r.start)} – ${minuteLabel(r.end)}`;
+
+/**
+ * Block time: the chosen day's slots, laid out like the guest's time page.
+ * Tap slots, or tap a start and an end for a range (drag works too with a mouse);
+ * booked slots show as "Booked" so a clash is visible before saving. Blocks
+ * the whole salon (every stylist) or one stylist. Exact times stay available
+ * for odd minutes.
+ */
 export function BlockTimeDialog({
   open,
   onOpenChange,
   initialDate,
   initialStart,
+  initialStaffId,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   initialDate?: string;
   initialStart?: number;
+  initialStaffId?: string;
   onSaved?: () => void;
 }) {
   const { pin } = useAdmin();
   const [date, setDate] = useState(initialDate ?? salonToday());
-  const [start, setStart] = useState(initialStart ?? 15 * 60);
-  const [end, setEnd] = useState((initialStart ?? 15 * 60) + 60);
+  const [who, setWho] = useState<string>("salon");
   const [kind, setKind] = useState<"block" | "break">("block");
   const [reason, setReason] = useState(BLOCK_REASONS[0]!);
-  const [clashes, setClashes] = useState<{ reference: string; time: number; name: string }[]>([]);
+  const [day, setDay] = useState<DaySnap | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reload, setReload] = useState(0);
+  const [picked, setPicked] = useState<number[]>([]);
+  /** A From–Until range set with the time boxes (the grid's taps are `picked`). */
+  const [exact, setExact] = useState<Run | null>(null);
+  const [clashes, setClashes] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const savedRuns = useRef(0);
+  const drag = useRef<{ start: number; base: number[]; add: boolean; moved: boolean } | null>(null);
+  const skipClick = useRef(false);
 
   useEffect(() => {
     if (!open) return;
     setDate(initialDate ?? salonToday());
-    setStart(initialStart ?? 15 * 60);
-    setEnd((initialStart ?? 15 * 60) + 60);
+    setWho(initialStaffId ?? "salon");
+    setKind("block");
+    setPicked([]);
+    setExact(initialStart != null ? { start: initialStart, end: initialStart + 60 } : null);
     setClashes([]);
     setError("");
-  }, [open, initialDate, initialStart]);
+    savedRuns.current = 0;
+  }, [open, initialDate, initialStart, initialStaffId]);
+
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    setDay(null);
+    setLoadFailed(false);
+    adminDay({ data: { pin, date } })
+      .then((d) => live && setDay(d))
+      .catch(() => live && setLoadFailed(true));
+    return () => {
+      live = false;
+    };
+  }, [open, date, pin, reload]);
+
+  const step = day?.interval || 30;
+  const member = who === "salon" ? null : (day?.team?.find((t) => t.id === who) ?? null);
+
+  const cells = useMemo<Cell[] | null>(() => {
+    if (!day || day.plan.closed) return null;
+    const plan = day.plan;
+    const today = day.now.iso === date;
+    const bookings = day.bookings.filter(
+      (b) => isLive(b.status) && (!member || b.staffId === member.id),
+    );
+    const out: Cell[] = [];
+    for (let m = plan.open; m <= plan.close; m += step) {
+      const e = m + step;
+      const hit = (r: { start: number; end: number }) => overlaps(m, e, r.start, r.end);
+      const brk = plan.breaks.find(hit) ?? member?.breaks.find(hit);
+      const blk = plan.blocks.find(hit) ?? member?.blocks.find(hit);
+      const off =
+        member &&
+        (!member.working ||
+          member.start == null ||
+          member.end == null ||
+          m < member.start ||
+          m > member.end);
+      let cell: Cell;
+      if (today && e <= day.now.minute) cell = { m, state: "past", label: "Earlier today" };
+      else if (off) cell = { m, state: "off", label: `${member.name} not working` };
+      else if (brk) cell = { m, state: "break", label: brk.label || "Break" };
+      else if (blk) cell = { m, state: "blocked", label: blk.label || "Blocked" };
+      else if (bookings.some((b) => overlaps(m, e, b.time, b.end)))
+        cell = { m, state: "booked", label: "Booked" };
+      else cell = { m, state: "free", label: "" };
+      out.push(cell);
+    }
+    return out;
+  }, [day, date, member, step]);
+
+  // keep only slots that can still be picked (after switching stylist or reloading)
+  useEffect(() => {
+    if (!cells) return;
+    const ok = new Set(cells.filter(pickable).map((c) => c.m));
+    setPicked((p) => (p.every((m) => ok.has(m)) ? p : p.filter((m) => ok.has(m))));
+  }, [cells]);
+
+  const runs: Run[] = exact ? [exact] : toRuns(picked, step);
+  const covered = useMemo(() => {
+    if (!day) return [] as number[];
+    const list = day.bookings.filter(
+      (b) =>
+        isLive(b.status) &&
+        (!member || b.staffId === member.id) &&
+        runs.some((r) => overlaps(r.start, r.end, b.time, b.end)),
+    );
+    return [...new Set(list.map((b) => b.time))].sort((a, b) => a - b);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day, member, JSON.stringify(runs)]);
+
+  const changed = () => {
+    setClashes([]);
+    setError("");
+    savedRuns.current = 0;
+  };
+  const setSel = (next: number[]) => {
+    setPicked([...new Set(next)].sort((a, b) => a - b));
+    setExact(null);
+    changed();
+  };
+  const between = (a: number, b: number) =>
+    (cells ?? [])
+      .filter((c) => pickable(c) && c.m >= Math.min(a, b) && c.m <= Math.max(a, b))
+      .map((c) => c.m);
+
+  /** The selection as slots: a From–Until range turns into the slots it covers. */
+  const current = () =>
+    exact
+      ? (cells ?? [])
+          .filter((c) => pickable(c) && overlaps(c.m, c.m + step, exact.start, exact.end))
+          .map((c) => c.m)
+      : picked;
+  const tap = (m: number) => {
+    if (skipClick.current) {
+      skipClick.current = false;
+      return;
+    }
+    const base = current();
+    setSel(base.includes(m) ? base.filter((x) => x !== m) : [...base, m]);
+  };
+
+  const cellAt = (x: number, y: number) => {
+    const el = document.elementFromPoint(x, y)?.closest("[data-slot]") as HTMLElement | null;
+    return el ? Number(el.dataset["slot"]) : null;
+  };
+  const onDown = (m: number, e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    const base = current();
+    drag.current = { start: m, base, add: !base.includes(m), moved: false };
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || !(e.buttons & 1)) return;
+    const m = cellAt(e.clientX, e.clientY);
+    if (m == null || (m === d.start && !d.moved)) return;
+    d.moved = true;
+    const span = between(d.start, m);
+    setSel(d.add ? [...d.base, ...span] : d.base.filter((x) => !span.includes(x)));
+  };
+  const onUp = () => {
+    if (drag.current?.moved) {
+      // swallow only the click that ends this drag (none fires when it ends on another slot)
+      skipClick.current = true;
+      setTimeout(() => (skipClick.current = false), 0);
+    }
+    drag.current = null;
+  };
+
+  const partSlots = (from: number, to: number) =>
+    (cells ?? []).filter((c) => pickable(c) && c.m >= from && c.m < to).map((c) => c.m);
+  const quick = (from: number, to: number) => {
+    const span = partSlots(from, to);
+    if (!span.length) return;
+    const base = current();
+    const all = span.every((m) => base.includes(m));
+    setSel(all ? base.filter((m) => !span.includes(m)) : [...base, ...span]);
+  };
+
+  const unblock = async (item: { id: string; staff: boolean }) => {
+    try {
+      const r = item.staff
+        ? await adminRemoveStaffTime({ data: { pin, kind: "block", id: item.id } })
+        : await adminArchiveBlock({ data: { pin, id: item.id } });
+      if (!r.ok) throw new Error();
+      toast.success("Unblocked.");
+      setReload((n) => n + 1);
+      onSaved?.();
+    } catch {
+      toast.error("Couldn't unblock. Please try again.");
+    }
+  };
 
   const save = async (confirm = false) => {
-    if (end <= start) return setError("End must be after start.");
+    if (!runs.length) return setError("Tap the slots to block, or use exact times.");
+    if (runs.some((r) => r.end <= r.start)) return setError("End must be after start.");
+    if (!confirm && covered.length) return setClashes(covered);
     setBusy(true);
     setError("");
     try {
-      const r = await adminSaveBlock({
-        data: { pin, date, start, end, kind, reason, ...(confirm ? { confirm: true } : {}) },
-      });
-      if (!r.ok && "clashes" in r && r.clashes.length) return setClashes(r.clashes);
-      if (!r.ok) return setError(("error" in r && r.error) || "Couldn't save.");
-      toast.success(kind === "break" ? "Break added." : "Time blocked.");
+      for (let i = savedRuns.current; i < runs.length; i++) {
+        const r = runs[i]!;
+        const res = member
+          ? await adminAddStaffBlock({
+              data: {
+                pin,
+                staffId: member.id,
+                date,
+                start: r.start,
+                end: r.end,
+                reason,
+                ...(confirm ? { confirm: true } : {}),
+              },
+            })
+          : await adminSaveBlock({
+              data: {
+                pin,
+                date,
+                start: r.start,
+                end: r.end,
+                kind,
+                reason,
+                ...(confirm ? { confirm: true } : {}),
+              },
+            });
+        if (!res.ok && "clashes" in res && res.clashes?.length)
+          return setClashes(res.clashes.map((c) => c.time));
+        if (!res.ok) return setError(("error" in res && res.error) || "Couldn't save.");
+        savedRuns.current = i + 1;
+      }
+      toast.success(
+        kind === "break" && !member
+          ? "Break added."
+          : `Blocked ${runs.map(runLabel).join(" and ")}${member ? ` for ${member.name}` : ""}.`,
+      );
       onSaved?.();
       onOpenChange(false);
     } catch {
-      setError("Couldn't save. Please try again.");
+      setError(
+        savedRuns.current
+          ? "Some of it was saved, the rest couldn't be. Please check and try again."
+          : "Couldn't save. Please try again.",
+      );
     } finally {
       setBusy(false);
     }
   };
 
+  // what's already blocked this day (salon blocks apply to every stylist)
+  const existing = useMemo(() => {
+    if (!day) return [];
+    const salon = day.blocks.map((b) => ({
+      id: b.id,
+      staff: false,
+      start: b.start,
+      end: b.end,
+      reason: b.reason || (b.kind === "break" ? "Break" : "Blocked"),
+      who: b.kind === "break" ? "Whole salon · break" : "Whole salon",
+    }));
+    const team = (day.team ?? [])
+      .filter((t) => !member || t.id === member.id)
+      .flatMap((t) =>
+        t.blocks
+          .filter((b) => b.id)
+          .map((b) => ({
+            id: b.id!,
+            staff: true,
+            start: b.start,
+            end: b.end,
+            reason: b.label || "Unavailable",
+            who: t.name,
+          })),
+      );
+    return [...salon, ...team].sort((a, b) => a.start - b.start);
+  }, [day, member]);
+
+  // the From–Until boxes show the selection (first start to last end when it's in pieces)
+  const shownFrom = runs[0]?.start ?? null;
+  const shownUntil = runs.length ? runs[runs.length - 1]!.end : null;
+  const setRange = (part: "start" | "end", v: number) => {
+    const next =
+      part === "start"
+        ? { start: v, end: shownUntil != null && shownUntil > v ? shownUntil : v + 60 }
+        : { start: shownFrom != null && shownFrom < v ? shownFrom : Math.max(0, v - 60), end: v };
+    setExact(next);
+    setPicked([]);
+    changed();
+  };
+  const fromOptions = [
+    ...new Set([...timeOptions(), ...(shownFrom != null ? [shownFrom] : [])]),
+  ].sort((a, b) => a - b);
+  const untilOptions = [
+    ...new Set([...timeOptions(), ...(shownUntil != null ? [shownUntil] : [])]),
+  ].sort((a, b) => a - b);
+  const isSel = (m: number) =>
+    exact ? overlaps(m, m + step, exact.start, exact.end) : picked.includes(m);
+  const team = (day?.team ?? []).filter((t) => t.working || t.id === who);
+
+  const chip = (on: boolean) =>
+    cn(
+      "press rounded-full border px-3 py-1 text-[0.8rem]",
+      on ? "border-foreground bg-foreground text-background" : "border-foreground/15",
+    );
   const sel = "rounded-md border border-foreground/15 bg-background px-3 py-2 text-[0.9rem]";
+
+  const renderPart = (p: (typeof DAY_PARTS)[number]) => {
+    const list = (cells ?? []).filter((c) => c.m >= p.from && c.m < p.to);
+    if (!list.length) return null;
+    // collapse runs of the same non-pickable state into one line (lunch, not working, earlier)
+    const rows: ({ cell: Cell } | { line: Cell; end: number })[] = [];
+    for (const c of list) {
+      const prev = rows[rows.length - 1];
+      const flat = c.state === "break" || c.state === "off" || c.state === "past";
+      if (
+        flat &&
+        prev &&
+        "line" in prev &&
+        prev.line.state === c.state &&
+        prev.line.label === c.label &&
+        prev.end === c.m
+      )
+        prev.end = c.m + step;
+      else if (flat) rows.push({ line: c, end: c.m + step });
+      else rows.push({ cell: c });
+    }
+    const free = partSlots(p.from, p.to).length;
+    return (
+      <section key={p.key} className="space-y-2">
+        <div className="flex items-center gap-3">
+          <span className="text-[0.68rem] font-medium uppercase tracking-[0.22em]">{p.label}</span>
+          <span className="h-px flex-1 bg-foreground/10" />
+          {free ? (
+            <button
+              type="button"
+              onClick={() => quick(p.from, p.to)}
+              className="text-[0.72rem] text-foreground/60 underline-offset-2 hover:underline"
+            >
+              {partSlots(p.from, p.to).every((m) => isSel(m)) ? "Clear" : "Select all"}
+            </button>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5">
+          {rows.map((r) =>
+            "line" in r ? (
+              <div
+                key={`l${r.line.m}`}
+                className="col-span-full flex items-center gap-2 py-1 text-[0.72rem] text-foreground/50"
+              >
+                <span className="h-px flex-1 bg-foreground/10" />
+                {r.line.label} · {minuteLabel(r.line.m)} – {minuteLabel(r.end)}
+                <span className="h-px flex-1 bg-foreground/10" />
+              </div>
+            ) : (
+              <button
+                key={r.cell.m}
+                type="button"
+                data-slot={r.cell.m}
+                disabled={!pickable(r.cell)}
+                aria-pressed={isSel(r.cell.m)}
+                onClick={() => tap(r.cell.m)}
+                onPointerDown={(e) => onDown(r.cell.m, e)}
+                className={cn(
+                  "flex min-h-[3.1rem] select-none flex-col items-center justify-center rounded-md border px-1 py-1.5 text-[0.84rem] leading-tight transition-colors duration-100",
+                  r.cell.state === "blocked" &&
+                    "cursor-not-allowed border-dashed border-foreground/15 bg-foreground/[0.04] text-foreground/45",
+                  pickable(r.cell) &&
+                    !isSel(r.cell.m) &&
+                    "border-foreground/15 bg-background hover:border-foreground/40",
+                  isSel(r.cell.m) && "border-foreground bg-foreground text-background",
+                )}
+              >
+                <span className="tabular-nums">{minuteLabel(r.cell.m)}</span>
+                {r.cell.state === "booked" ? (
+                  <span
+                    className={cn(
+                      "mt-0.5 flex items-center gap-1 text-[0.66rem] uppercase tracking-[0.12em]",
+                      isSel(r.cell.m) ? "text-amber-300" : "text-amber-700",
+                    )}
+                  >
+                    <span className="size-1.5 rounded-full bg-current" />
+                    Booked
+                  </span>
+                ) : r.cell.state === "blocked" ? (
+                  <span className="mt-0.5 max-w-full truncate text-[0.66rem]">{r.cell.label}</span>
+                ) : null}
+              </button>
+            ),
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  const summary = runs.length
+    ? `${runs.map(runLabel).join(" and ")}${exact ? "" : ` · ${picked.length} slot${picked.length === 1 ? "" : "s"}`}`
+    : "";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-[1.6rem] font-normal">Block time</DialogTitle>
           <DialogDescription>Guests immediately see this period as unavailable.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="flex gap-1.5">
-            {(["block", "break"] as const).map((k) => (
+          {day?.team && day.team.length ? (
+            <div className="space-y-1.5">
+              <p className="text-[0.72rem] uppercase tracking-[0.18em] text-foreground/55">Who</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWho("salon");
+                    changed();
+                  }}
+                  className={chip(who === "salon")}
+                >
+                  Whole salon · all stylists
+                </button>
+                {team.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => {
+                      setWho(t.id);
+                      setKind("block");
+                      changed();
+                    }}
+                    className={chip(who === t.id)}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {!member ? (
+              <div className="flex gap-1.5">
+                {(["block", "break"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKind(k)}
+                    className={chip(kind === k)}
+                  >
+                    {k === "block" ? "Block" : "One-day break"}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                setDate(e.target.value);
+                setPicked([]);
+                setExact(null);
+                changed();
+              }}
+              className={cn(sel, member ? "w-full" : "ml-auto min-w-[10.5rem] flex-1 sm:flex-none")}
+              aria-label="Date"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="grid min-w-[14rem] flex-1 grid-cols-2 gap-2">
+                <select
+                  value={shownFrom ?? ""}
+                  onChange={(e) => setRange("start", Number(e.target.value))}
+                  className={sel}
+                  aria-label="From"
+                >
+                  <option value="" disabled>
+                    From
+                  </option>
+                  {fromOptions.map((m) => (
+                    <option key={m} value={m}>
+                      {minuteLabel(m)}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={shownUntil ?? ""}
+                  onChange={(e) => setRange("end", Number(e.target.value))}
+                  className={sel}
+                  aria-label="Until"
+                >
+                  <option value="" disabled>
+                    Until
+                  </option>
+                  {untilOptions.map((m) => (
+                    <option key={m} value={m}>
+                      {minuteLabel(m)}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <button
-                key={k}
-                onClick={() => setKind(k)}
-                className={cn(
-                  "press rounded-full border px-3 py-1 text-[0.8rem]",
-                  kind === k
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-foreground/15",
-                )}
+                type="button"
+                onClick={() => quick(0, 24 * 60)}
+                className="rounded-full border border-foreground/15 px-3 py-1.5 text-[0.78rem]"
               >
-                {k === "block" ? "Block" : "One-day break"}
+                Whole day
               </button>
-            ))}
+              {runs.length ? (
+                <button
+                  type="button"
+                  onClick={() => setSel([])}
+                  className="rounded-full border border-foreground/15 px-3 py-1.5 text-[0.78rem]"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            <p className="text-[0.76rem] text-foreground/55">
+              {runs.length > 1
+                ? `${runs.length} separate times picked on the slots below.`
+                : "Set From and Until, or tap slots below (tap again to remove)."}
+            </p>
           </div>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={cn(sel, "w-full")}
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              value={start}
-              onChange={(e) => setStart(Number(e.target.value))}
-              className={sel}
-              aria-label="From"
-            >
-              {timeOptions().map((m) => (
-                <option key={m} value={m}>
-                  {minuteLabel(m)}
-                </option>
-              ))}
-            </select>
-            <select
-              value={end}
-              onChange={(e) => setEnd(Number(e.target.value))}
-              className={sel}
-              aria-label="Until"
-            >
-              {timeOptions().map((m) => (
-                <option key={m} value={m}>
-                  {minuteLabel(m)}
-                </option>
-              ))}
-            </select>
+
+          <div
+            className="space-y-4"
+            style={{ touchAction: "pan-y" }}
+            onPointerMove={onMove}
+            onPointerUp={onUp}
+            onPointerLeave={onUp}
+            onPointerCancel={onUp}
+          >
+            {loadFailed ? (
+              <p className="rounded-md border border-foreground/10 p-4 text-[0.85rem]">
+                Couldn't load this day.{" "}
+                <button type="button" className="underline" onClick={() => setReload((n) => n + 1)}>
+                  Try again
+                </button>
+              </p>
+            ) : !day ? (
+              <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5" aria-busy="true">
+                {Array.from({ length: 10 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="h-[3.1rem] animate-pulse rounded-md bg-foreground/[0.06]"
+                  />
+                ))}
+              </div>
+            ) : !cells ? (
+              <p className="rounded-md border border-foreground/10 p-4 text-[0.85rem]">
+                The salon is closed on {dateLabel(date)}
+                {day.plan.note ? ` (${day.plan.note})` : ""}.
+              </p>
+            ) : member && !member.working ? (
+              <p className="rounded-md border border-foreground/10 p-4 text-[0.85rem]">
+                {member.name} isn't working on {dateLabel(date)}.
+              </p>
+            ) : (
+              DAY_PARTS.map(renderPart)
+            )}
           </div>
+
+          {existing.length ? (
+            <div className="space-y-1.5">
+              <p className="text-[0.72rem] uppercase tracking-[0.18em] text-foreground/55">
+                Already blocked this day
+              </p>
+              <ul className="divide-y divide-foreground/10 rounded-md border border-foreground/10">
+                {existing.map((b) => (
+                  <li key={b.id} className="flex items-center gap-3 px-3 py-2 text-[0.84rem]">
+                    <span className="tabular-nums">
+                      {minuteLabel(b.start)} – {minuteLabel(b.end)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-foreground/60">
+                      {b.reason} · {b.who}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void unblock(b)}
+                      className="text-[0.78rem] underline-offset-2 hover:underline"
+                    >
+                      Unblock
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap gap-1.5">
             {BLOCK_REASONS.map((r) => (
               <button
                 key={r}
+                type="button"
                 onClick={() => setReason(r)}
-                className={cn(
-                  "press rounded-full border px-3 py-1 text-[0.78rem]",
-                  reason === r
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-foreground/15",
-                )}
+                className={chip(reason === r)}
               >
                 {r}
               </button>
             ))}
           </div>
+
+          <div
+            className={cn(
+              "rounded-md border px-3 py-2 text-[0.85rem]",
+              runs.length
+                ? "border-foreground/20"
+                : "border-dashed border-foreground/15 text-foreground/55",
+            )}
+            aria-live="polite"
+          >
+            {runs.length ? (
+              <>
+                <span className="font-medium">Blocking {summary}</span>
+                <span className="text-foreground/60">
+                  {" "}
+                  · {member ? member.name : "all stylists"}
+                </span>
+                {covered.length ? (
+                  <p className="mt-1 text-amber-800">
+                    ⚠ Covers {covered.length === 1 ? "a booking" : `${covered.length} bookings`} at{" "}
+                    {covered.map(minuteLabel).join(", ")}. They stay booked.
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              "Nothing selected yet."
+            )}
+          </div>
+
           {clashes.length ? (
             <div className="rounded-md border border-amber-600/30 bg-amber-500/10 p-3 text-[0.85rem]">
-              These bookings are inside that time:
-              <ul className="mt-1 list-disc pl-5">
-                {clashes.map((c) => (
-                  <li key={c.reference}>
-                    {minuteLabel(c.time)} · {c.name}
-                  </li>
-                ))}
-              </ul>
-              They stay booked. Block anyway?
+              {clashes.length === 1 ? "There's a booking" : `There are ${clashes.length} bookings`}{" "}
+              at {[...new Set(clashes)].map(minuteLabel).join(", ")} inside this time. They stay
+              booked. Block anyway?
               <div className="mt-2 flex gap-2">
                 <Action primary disabled={busy} onClick={() => void save(true)}>
-                  Block anyway
+                  {busy ? "Saving…" : "Block anyway"}
                 </Action>
                 <Action onClick={() => setClashes([])}>Change time</Action>
               </div>
@@ -1788,7 +2323,7 @@ export function BlockTimeDialog({
           {!clashes.length ? (
             <div className="flex justify-end gap-2">
               <Action onClick={() => onOpenChange(false)}>Cancel</Action>
-              <Action primary disabled={busy} onClick={() => void save()}>
+              <Action primary disabled={busy || !runs.length} onClick={() => void save()}>
                 {busy ? "Saving…" : "Save"}
               </Action>
             </div>

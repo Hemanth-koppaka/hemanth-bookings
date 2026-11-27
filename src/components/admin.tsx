@@ -343,7 +343,7 @@ const STATUS_STYLE: Record<ApptStatus, string> = {
   cancelled: "border-destructive/25 text-destructive/70",
 };
 
-export function StatusPill({ status }: { status: ApptStatus }) {
+export function StatusPill({ status, label }: { status: ApptStatus; label?: string }) {
   return (
     <span
       className={cn(
@@ -351,7 +351,7 @@ export function StatusPill({ status }: { status: ApptStatus }) {
         STATUS_STYLE[status],
       )}
     >
-      {STATUS_LABEL[status]}
+      {label ?? STATUS_LABEL[status]}
     </span>
   );
 }
@@ -383,6 +383,7 @@ export function TinyButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      aria-pressed={active}
       className={cn(
         "press inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-[0.8rem] transition-colors disabled:opacity-40",
         active || tone === "primary"

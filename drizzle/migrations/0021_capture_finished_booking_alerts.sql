@@ -1,0 +1,5 @@
+CREATE OR REPLACE FUNCTION public.capture_finished_booking_alert() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF OLD.status='confirmed' AND NEW.status='confirmed' AND coalesce(OLD.meta->>'status','') NOT IN ('completed','no-show','cancelled') AND coalesce(NEW.meta->>'status','') IN ('completed','no-show') THEN INSERT INTO public.appointment_change_events(booking_reference,event_type,booking_snapshot,previous) VALUES(NEW.reference,CASE WHEN NEW.meta->>'status'='completed' THEN 'BOOKING_COMPLETED' ELSE 'NO_SHOW' END,to_jsonb(NEW),'{}'::jsonb); END IF; RETURN NEW; END; $$;
+DROP TRIGGER IF EXISTS capture_finished_booking_alert ON public.bookings;
+CREATE TRIGGER capture_finished_booking_alert AFTER UPDATE ON public.bookings FOR EACH ROW EXECUTE FUNCTION public.capture_finished_booking_alert();
+REVOKE ALL ON FUNCTION public.capture_finished_booking_alert() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.capture_finished_booking_alert() TO service_role;

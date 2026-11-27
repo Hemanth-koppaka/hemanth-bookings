@@ -15,7 +15,11 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/hb-desk-7392/system")({
   head: () => ({
     meta: [
-      { title: "System health — Hair by Bhargav" },
+      { property: "og:title", content: "System health \u2014 Hair by Kiran" },
+      { property: "og:description", content: "Database, scheduled jobs, messaging, storage and security status." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "System health — Hair by Kiran" },
       {
         name: "description",
         content: "Database, scheduled jobs, messaging, storage and security status.",

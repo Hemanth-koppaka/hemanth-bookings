@@ -69,7 +69,7 @@ async function matches(code: string, stored: string) {
 
 /** A short code, or the original code that matches the public street number, is weak. */
 // The salon's own numbers (phone, plot, PIN code) are the first things guessed.
-const SALON_NUMBERS = ["7981648951", "1143", "500072"];
+const SALON_NUMBERS = ["9000000000", "1143", "500000"];
 /** Too short, a repeat (111111, 121212, 123123), a run (123456, 654321) or the salon's own numbers. */
 export const isWeakCode = (raw: string) => {
   const code = raw.trim().toLowerCase();
@@ -156,10 +156,30 @@ export async function assertAdmin(token: string) {
   }
   if (!claims.exp || claims.exp < Date.now()) throw new Error("Session expired");
   if ((claims as { kind?: string }).kind === "stylist") throw new Error("Session not valid");
-  const [secret, epoch] = await Promise.all([readSecret(), readEpoch()]);
+  const [secret, epoch] = await sessionState();
   if (claims.v !== (await codeVersion(secret))) throw new Error("Session revoked");
   if (epoch && (claims.iat ?? 0) < epoch) throw new Error("Session revoked");
   return supabaseAdmin;
+}
+
+// The stored code and the "signed out everywhere" time, shared for a few
+// seconds: one admin action checks the session several times, and each check
+// was two database calls (Cloudflare's free plan allows 50 per request).
+// Changing the code or signing out everywhere clears it immediately here.
+const SESSION_STATE_TTL_MS = 5_000;
+let sessionCache: { at: number; value: Promise<[string, number]> } | null = null;
+function forgetSessionState() {
+  sessionCache = null;
+}
+async function sessionState(): Promise<[string, number]> {
+  if (!sessionCache || Date.now() - sessionCache.at > SESSION_STATE_TTL_MS) {
+    const value = Promise.all([readSecret(), readEpoch()]) as Promise<[string, number]>;
+    sessionCache = { at: Date.now(), value };
+    value.catch(() => {
+      if (sessionCache?.value === value) sessionCache = null;
+    });
+  }
+  return sessionCache.value;
 }
 
 async function readEpoch(): Promise<number> {
@@ -177,6 +197,7 @@ export async function signOutEverywhere(token: string) {
   const { error } = await supabaseAdmin
     .from("site_settings")
     .upsert({ key: EPOCH_KEY, value: { at: Date.now() } as never });
+  forgetSessionState();
   return { ok: !error };
 }
 
@@ -341,6 +362,7 @@ export async function changeCode(token: string, current: string, next: string) {
   if (isWeakCode(next)) return { ok: false as const, error: WEAK_CODE_HINT };
   const hashed = await hashCode(next);
   const { error } = await supabaseAdmin.from("admin_secret").update({ pin: hashed }).eq("id", 1);
+  forgetSessionState();
   if (error) return { ok: false as const, error: "Couldn't save the new code." };
   return { ok: true as const, ...(await issueToken(hashed, false)) };
 }

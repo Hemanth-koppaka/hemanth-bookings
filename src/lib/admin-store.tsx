@@ -74,13 +74,13 @@ const SETTINGS_KEY = "hbb.admin.settings.v1";
 const SESSION_KEY = "hbb.admin.session.v1";
 
 const DEFAULT_STAFF: Staff[] = [
-  { id: "st-bhargav", name: "Bhargav", role: "Founder · Master Stylist", active: true },
+  { id: "st-kiran", name: "Kiran", role: "Founder · Master Stylist", active: true },
   { id: "st-chair2", name: "Chair 2", role: "Stylist", active: true },
   { id: "st-beauty", name: "Beauty Room", role: "Beauty & Skin", active: true },
 ];
 
 const DEFAULT_SETTINGS: AdminSettings = {
-  salonName: "Hair by Bhargav",
+  salonName: "Hair by Kiran",
   acceptingBookings: true,
 };
 

@@ -1,3 +1,4 @@
+import { SiteCredit } from "@/components/site-credit";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowUpRight,
@@ -16,14 +17,16 @@ import { BUSINESS } from "@/lib/salon";
 export const Route = createFileRoute("/studio")({
   head: () => ({
     meta: [
-      { title: "The studio — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "The studio — Hair by Kiran" },
       {
         name: "description",
         content:
-          "Four chairs, two wash stations, a private room and full air conditioning at KPHB Phase 9, Kukatpally, Hyderabad.",
+          "Four chairs, two wash stations, a private room and full air conditioning at Sector 9, Midtown, Hyderabad.",
       },
-      { property: "og:title", content: "The studio — Hair by Bhargav" },
-      { property: "og:description", content: "Inside the salon at KPHB Phase 9, Kukatpally." },
+      { property: "og:title", content: "The studio — Hair by Kiran" },
+      { property: "og:description", content: "Inside the salon at Sector 9, Midtown." },
     ],
   }),
   component: StudioScreen,
@@ -50,7 +53,7 @@ function StudioScreen() {
       label="Studio"
       image="/studio/chairs-1600.webp"
       imagePos="45% 50%"
-      panelEyebrow="KPHB Phase 9"
+      panelEyebrow="Sector 9"
       panelTitle={
         <>
           Calm,
@@ -62,7 +65,7 @@ function StudioScreen() {
     >
       <InfoTitle
         eyebrow="The studio"
-        sub="A calm, unhurried unisex salon in KPHB. Everything you need for a full makeover under one roof, with a private room when you'd rather not be seen mid-transformation."
+        sub="A calm, unhurried unisex salon in Sector 9. Everything you need for a full makeover under one roof, with a private room when you'd rather not be seen mid-transformation."
       >
         The <span className="italic text-bronze">studio.</span>
       </InfoTitle>
@@ -153,6 +156,7 @@ function StudioScreen() {
       </div>
 
       <BookCTA className="mt-10" />
+      <SiteCredit className="mt-8" />
     </InfoPage>
   );
 }

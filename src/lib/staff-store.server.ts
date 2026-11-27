@@ -54,7 +54,7 @@ const DEFAULTS: Partial<Record<StaffTable, () => Row>> = {
   staff_breaks: () => ({ day_of_week: null, label: "Break" }),
 };
 
-/** The team the salon started with (same as the original seed): Bhargav + two stylists. */
+/** The team the salon started with (same as the original seed): Kiran + two stylists. */
 async function seed(): Promise<Store> {
   const s = empty();
   const [{ data: svcs }, { data: hours }] = await Promise.all([
@@ -68,7 +68,7 @@ async function seed(): Promise<Store> {
     return (h ?? 10) * 60 + (m ?? 0);
   };
   const team = [
-    { name: "Bhargav", gender: "male", specialties: "Founder · Chief Stylist", display_order: 0 },
+    { name: "Kiran", gender: "male", specialties: "Founder · Chief Stylist", display_order: 0 },
     {
       name: "Male Stylist",
       gender: "male",
@@ -84,9 +84,9 @@ async function seed(): Promise<Store> {
   ].map((t) => ({ ...DEFAULTS.staff!(), ...t, id: uuid(), created_at: now() }));
   const [b, m, f] = team as unknown as [Row, Row, Row];
   s.staff = team;
-  const sig = (n: string) => /^bhargav.?s signature/i.test(n);
+  const sig = (n: string) => /^kiran.?s signature/i.test(n);
   for (const x of (svcs ?? []) as { id: string; name: string; gender: string }[]) {
-    // Bhargav takes men's and women's guests (and his Signature)
+    // Kiran takes men's and women's guests (and his Signature)
     s.staff_services.push({ staff_id: b["id"], service_id: x.id });
     if (x.gender === "men" && !sig(x.name))
       s.staff_services.push({ staff_id: m["id"], service_id: x.id });
@@ -137,8 +137,30 @@ export async function staffTablesExist(): Promise<boolean> {
   return !error;
 }
 
-/** Reads the whole store (seeding the team the first time). */
+// One read of the seven staff tables is shared for a few seconds. A booking
+// checks the team several times; reading each time multiplied the database
+// calls, and Cloudflare's free plan allows only 50 calls per request. Every
+// write through this module clears it, so admin changes show at once here.
+const STORE_TTL_MS = 10_000;
+let storeCache: { at: number; value: Promise<Store> } | null = null;
+/** Forget the shared read (after any write to the staff tables). */
+export function invalidateStore() {
+  storeCache = null;
+}
+
+/** Reads the whole store (seeding the team the first time). Callers get their own copy. */
 export async function loadStore(): Promise<Store> {
+  if (!storeCache || Date.now() - storeCache.at > STORE_TTL_MS) {
+    const value = readStore();
+    storeCache = { at: Date.now(), value };
+    value.catch(() => {
+      if (storeCache?.value === value) storeCache = null;
+    });
+  }
+  return structuredClone(await storeCache.value);
+}
+
+async function readStore(): Promise<Store> {
   // the existence check (cached once known) and the reads go out together
   const reads = Promise.all(TABLES.map((n) => Promise.resolve(sb.from(n as never).select("*"))));
   reads.catch(() => {});
@@ -156,6 +178,7 @@ export async function loadStore(): Promise<Store> {
   return fresh;
 }
 async function saveStore(s: Store) {
+  invalidateStore();
   const { error } = await sb.from("site_settings").upsert({ key: KEY, value: s as never });
   // staff, leave and closures feed the salon configuration
   (await import("./config.server")).invalidateConfig();
@@ -247,7 +270,8 @@ class Query implements PromiseLike<Result> {
   }
 
   private async run(): Promise<Result> {
-    if (await staffTablesExist()) {
+    // a read on an already-loaded store is answered from it (no database call)
+    if (!(this.op === "select" && this.store) && (await staffTablesExist())) {
       // database update applied: same query against the real table
       let q = sb.from(this.table as never) as unknown as Record<
         string,
@@ -265,6 +289,11 @@ class Query implements PromiseLike<Result> {
         q = q[name]!(...args) as typeof q;
       }
       const r = (await (q as unknown as PromiseLike<Result>)) as Result;
+      if (this.op !== "select") {
+        invalidateStore();
+        // staff, leave and closures feed the salon configuration
+        (await import("./config.server")).invalidateConfig();
+      }
       return { data: r.data, error: r.error ? { message: r.error.message } : null };
     }
     const store = this.store ?? (await loadStore());

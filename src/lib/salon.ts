@@ -4,7 +4,7 @@ import type { SoundSettings } from "./sfx/tokens";
 import type { ServiceRule } from "./service-rules";
 import { CATEGORY_ICON_BY_ID, SERVICE_ICON_BY_ID } from "./service-icons";
 
-// Business, menu and availability data for The Hair By Bhargav Unisex Salon.
+// Business, menu and availability data for The Hair By Kiran Unisex Salon.
 // Service names and prices are taken verbatim from the official Service Menu.
 // `slots` = number of consecutive 30-minute booking slots the service occupies.
 
@@ -44,30 +44,30 @@ export type Category = {
 export const SLOT_MINUTES = 30;
 
 export const BUSINESS = {
-  name: "The Hair By Bhargav Unisex Salon",
-  brand: "Hair by Bhargav",
+  name: "The Hair By Kiran Unisex Salon",
+  brand: "Hair by Kiran",
   tagline: "Hair · Beauty · Makeover",
-  founder: "B. Bhargav",
-  locationShort: "KPHB Phase 9 · Kukatpally · Hyderabad",
+  founder: "B. Kiran",
+  locationShort: "Sector 9 · Midtown · Hyderabad",
   address:
-    "Plot No. 1143, Raghava Avasa, Gokul Plots, Venkataramana Colony, KPHB Phase 9, Kukatpally, Hyderabad – 500072",
+    "Plot No. 12, Lotus Residency, Park Lane, Green Avenue, Sector 9, Midtown, Hyderabad – 500000",
   mapsQuery:
-    "The Hair By Bhargav Unisex Salon, Plot No. 1143, Raghava Avasa, Gokul Plots, Venkataramana Colony, KPHB Phase 9, Kukatpally, Hyderabad 500072",
+    "The Hair By Kiran Unisex Salon, Plot No. 12, Lotus Residency, Park Lane, Green Avenue, Sector 9, Midtown, Hyderabad 500000",
   // the business number only
-  phones: ["+917981648951"],
+  phones: ["+919000000000"],
   /**
    * The salon's "write a review" link from Google Business Profile ("Ask for
    * reviews"). Until it's set, guests are sent to the salon on Google Maps,
    * where they tap "Write a review".
    */
   googleReviewUrl: "https://share.google/1XYLXWkKdYhTgbDMB",
-  /** Instagram: the salon's page and Bhargav's own work. */
+  /** Instagram: the salon's page and Kiran's own work. */
   instagram: {
     salon: {
-      handle: "the_hairbybhargav_salon",
-      url: "https://www.instagram.com/the_hairbybhargav_salon/",
+      handle: "hairbykiran.salon",
+      url: "https://www.instagram.com/",
     },
-    bhargav: { handle: "hair_by_bhargav", url: "https://www.instagram.com/hair_by_bhargav/" },
+    kiran: { handle: "hair.by.kiran", url: "https://www.instagram.com/" },
   },
   hoursOpenDays: "Wednesday to Monday",
   closedDay: "Tuesday",
@@ -219,7 +219,7 @@ export const MEN_MENU: Category[] = [
       s("m-cut", "Basic Haircut", 500, 1),
       s("m-beard", "Beard Trim", 250, 1),
       s("m-shave", "Shave", 300, 1),
-      s("m-signature", "Bhargav's Signature", 1000, 1, {
+      s("m-signature", "Kiran's Signature", 1000, 1, {
         note: "Consultation, haircut, beard trim, wash & styling",
       }),
       s("m-kids", "Kids (U-14)", 300, 1),
@@ -287,7 +287,7 @@ export const WOMEN_MENU: Category[] = [
     services: [
       s("w-fringe", "Fringe Cut / Bangs", 350, 1),
       s("w-cut", "Cut & Styling", 1200, 2),
-      s("w-signature", "Bhargav's Signature", 1500, 1),
+      s("w-signature", "Kiran's Signature", 1500, 1),
       s("w-blow-straight", "Blow Dry Straight", 600, 1),
       s("w-blow-curls", "Blow Dry Curls", 800, 2),
       s("w-ironing", "Ironing / Tonging", 800, 2),
@@ -469,10 +469,10 @@ export function availableSlots(
   const out: { minute: number; available: boolean }[] = [];
   const h = hoursFor(iso);
   const breaks = breaksFor(iso);
-  const count = (h.close - h.open) / SLOT_MINUTES;
+  const count = (h.close - h.open) / SLOT_MINUTES + 1; // closing time = last start
   for (let i = 0; i < count; i++) {
     const start = h.open + i * SLOT_MINUTES;
-    const fits = start + Math.max(1, slotsNeeded) * SLOT_MINUTES <= h.close;
+    const fits = start <= h.close;
     const future = !isToday || start >= nowMin + 30;
     const end = start + Math.max(1, slotsNeeded) * SLOT_MINUTES;
     const clash = busy.some((b) => start < b.time + b.slots * SLOT_MINUTES && b.time < end);
@@ -515,7 +515,7 @@ export type SalonConfig = {
   closures?: Closure[];
   /** Interface sound settings from the console. */
   sound?: Partial<SoundSettings> | null;
-  /** Services with a preferred stylist (e.g. Bhargav's Signature → Bhargav). */
+  /** Services with a preferred stylist (e.g. Kiran's Signature → Kiran). */
   serviceRules?: Record<string, ServiceRule>;
 };
 
@@ -640,4 +640,30 @@ export function googleReviewLink() {
     BUSINESS.googleReviewUrl ||
     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(BUSINESS.mapsQuery)}`
   );
+}
+
+/** The usual first and last appointment across open days (the most common ones). */
+export function typicalHours(): { open: number; close: number } {
+  const open = WEEK.filter((d) => !d.closed);
+  const most = (xs: number[], fallback: number) => {
+    const n = new Map<number, number>();
+    for (const x of xs) n.set(x, (n.get(x) ?? 0) + 1);
+    return [...n.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0] ?? fallback;
+  };
+  return {
+    open: most(
+      open.map((d) => d.open ?? OPEN_MINUTE),
+      OPEN_MINUTE,
+    ),
+    close: most(
+      open.map((d) => d.close ?? CLOSE_MINUTE),
+      CLOSE_MINUTE,
+    ),
+  };
+}
+
+/** "Tuesday", "Monday & Tuesday" or "" — from the hours, never typed by hand. */
+export function closedDaysLabel(): string {
+  const names = WEEK.filter((d) => d.closed).map((d) => d.day);
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names.at(-1)}` : (names[0] ?? "");
 }

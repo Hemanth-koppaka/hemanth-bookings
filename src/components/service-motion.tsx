@@ -125,7 +125,7 @@ const BY_ICON: Record<string, MotionKind> = {
   "bridal-makeup": "bridal-makeup",
   "saree-draping-in-salon": "drape",
   "saree-draping-at-venue": "drape",
-  "bhargavs-signature": "signature",
+  "kirans-signature": "signature",
   essentials: "signature",
   premium: "signature",
   ethereal: "signature",

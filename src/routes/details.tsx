@@ -17,17 +17,26 @@ import {
   StepTitle,
 } from "@/components/desktop";
 import { useBooking, type Customer } from "@/lib/booking-store";
-import { formatDuration, fromISO, inr, isValidMobile, minuteLabel } from "@/lib/salon";
+import {
+  formatDuration,
+  fromISO,
+  inr,
+  isValidMobile,
+  mobileDigits,
+  minuteLabel,
+} from "@/lib/salon";
 
 export const Route = createFileRoute("/details")({
   head: () => ({
     meta: [
-      { title: "Your details — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Your details — Hair by Kiran" },
       {
         name: "description",
-        content: "Tell us who the appointment is for so we can hold your chair at Hair by Bhargav.",
+        content: "Tell us who the appointment is for so we can hold your chair at Hair by Kiran.",
       },
-      { property: "og:title", content: "Your details — Hair by Bhargav" },
+      { property: "og:title", content: "Your details — Hair by Kiran" },
       { property: "og:description", content: "Name, phone and any notes for your stylist." },
     ],
   }),
@@ -40,10 +49,7 @@ function DetailsScreen() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
-  // booking emails: on unless the guest unticks it
-  const [consent, setConsent] = useState(true);
   const [touched, setTouched] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [dockOpen, setDockOpen] = useState(false);
@@ -57,17 +63,14 @@ function DetailsScreen() {
     if (draft.customer) {
       setName(draft.customer.name);
       setPhone(draft.customer.phone);
-      setEmail(draft.customer.email);
       setNotes(draft.customer.notes ?? "");
-      setConsent(draft.customer.consent !== false);
     }
   }, [hydrated]);
 
-  const digits = phone.replace(/\D/g, "");
+  const digits = mobileDigits(phone);
   const validName = name.trim().length >= 2;
   const validPhone = isValidMobile(phone);
-  const validEmail = email.trim() === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const valid = validName && validPhone && validEmail;
+  const valid = validName && validPhone;
 
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -80,10 +83,9 @@ function DetailsScreen() {
     }
     const customer: Customer = {
       name: name.trim(),
-      phone: phone.trim(),
-      email: email.trim(),
+      phone: mobileDigits(phone),
+      email: "",
       ...(notes.trim() ? { notes: notes.trim() } : {}),
-      consent,
     };
     update({ customer });
     navigate({ to: "/review" });
@@ -105,13 +107,7 @@ function DetailsScreen() {
             : "Enter a valid mobile number (starts with 6, 7, 8 or 9)."
           : "",
     },
-    email: {
-      value: email,
-      set: setEmail,
-      error: touched && !validEmail ? "That email doesn't look right." : "",
-    },
     notes: { value: notes, set: setNotes, error: "" },
-    consent: { value: consent, set: setConsent },
   };
 
   return (
@@ -210,9 +206,7 @@ function MobileSummary() {
 }
 
 type Field = { value: string; set: (v: string) => void; error: string };
-type Fields = Record<"name" | "phone" | "email" | "notes", Field> & {
-  consent: { value: boolean; set: (v: boolean) => void };
-};
+type Fields = Record<"name" | "phone" | "notes", Field>;
 
 const box =
   "w-full rounded-sm border border-foreground/18 bg-card px-5 py-4 text-[1.05rem] outline-none transition-colors placeholder:text-foreground/35 focus:border-foreground/60 aria-[invalid=true]:border-destructive";
@@ -249,7 +243,7 @@ function DetailsFields({
   idPrefix: string;
   attempt: number;
 }) {
-  const { name, phone, email, notes, consent } = fields;
+  const { name, phone, notes } = fields;
   return (
     <>
       <div>
@@ -285,27 +279,14 @@ function DetailsFields({
             placeholder="Enter mobile number"
             type="tel"
             inputMode="tel"
-            autoComplete="tel-national"
+            autoComplete="tel"
+            onBlur={() => {
+              if (isValidMobile(phone.value)) phone.set(mobileDigits(phone.value));
+            }}
             aria-invalid={Boolean(phone.error)}
           />
         </div>
         <FieldError attempt={attempt}>{phone.error}</FieldError>
-      </div>
-
-      <div className="mt-3">
-        <FieldLabel htmlFor={`${idPrefix}email`}>Email (optional)</FieldLabel>
-        <input
-          id={`${idPrefix}email`}
-          className={box}
-          value={email.value}
-          onChange={(e) => email.set(e.target.value)}
-          placeholder="Enter your email"
-          type="email"
-          autoComplete="email"
-          autoCapitalize="off"
-          aria-invalid={Boolean(email.error)}
-        />
-        <FieldError attempt={attempt}>{email.error}</FieldError>
       </div>
 
       <div className="mt-3">
@@ -323,25 +304,6 @@ function DetailsFields({
       <div className="mt-6">
         <ReferencePhotos />
       </div>
-
-      <label
-        htmlFor={`${idPrefix}consent`}
-        className="mt-6 flex cursor-pointer items-start gap-3 rounded-md border border-hairline bg-card px-4 py-3.5"
-      >
-        <input
-          id={`${idPrefix}consent`}
-          type="checkbox"
-          checked={consent.value}
-          onChange={(e) => consent.set(e.target.checked)}
-          className="mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0 accent-[var(--bronze)]"
-        />
-        <span className="text-[0.88rem] leading-relaxed">
-          Email me my booking confirmation, changes and reminders (when I add an email).
-          <span className="mt-0.5 block text-[0.76rem] text-muted-foreground">
-            Booking messages only — never promotions. You can still book if you untick this.
-          </span>
-        </span>
-      </label>
     </>
   );
 }

@@ -34,13 +34,13 @@ MSG91 reports    ─▶ /api/notifications/webhook   (sent / delivered / failed)
    - WhatsApp: utility templates approved by Meta (`{{1}}`, `{{2}}`…).
    - SMS: DLT-registered templates / MSG91 flows (`##var1##`, `##var2##`…).
      Enter the template names / ids next to each message.
-4. **Server secrets** (Lovable project secrets — never in code or the browser):
+4. **Server secrets** (Cloudflare Worker secrets — never in code or the browser):
    - `MSG91_AUTH_KEY` — MSG91 API key
    - `MSG91_WEBHOOK_SECRET` — any long random string
 5. **Delivery reports**: in MSG91, set the WhatsApp and SMS report webhook to
    `https://<your-site>/api/notifications/webhook?key=<MSG91_WEBHOOK_SECRET>`.
 6. **Reminders**: schedule `POST https://<your-site>/api/notifications/dispatch`
-   every 10 minutes with Lovable cron (it sends `Authorization: Bearer
+   every 10 minutes with Supabase pg_cron (it sends `Authorization: Bearer
 LOVABLE_CRON_SECRET`).
 7. **Admin → Notifications**: set the salon alert number and a test number, save,
    then use **Test** to send a sample. "Sent" means MSG91 accepted it;

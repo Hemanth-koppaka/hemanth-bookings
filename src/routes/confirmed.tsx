@@ -1,3 +1,4 @@
+import { SiteCredit } from "@/components/site-credit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookingFilm, filmPoster, playLogoSting } from "@/components/booking-film";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -5,6 +6,7 @@ import { Check, ChevronDown, Copy, Download, MapPin, MessageCircle } from "lucid
 import { guestToSalonText, waLink } from "@/lib/whatsapp-link";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { RemindMe } from "@/components/remind-me";
+import { BookingLook } from "@/components/my-look";
 import { sfx } from "@/lib/sfx";
 import { useChangeDeadline } from "@/lib/change-deadline";
 import { prettyPhone } from "@/components/desktop";
@@ -22,12 +24,14 @@ export const Route = createFileRoute("/confirmed")({
   }),
   head: () => ({
     meta: [
-      { title: "Booking confirmed — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Booking confirmed — Hair by Kiran" },
       {
         name: "description",
-        content: "Your chair is reserved at Hair by Bhargav, KPHB Phase 9, Kukatpally, Hyderabad.",
+        content: "Your chair is reserved at Hair by Kiran, Sector 9, Midtown, Hyderabad.",
       },
-      { property: "og:title", content: "Booking confirmed — Hair by Bhargav" },
+      { property: "og:title", content: "Booking confirmed — Hair by Kiran" },
       { property: "og:description", content: "Your chair is reserved." },
     ],
   }),
@@ -37,12 +41,12 @@ export const Route = createFileRoute("/confirmed")({
 /* ── helpers ─────────────────────────────────────────────── */
 
 /**
- * Bhargav's own moment (his film and portrait) is only for guests who chose him:
+ * Kiran's own moment (his film and portrait) is only for guests who chose him:
  * picked as their stylist, or booked his Signature. Any other stylist, or
  * "any available", gets the simple confirmation.
  */
-function isBhargavBooking(b: Booking | undefined) {
-  if (!b || !/^bhargav\b/i.test(b.stylist ?? "")) return false;
+function isKiranBooking(b: Booking | undefined) {
+  if (!b || !/^kiran\b/i.test(b.stylist ?? "")) return false;
   return Boolean(b.stylistChosen) || servicesOf(b).some((s) => isSignature(s));
 }
 
@@ -74,8 +78,8 @@ async function renderConfirmationImage(
   ctx.fillStyle = "#0B0B0B";
   ctx.fillRect(0, 0, W, H);
 
-  const withBhargav = isBhargavBooking(booking);
-  if (withBhargav)
+  const withKiran = isKiranBooking(booking);
+  if (withKiran)
     try {
       const img = await loadImage(portrait.url);
       const scale = Math.max(W / img.width, H / img.height);
@@ -159,9 +163,9 @@ async function renderConfirmationImage(
   ctx.fillText("S T U D I O", W / 2, 972);
   ctx.fillStyle = ivory;
   ctx.font = "300 38px 'Cormorant Garamond', Georgia, serif";
-  ctx.fillText("Hair by Bhargav", W / 2, 1018);
+  ctx.fillText("Hair by Kiran", W / 2, 1018);
   ctx.fillStyle = "rgba(232,225,216,0.72)";
-  const where = BUSINESS.locationShort || "KPHB Phase 9, Kukatpally, Hyderabad";
+  const where = BUSINESS.locationShort || "Sector 9, Midtown, Hyderabad";
   fit(where, MAXW, 26, SANS, 18);
   ctx.fillText(where, W / 2, 1058);
 
@@ -173,7 +177,7 @@ async function renderConfirmationImage(
   ctx.fillText("Your chair is waiting.", W / 2, 1182);
   ctx.fillStyle = gold;
   ctx.font = "300 32px 'Cormorant Garamond', Georgia, serif";
-  ctx.fillText(withBhargav ? "— Bhargav" : "— Hair by Bhargav", W / 2, 1234);
+  ctx.fillText(withKiran ? "— Kiran" : "— Hair by Kiran", W / 2, 1234);
 
   try {
     return await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/png"));
@@ -203,7 +207,7 @@ async function deliverImage(
   const touch = window.matchMedia?.("(pointer: coarse)").matches;
   if (touch && navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: "Hair by Bhargav: booking confirmed" });
+      await navigator.share({ files: [file], title: "Hair by Kiran: booking confirmed" });
       return "shared";
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return "cancelled";
@@ -229,10 +233,10 @@ function ConfirmedScreen() {
   const { ref, seq } = Route.useSearch();
   const { bookings, hydrated, resetDraft } = useBooking();
   const booking = bookings.find((b) => b.reference === ref);
-  const withBhargav = isBhargavBooking(booking);
-  const cinematic = seq === 1 && withBhargav;
+  const withKiran = isKiranBooking(booking);
+  const cinematic = seq === 1 && withKiran;
   const [stage, setStage] = useState(cinematic ? 0 : FINAL);
-  // the film (Bhargav getting ready → the reserved chair) opens a fresh
+  // the film (Kiran getting ready → the reserved chair) opens a fresh
   // confirmation on every screen; the booking ID follows it. It is framed for
   // phones (9:16); wide screens show it centred over a soft blurred backdrop.
   const [film, setFilm] = useState<"on" | "leaving" | "off">(cinematic ? "on" : "off");
@@ -244,11 +248,11 @@ function ConfirmedScreen() {
 
   // another stylist or "any available": the simple confirmation, straight away
   useEffect(() => {
-    if (booking && !withBhargav) {
+    if (booking && !withKiran) {
       setFilm("off");
       setStage(FINAL);
     }
-  }, [booking, withBhargav]);
+  }, [booking, withKiran]);
 
   useEffect(() => {
     if (hydrated && booking) resetDraft();
@@ -353,7 +357,7 @@ function ConfirmedScreen() {
       return;
     }
     card.current = blob;
-    const name = `hair-by-bhargav-${booking.reference}.png`;
+    const name = `hair-by-kiran-${booking.reference}.png`;
     const how = await deliverImage(blob, name);
     if (how === "shared" || how === "cancelled") return;
     if (how === "downloaded") {
@@ -381,7 +385,7 @@ function ConfirmedScreen() {
     return (
       <div className="flex min-h-[100svh] items-center justify-center bg-background px-6 text-foreground">
         <div className="text-center">
-          <div className="eyebrow">Hair by Bhargav</div>
+          <div className="eyebrow">Hair by Kiran</div>
           <h1 className="font-display text-4xl">Booking not found</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             We couldn't find that reference on this device.
@@ -412,8 +416,8 @@ function ConfirmedScreen() {
       onClick={() => setStage(FINAL)}
       className="relative min-h-[100svh] overflow-hidden bg-[#0B0B0B] text-[#E8E1D8]"
     >
-      {/* 4 — Bhargav, cinematic black & white (only when the guest chose him) */}
-      {withBhargav ? (
+      {/* 4 — Kiran, cinematic black & white (only when the guest chose him) */}
+      {withKiran ? (
         <div
           // phones: one screen tall at the top of the page (the page scrolls past
           // the card and calendar, so filling all of it would push his face
@@ -464,12 +468,12 @@ function ConfirmedScreen() {
           >
             <Link
               to="/"
-              aria-label="Hair by Bhargav: go to home"
+              aria-label="Hair by Kiran: go to home"
               className="rounded-sm transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#C9A96A] active:scale-[0.97]"
             >
               <img
                 src={logo.url}
-                alt="Hair by Bhargav"
+                alt="Hair by Kiran"
                 className="h-12 w-auto object-contain brightness-0 invert [@media(max-width:639px)_and_(max-height:800px)]:h-10 lg:h-14"
               />
             </Link>
@@ -485,8 +489,8 @@ function ConfirmedScreen() {
               Your chair is reserved.
             </p>
             <p className="mt-3 text-[0.7rem] uppercase tracking-[0.3em] text-[#C9A96A] [@media(max-width:639px)_and_(max-height:800px)]:mt-2">
-              {/^bhargav\b/i.test(booking.stylist ?? "")
-                ? "Bhargav is waiting for you"
+              {/^kiran\b/i.test(booking.stylist ?? "")
+                ? "Kiran is waiting for you"
                 : "We’re waiting for you"}
             </p>
           </div>
@@ -546,7 +550,7 @@ function ConfirmedScreen() {
                     <Row label="Service" value={serviceLine} />
                     {booking.stylist ? <Row label="Stylist" value={booking.stylist} /> : null}
                     <Row label="Guest" value={booking.customer.name} />
-                    <Row label="Studio" value="Hair by Bhargav" sub={BUSINESS.address} />
+                    <Row label="Studio" value="Hair by Kiran" sub={BUSINESS.address} />
                   </dl>
                 </div>
                 {/* light sweep once the card lands */}
@@ -570,10 +574,6 @@ function ConfirmedScreen() {
               pointerEvents: stage >= FINAL ? "auto" : "none",
             }}
           >
-            {/* free reminders: the guest's own calendar app reminds them */}
-            <AddToCalendar booking={booking} tone="dark" />
-            {/* or a reminder on this phone (free web push), where the browser can */}
-            <RemindMe booking={booking} tone="dark" />
             {/* free: opens WhatsApp with the booking written out, to the salon's number */}
             <a
               href={waLink(
@@ -616,11 +616,17 @@ function ConfirmedScreen() {
                   () => {},
                 );
               }}
-              className="press flex min-h-13 w-full items-center justify-center gap-3 rounded-sm border border-[#E8E1D8]/28 px-6 text-[0.66rem] uppercase tracking-[0.2em] text-[#E8E1D8] hover:border-[#E8E1D8]/70"
+              className="press flex min-h-13 w-full items-center justify-center gap-3 rounded-sm bg-[#E8E1D8] px-6 text-[0.66rem] font-medium uppercase tracking-[0.2em] text-[#14110F] hover:opacity-90"
             >
               <MessageCircle className="h-4 w-4" strokeWidth={1.25} />
               Confirm on WhatsApp
             </a>
+            <p className="text-center text-[0.7rem] text-[#E8E1D8]/70">
+              Please tap Confirm on WhatsApp so the salon has your booking.
+            </p>
+            <RemindMe booking={booking} tone="dark" prompt />
+            <AddToCalendar booking={booking} tone="dark" />
+            <BookingLook booking={booking} tone="dark" />
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => void onSave()}
@@ -671,6 +677,13 @@ function ConfirmedScreen() {
         </div>
       </div>
 
+      {/* the maker's credit, once the confirmation has played */}
+      {stage >= FINAL ? (
+        <div className="fade-rise relative z-10 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          <SiteCredit tone="dark" />
+        </div>
+      ) : null}
+
       <button
         type="button"
         aria-hidden={!scrollHint}
@@ -700,7 +713,7 @@ function ConfirmedScreen() {
         >
           <img
             src={preview.url}
-            alt="Hair by Bhargav booking confirmation"
+            alt="Hair by Kiran booking confirmation"
             className="max-h-[78svh] w-auto max-w-full rounded-sm shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
@@ -802,7 +815,7 @@ function Seal() {
             letterSpacing="2.6"
             fontFamily="Jost, sans-serif"
           >
-            <textPath href="#seal-ring">CONFIRMED · HAIR BY BHARGAV ·</textPath>
+            <textPath href="#seal-ring">CONFIRMED · HAIR BY KIRAN ·</textPath>
           </text>
         </g>
         <path

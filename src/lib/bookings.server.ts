@@ -2,7 +2,7 @@
 // record and race-safe insert) and patch. Used by the server functions.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { metaWithStaff } from "./staff-store.server";
-import { applyConfig, type SalonConfig } from "./salon";
+import { applyConfig, isValidMobile, mobileDigits, type SalonConfig } from "./salon";
 import { loadConfig, loadConfigFast } from "./config.server";
 
 async function db() {
@@ -84,6 +84,7 @@ export type NewBooking = {
   siteOrigin?: string;
   /** "any" (default) or a stylist id chosen by the guest. */
   staffChoice?: string;
+  allowRepeat?: boolean;
 };
 
 /**
@@ -110,6 +111,8 @@ export async function insertBooking(
   const E = await engine(true);
   const rules = await E.loadRules();
   if (!options.staff) {
+    if (!isValidMobile(b.customer.phone)) return { ok: false, error: "Enter a complete 10-digit Indian mobile number; +91 and spaces are accepted." };
+    b = { ...b, customer: { ...b.customer, phone: mobileDigits(b.customer.phone) } };
     if (!rules.accepting) return { ok: false, error: rules.pauseMessage };
     if (!rules.allowMultiple && b.serviceIds.length > 1)
       return { ok: false, error: "Please choose one service per booking." };
@@ -296,7 +299,8 @@ async function guestGuard(
     const st = ((r["meta"] as Record<string, unknown> | null)?.["status"] as string) ?? "";
     return (
       last10(((r["customer"] as { phone?: string }) ?? {}).phone ?? "") === phone &&
-      !["cancelled", "no-show", "completed"].includes(st)
+      !["cancelled", "no-show", "completed"].includes(st) &&
+      ((r["date"] as string) > today || (r["time"] as number) >= now.getUTCHours() * 60 + now.getUTCMinutes())
     );
   });
   const sameIds = (r: Record<string, unknown>) =>
@@ -337,6 +341,8 @@ async function guestGuard(
         error: `You already have a booking at this time (${r["reference"] as string}). Change it in Manage booking, or call us.`,
       };
   }
+  if (!b.allowRepeat && mine.some(r => sameIds(r)))
+    return { ok: false, error: "You already have an upcoming appointment for these services. Reschedule it in Manage booking, or confirm you want another booking." };
   // repeat no-shows book by calling the salon (who can still book them in)
   {
     const since = new Date(now.getTime() - 365 * 86_400_000).toISOString().slice(0, 10);

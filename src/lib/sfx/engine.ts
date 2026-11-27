@@ -1,4 +1,4 @@
-// Hair by Bhargav: procedural interface sound.
+// Hair by Kiran: procedural interface sound.
 //
 // One shared AudioContext, created only after the guest's first real gesture.
 // Every sound is synthesised on the fly from a handful of primitives (filtered

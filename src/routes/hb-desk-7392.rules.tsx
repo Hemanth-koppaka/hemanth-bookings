@@ -11,7 +11,11 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/hb-desk-7392/rules")({
   head: () => ({
     meta: [
-      { title: "Booking rules — Hair by Bhargav" },
+      { property: "og:title", content: "Booking rules \u2014 Hair by Kiran" },
+      { property: "og:description", content: "How and when guests can book, cancel and reschedule." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Booking rules — Hair by Kiran" },
       { name: "description", content: "How and when guests can book, cancel and reschedule." },
       { name: "robots", content: "noindex" },
     ],

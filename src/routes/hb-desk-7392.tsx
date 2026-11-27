@@ -9,13 +9,15 @@ import { AdminAssistant } from "@/components/admin-assistant";
 export const Route = createFileRoute("/hb-desk-7392")({
   head: () => ({
     meta: [
-      { title: "Salon operations — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Salon operations — Hair by Kiran" },
       {
         name: "description",
-        content: "Private operations console for managing appointments at Hair by Bhargav.",
+        content: "Private operations console for managing appointments at Hair by Kiran.",
       },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Salon operations — Hair by Bhargav" },
+      { property: "og:title", content: "Salon operations — Hair by Kiran" },
       { property: "og:description", content: "Private operations console." },
       // installable on phones (iPhone needs this for booking alerts)
       { name: "theme-color", content: "#1c1611" },

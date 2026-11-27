@@ -94,8 +94,8 @@ export function RateVisit({ booking, className }: { booking: Booking; className?
           <p className="font-display text-[1.3rem] leading-snug">
             Thank you. Your rating helps other guests choose.
           </p>
-          {/* happy guests: one tap to say it on Google too, where new guests find us */}
-          {Math.max(0, ...Object.values(stars)) >= 4 ? (
+          {/* All guests can share an honest Google review. */}
+          {(
             <div className="mt-4 border-t border-bronze/20 pt-4">
               <p className="text-[0.9rem] leading-relaxed text-muted-foreground">
                 Would you share it on Google? A few words there help new guests find us.
@@ -106,13 +106,13 @@ export function RateVisit({ booking, className }: { booking: Booking; className?
                 rel="noopener noreferrer"
                 className="press mt-3 inline-flex min-h-11 items-center gap-2.5 rounded-sm bg-foreground px-6 text-[0.7rem] uppercase tracking-[0.2em] text-background"
               >
-                <span aria-hidden className="text-[1rem] leading-none text-[#f4c542]">
+                <span aria-hidden className="text-[1rem] leading-none text-bronze">
                   ★
                 </span>{" "}
                 Write a Google review
               </a>
             </div>
-          ) : null}
+          )}
         </>
       ) : (
         <>

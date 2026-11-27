@@ -67,11 +67,11 @@ const SAMPLE: BookingFacts = {
   customerPhone: "+919876543210",
   date: "2026-11-12",
   time: 16 * 60 + 30,
-  services: ["Bhargav's Signature"],
+  services: ["Kiran's Signature"],
   minutes: 30,
   price: 1000,
   priceFrom: false,
-  location: "KPHB Phase 9, Kukatpally, Hyderabad",
+  location: "Sector 9, Midtown, Hyderabad",
   manageUrl: "https://your-site/manage?ref=HB-7KQ2MX",
   previous: { date: "2026-11-11", time: 15 * 60 },
 };
@@ -143,7 +143,7 @@ const settingsInput = z.object({
     .max(200)
     .refine(
       (u) => u === "" || /^https:\/\/[a-z0-9.-]+(:\d+)?\/?$/i.test(u),
-      "Use the full address, e.g. https://hairbybhargav.com",
+      "Use the full address, e.g. https://salon.example.com",
     ),
   customerEmail: z.boolean(),
   adminEmail: z.boolean(),
@@ -213,7 +213,7 @@ export const adminSaveNotifySettings = createServerFn({ method: "POST" })
       admin_notification_email: x.adminEmailAddress,
       email_provider: x.email.provider,
       email_from: x.email.from,
-      email_from_name: x.email.fromName || "Hair by Bhargav",
+      email_from_name: x.email.fromName || "Hair by Kiran",
     };
     const { data: before } = await sb
       .from("notification_settings" as never)

@@ -4,7 +4,12 @@ import { CinematicKit } from "@/components/cinematic-kit";
 // Preview of the barber-kit film (not linked from the site yet).
 export const Route = createFileRoute("/film")({
   head: () => ({
-    meta: [{ title: "The kit — Hair by Bhargav" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { name: "description", content: "View the Hair by Kiran appointment film." },
+      { property: "og:title", content: "The kit \u2014 Hair by Kiran" },
+      { property: "og:description", content: "View the Hair by Kiran appointment film." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },{ title: "The kit — Hair by Kiran" }, { name: "robots", content: "noindex" }],
   }),
   component: Film,
 });

@@ -1,4 +1,4 @@
-// The confirmation film: Bhargav getting ready (his tools sliding into the
+// The confirmation film: Kiran getting ready (his tools sliding into the
 // pocket) cut into the reserved chair lighting up. Both shots and their own
 // sound are joined offline into one file, with the transition (zoom push,
 // warm light flash, whoosh) baked in so picture and sound never drift apart.
@@ -40,7 +40,7 @@ const filmFor = (a: FilmAudience | null | undefined) => FILMS[a === "women" ? "w
 export const filmPoster = (a: FilmAudience | null | undefined) => filmFor(a ?? filmAudience).poster;
 const STING_SRC = "/media/logo-sting.mp3";
 
-// the line along the bottom: while Bhargav gets ready, then over the chair
+// the line along the bottom: while Kiran gets ready, then over the chair
 const READY_IN = 0.7; // s
 const READY_OUT_BEFORE_CHAIR = 0.55;
 const CHAIR_TEXT_AFTER_CUT = 1.25;
@@ -188,7 +188,7 @@ export function BookingFilm({
     video.current = v;
     v.setAttribute(
       "aria-label",
-      "Bhargav getting ready, then the reserved chair at Hair by Bhargav",
+      "Kiran getting ready, then the reserved chair at Hair by Kiran",
     );
     v.className = "absolute inset-0 h-full w-full object-cover will-change-transform";
     box.prepend(v);
@@ -325,7 +325,7 @@ export function BookingFilm({
           }}
         >
           {caption.line === "ready"
-            ? "Bhargav is getting ready for you"
+            ? "Kiran is getting ready for you"
             : "Your chair is being reserved"}
         </p>
       </div>

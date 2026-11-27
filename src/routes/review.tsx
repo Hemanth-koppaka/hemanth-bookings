@@ -15,6 +15,15 @@ import {
   prettyPhone,
 } from "@/components/desktop";
 import { useBooking } from "@/lib/booking-store";
+import { isRepeatBooking } from "@/lib/repeat-booking";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { cn, haptic } from "@/lib/utils";
 import { useChangeDeadline } from "@/lib/change-deadline";
 import { BookingDock } from "@/components/booking-dock";
@@ -35,13 +44,15 @@ import { primeBookingFilm, warmBookingFilm } from "@/components/booking-film";
 export const Route = createFileRoute("/review")({
   head: () => ({
     meta: [
-      { title: "Review your appointment — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Review your appointment — Hair by Kiran" },
       {
         name: "description",
         content:
-          "Check your services, date, time and details before confirming with Hair by Bhargav.",
+          "Check your services, date, time and details before confirming with Hair by Kiran.",
       },
-      { property: "og:title", content: "Review your appointment — Hair by Bhargav" },
+      { property: "og:title", content: "Review your appointment — Hair by Kiran" },
       { property: "og:description", content: "One last look before you confirm." },
     ],
   }),
@@ -58,10 +69,19 @@ function ReviewScreen() {
     hasFromPricing,
     removeService,
     commitBooking,
+    bookings,
   } = useBooking();
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [repeatOpen, setRepeatOpen] = useState(false);
+  const [repeatAllowed, setRepeatAllowed] = useState(false);
+  const repeat = draft.customer
+    ? bookings.find((b) => isRepeatBooking(b, draft.serviceIds, draft.customer?.phone ?? ""))
+    : undefined;
+  useEffect(() => {
+    setRepeatAllowed(false);
+  }, [draft.customer?.phone, draft.serviceIds]);
 
   const ready = Boolean(draft.date && draft.time != null && draft.customer && selected.length);
 
@@ -69,13 +89,15 @@ function ReviewScreen() {
     if (hydrated && !ready) navigate({ to: "/book" });
   }, [hydrated, ready, navigate]);
 
-  // warm the confirmation film so it starts the moment the guest confirms
-  useEffect(() => {
-    warmBookingFilm(draft.audience);
-  }, [draft.audience]);
-
   // the guest's promise to come, or to tell the salon in advance
   const [pledged, setPledged] = useState(false);
+
+  // Start downloading the confirmation film only once the guest is about to book
+  // (they've ticked the promise, which Confirm needs), so people who just look
+  // at this page don't spend mobile data on it. The Confirm tap starts it too.
+  useEffect(() => {
+    if (pledged) warmBookingFilm(draft.audience);
+  }, [pledged, draft.audience]);
   const [nudge, setNudge] = useState(0);
 
   // a second tap in the same instant never sends a second booking
@@ -83,6 +105,10 @@ function ReviewScreen() {
   if (!ready || !draft.customer || !draft.date || draft.time == null) return null;
   const confirm = async () => {
     if (saving || sending.current) return;
+    if (repeat && !repeatAllowed) {
+      setRepeatOpen(true);
+      return;
+    }
     // services changed after the time was chosen: check the time again first
     if (draft.timeStale) {
       navigate({ to: "/time" });
@@ -110,13 +136,15 @@ function ReviewScreen() {
     setSaving(true);
     sending.current = true;
     setSaveError("");
-    const res = await commitBooking();
+    const res = await commitBooking(repeatAllowed);
     sending.current = false;
     setSaving(false);
     if ("error" in res) {
       haptic(30);
       sfx.error();
       setSaveError(res.error);
+      if (res.error.startsWith("You already have an upcoming appointment for these services"))
+        setRepeatOpen(true);
       return;
     }
     haptic(15);
@@ -126,6 +154,37 @@ function ReviewScreen() {
 
   return (
     <>
+      <Dialog open={repeatOpen} onOpenChange={setRepeatOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>You already have an appointment</DialogTitle>
+            <DialogDescription>
+              The same services are booked
+              {repeat
+                ? ` for ${fromISO(repeat.date).toLocaleDateString("en-GB", { day: "numeric", month: "long" })} at ${minuteLabel(repeat.time)}`
+                : ""}
+              . Would you like to change that booking instead?
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            onClick={() => {
+              setRepeatOpen(false);
+              void navigate({ to: "/manage", search: repeat ? { ref: repeat.reference } : {} });
+            }}
+          >
+            Reschedule existing booking
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setRepeatAllowed(true);
+              setRepeatOpen(false);
+            }}
+          >
+            Continue with another booking
+          </Button>
+        </DialogContent>
+      </Dialog>
       <DesktopReview
         confirm={confirm}
         saving={saving}
@@ -215,7 +274,6 @@ function ReviewScreen() {
                   {[
                     ["Full name", c.name],
                     ["Mobile", prettyPhone(c.phone)],
-                    ["Email", c.email || "—"],
                     ...(c.notes ? [["Note", c.notes]] : []),
                   ].map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-6">
@@ -316,8 +374,8 @@ function PhotoStrip() {
   );
 }
 
-/** "with Bhargav" or "any available stylist" (assigned when the booking is confirmed).
- * A service with a preferred stylist (Bhargav's Signature) is with that stylist. */
+/** "with Kiran" or "any available stylist" (assigned when the booking is confirmed).
+ * A service with a preferred stylist (Kiran's Signature) is with that stylist. */
 const stylistLabel = (id: string | null | undefined, serviceIds: string[] = []) => {
   if (id) return `with ${STYLISTS.find((x) => x.id === id)?.name ?? "your stylist"}`;
   const pref = preferredFor(serviceIds, SERVICE_RULES);
@@ -378,7 +436,7 @@ function DesktopReview({
   const c = draft.customer;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(BUSINESS.mapsQuery)}`;
   const embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(BUSINESS.mapsQuery)}&z=15&output=embed`;
-  const [line1, ...line2] = BUSINESS.address.split(", KPHB");
+  const [line1, ...line2] = BUSINESS.address.split(", Sector 9");
 
   return (
     <DesktopPage>
@@ -469,11 +527,10 @@ function DesktopReview({
               </Card>
 
               <Card title="Your details" action={<EditLink to="/details" />}>
-                <dl className="grid grid-cols-3 divide-x divide-hairline">
+                <dl className="grid grid-cols-2 divide-x divide-hairline">
                   {[
                     ["Full name", c.name],
                     ["Mobile", prettyPhone(c.phone)],
-                    ["Email", c.email || "—"],
                   ].map(([k, v]) => (
                     <div key={k} className="min-w-0 px-4 first:pl-0 last:pr-0">
                       <dt className="text-[0.64rem] uppercase tracking-[0.24em] text-muted-foreground">
@@ -517,12 +574,12 @@ function DesktopReview({
               >
                 <address className="text-[0.98rem] not-italic leading-relaxed">
                   <span className="block font-display text-[1.2rem] leading-tight">
-                    {BUSINESS.name || "Hair by Bhargav"}
+                    {BUSINESS.name || "Hair by Kiran"}
                   </span>
                   <span className="mt-1 block text-muted-foreground">
                     {line1},
                     <br />
-                    KPHB{line2.join(", KPHB")}
+                    Sector 9{line2.join(", Sector 9")}
                   </span>
                 </address>
                 {/* the map sits under the address and fills the rest of the column */}
@@ -627,7 +684,7 @@ function AttendancePledge({
       </label>
       <p className="mt-4 text-[0.8rem] italic text-muted-foreground">
         Thank you for respecting each other's time.{" "}
-        <span className="not-italic text-bronze">Hair by Bhargav</span>
+        <span className="not-italic text-bronze">Hair by Kiran</span>
       </p>
     </section>
   );

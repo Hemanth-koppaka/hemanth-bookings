@@ -12,6 +12,8 @@ import {
 import { Wordmark } from "@/components/screen";
 import { pushPublicKey } from "@/lib/salon.functions";
 import {
+  stylistAway,
+  stylistAwayNow,
   stylistDay,
   stylistPushSubscribe,
   stylistSetStatus,
@@ -20,6 +22,7 @@ import {
 } from "@/lib/stylist.functions";
 import { minuteLabel } from "@/lib/salon";
 import { cn, haptic } from "@/lib/utils";
+import { waLink } from "@/lib/whatsapp-link";
 
 // "My day" for a stylist: their own appointments only, one tap to move each
 // along, and alerts on this phone for their own bookings. Signed in with the
@@ -28,7 +31,18 @@ import { cn, haptic } from "@/lib/utils";
 export const Route = createFileRoute("/stylist")({
   head: () => ({
     meta: [
-      { title: "My day — Hair by Bhargav" },
+      {
+        name: "description",
+        content: "Private daily appointment schedule for Hair by Kiran stylists.",
+      },
+      { property: "og:title", content: "My day \u2014 Hair by Kiran" },
+      {
+        property: "og:description",
+        content: "Private daily appointment schedule for Hair by Kiran stylists.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "My day — Hair by Kiran" },
       { name: "robots", content: "noindex" },
       { name: "theme-color", content: "#1c1611" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
@@ -262,6 +276,7 @@ function MyDay({ session, onSignOut }: { session: Session; onSignOut: () => void
 
       <main className="mx-auto max-w-xl px-4 pt-4">
         <MyAlerts token={session.token} />
+        {offset === 0 ? <AwayToday token={session.token} name={session.name} /> : null}
         {error ? <p className="mt-3 text-[0.85rem] text-destructive">{error}</p> : null}
         {!data ? (
           <div className="mt-10 flex justify-center">
@@ -328,9 +343,27 @@ function MyDay({ session, onSignOut }: { session: Session; onSignOut: () => void
                     {a.photos ? (
                       <p className="mt-2 flex items-center gap-1.5 text-[0.8rem] text-muted-foreground">
                         <ImageIcon className="h-3.5 w-3.5" strokeWidth={1.5} /> {a.photos} reference{" "}
-                        {a.photos === 1 ? "photo" : "photos"} (the guest can show you on their
-                        phone)
+                        {a.photos === 1 ? "photo" : "photos"}
                       </p>
+                    ) : null}
+                    {a.photoUrls.length ? (
+                      <div className="mt-2 flex gap-2">
+                        {a.photoUrls.map((url, i) => (
+                          <a
+                            key={i}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Open reference photo ${i + 1}`}
+                          >
+                            <img
+                              src={url}
+                              alt={`Reference look ${i + 1}`}
+                              className="h-20 w-20 rounded-sm object-cover"
+                            />
+                          </a>
+                        ))}
+                      </div>
                     ) : null}
                     {!done ? (
                       <div className="mt-3 flex items-center gap-2">
@@ -388,6 +421,145 @@ const keyBytes = (b64: string) => {
 };
 
 /** Alerts on this phone for the stylist's own bookings. */
+/**
+ * "Running late" / "off for the rest of today" from the stylist's own phone:
+ * no new bookings are offered in that time, the salon gets an alert, and any
+ * guests already booked in it are listed with a one-tap WhatsApp note.
+ */
+function AwayToday({ token, name }: { token: string; name: string }) {
+  const [now, setNow] = useState<{ until: number } | null | undefined>(undefined);
+  const [pick, setPick] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [affected, setAffected] = useState<
+    { reference: string; time: number; name: string; phone: string }[]
+  >([]);
+  const refresh = useCallback(() => {
+    stylistAwayNow({ data: { token } })
+      .then((r) => setNow(r))
+      .catch(() => setNow(null));
+  }, [token]);
+  useEffect(() => refresh(), [refresh]);
+  // the choices: every half hour from the next one until 9 PM, plus "rest of today"
+  const d = new Date(Date.now() + 330 * 60_000);
+  const nowMin = d.getUTCHours() * 60 + d.getUTCMinutes();
+  const times: number[] = [];
+  for (let m = Math.ceil((nowMin + 1) / 30) * 30; m <= 21 * 60; m += 30) times.push(m);
+
+  const set = async (until: number | null) => {
+    setBusy(true);
+    setMsg("");
+    haptic();
+    const r = await stylistAway({ data: { token, until } }).catch(() => null);
+    setBusy(false);
+    if (!r?.ok) return setMsg(r && "error" in r ? r.error : "Couldn't save. Try again.");
+    setAffected(r.affected);
+    setPick("");
+    setMsg(
+      until == null
+        ? "You're bookable again from now."
+        : `Saved: ${"label" in r ? r.label : ""}. No new bookings in that time; the salon has been told.`,
+    );
+    refresh();
+  };
+  const note = (a: { name: string; time: number; reference: string }) =>
+    [
+      `Hello ${a.name || "there"}, this is Hair by Kiran.`,
+      `We're sorry, ${name} has been held up today, so your ${minuteLabel(a.time)} appointment needs a new time.`,
+      `Please choose one here: ${window.location.origin}/manage?ref=${encodeURIComponent(a.reference)}`,
+      "Or reply to this message and we'll arrange it. Thank you!",
+    ].join("\n\n");
+
+  if (now === undefined) return null;
+  return (
+    <section className="mt-3 rounded-lg border border-hairline bg-card p-3.5">
+      {now ? (
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-[0.9rem]">
+            <span className="font-medium">You're away</span>
+            <span className="text-muted-foreground">
+              {" "}
+              · {now.until >= 1440 ? "rest of today" : `back at ${minuteLabel(now.until)}`}
+            </span>
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void set(null)}
+            className="press shrink-0 rounded-md bg-foreground px-3 py-2 text-[0.8rem] text-background"
+          >
+            I'm back now
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="text-[0.62rem] uppercase tracking-[0.22em] text-muted-foreground">
+            Running late or need to leave?
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <select
+              value={pick}
+              onChange={(e) => setPick(e.target.value)}
+              aria-label="Back at"
+              className="min-w-0 flex-1 rounded-md border border-foreground/15 bg-background px-2 py-2 text-[0.85rem]"
+            >
+              <option value="">Back at…</option>
+              {times.map((m) => (
+                <option key={m} value={m}>
+                  Back at {minuteLabel(m)}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={busy || !pick}
+              onClick={() => void set(Number(pick))}
+              className="press rounded-md bg-foreground px-3 py-2 text-[0.8rem] text-background disabled:opacity-40"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                window.confirm("Take no more bookings for the rest of today?") && void set(1440)
+              }
+              className="press rounded-md border border-foreground/20 px-3 py-2 text-[0.8rem]"
+            >
+              Off rest of today
+            </button>
+          </div>
+        </>
+      )}
+      {msg ? <p className="mt-2 text-[0.8rem] text-muted-foreground">{msg}</p> : null}
+      {affected.length ? (
+        <div className="mt-3 border-t border-hairline pt-2.5">
+          <div className="text-[0.8rem] font-medium">Guests booked in that time</div>
+          <ul className="mt-1.5 space-y-1.5 text-[0.85rem]">
+            {affected.map((a) => (
+              <li key={a.reference} className="flex items-center justify-between gap-2">
+                <span>
+                  {minuteLabel(a.time)} · {a.name}
+                </span>
+                {a.phone ? (
+                  <a
+                    href={waLink(a.phone, note(a))}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 rounded-full bg-[#1f7a4d] px-3 py-1 text-[0.75rem] text-white"
+                  >
+                    WhatsApp
+                  </a>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function MyAlerts({ token }: { token: string }) {
   const [state, setState] = useState<"hidden" | "off" | "on" | "busy" | "blocked">("hidden");
   useEffect(() => {

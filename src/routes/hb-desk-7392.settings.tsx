@@ -9,10 +9,12 @@ import { BUSINESS, WEEK, type WeekDay } from "@/lib/salon";
 export const Route = createFileRoute("/hb-desk-7392/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Settings — Hair by Kiran" },
       { name: "description", content: "Team, access code and salon preferences." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Settings — Hair by Bhargav" },
+      { property: "og:title", content: "Settings — Hair by Kiran" },
       { property: "og:description", content: "Team and salon preferences." },
     ],
   }),
@@ -128,8 +130,8 @@ function SettingsScreen() {
       <Panel className="mt-4">
         <div className="eyebrow">Business hours</div>
         <p className="mt-3 text-sm text-muted-foreground">
-          Configure opening hours and lunch/break periods. Breaks are hidden in customer slot
-          availability.
+          For each day, the first and last appointment times: "10:00 AM – 7:00 PM" offers 10:00 AM
+          as the first slot and 7:00 PM as the last. Breaks are hidden from guests.
         </p>
         <div className="mt-5 flex flex-col gap-4">
           {hours.map((h, idx) => (
@@ -150,28 +152,34 @@ function SettingsScreen() {
                 </TinyButton>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <input
-                  className={inputClass}
-                  type="time"
-                  value={h.from}
-                  disabled={!h.open}
-                  onChange={(e) =>
-                    setHours((list) =>
-                      list.map((x, i) => (i === idx ? { ...x, from: e.target.value } : x)),
-                    )
-                  }
-                />
-                <input
-                  className={inputClass}
-                  type="time"
-                  value={h.to}
-                  disabled={!h.open}
-                  onChange={(e) =>
-                    setHours((list) =>
-                      list.map((x, i) => (i === idx ? { ...x, to: e.target.value } : x)),
-                    )
-                  }
-                />
+                <label className="grid gap-1 text-[0.72rem] uppercase tracking-[0.16em] text-muted-foreground">
+                  First appointment
+                  <input
+                    className={inputClass}
+                    type="time"
+                    value={h.from}
+                    disabled={!h.open}
+                    onChange={(e) =>
+                      setHours((list) =>
+                        list.map((x, i) => (i === idx ? { ...x, from: e.target.value } : x)),
+                      )
+                    }
+                  />
+                </label>
+                <label className="grid gap-1 text-[0.72rem] uppercase tracking-[0.16em] text-muted-foreground">
+                  Last appointment
+                  <input
+                    className={inputClass}
+                    type="time"
+                    value={h.to}
+                    disabled={!h.open}
+                    onChange={(e) =>
+                      setHours((list) =>
+                        list.map((x, i) => (i === idx ? { ...x, to: e.target.value } : x)),
+                      )
+                    }
+                  />
+                </label>
               </div>
               <div className="mt-4">
                 <div className="eyebrow">Break periods</div>

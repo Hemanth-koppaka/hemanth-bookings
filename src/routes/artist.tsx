@@ -1,3 +1,4 @@
+import { SiteCredit } from "@/components/site-credit";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight, Instagram } from "lucide-react";
 import { BookCTA, InfoPage } from "@/components/info-page";
@@ -7,13 +8,15 @@ import founder from "@/assets/founder.jpg.asset.json";
 export const Route = createFileRoute("/artist")({
   head: () => ({
     meta: [
-      { title: "The artist, B. Bhargav — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { title: "The artist, B. Kiran — Hair by Kiran" },
       {
         name: "description",
         content:
-          "Meet B. Bhargav, founder and chief stylist of The Hair By Bhargav Unisex Salon in KPHB Phase 9, Kukatpally.",
+          "Meet B. Kiran, founder and chief stylist of The Hair By Kiran Unisex Salon in Sector 9, Midtown.",
       },
-      { property: "og:title", content: "The artist, B. Bhargav — Hair by Bhargav" },
+      { property: "og:title", content: "The artist, B. Kiran — Hair by Kiran" },
       { property: "og:description", content: "Founder and chief stylist." },
       { property: "og:image", content: founder.url },
       { name: "twitter:image", content: founder.url },
@@ -37,7 +40,7 @@ function ArtistScreen() {
       panelEyebrow="Founder · Chief Stylist"
       panelTitle={
         <>
-          B. <span className="italic text-champagne">Bhargav</span>
+          B. <span className="italic text-champagne">Kiran</span>
         </>
       }
       panelSub="A haircut is a conversation first."
@@ -45,7 +48,7 @@ function ArtistScreen() {
       <div className="relative overflow-hidden rounded-xl bg-ink lg:hidden">
         <img
           src={founder.url}
-          alt="B. Bhargav, founder and chief stylist"
+          alt="B. Kiran, founder and chief stylist"
           className="aspect-4/5 w-full object-cover grayscale"
           decoding="async"
         />
@@ -57,7 +60,7 @@ function ArtistScreen() {
           Founder · Chief Stylist
         </div>
         <h1 className="mt-3 font-display text-[clamp(3rem,13vw,3.6rem)] leading-[0.95] lg:text-[4.5rem]">
-          B. <span className="italic text-bronze">Bhargav</span>
+          B. <span className="italic text-bronze">Kiran</span>
         </h1>
         <blockquote className="mt-7 border-l-2 border-bronze/50 pl-5 font-display text-[1.45rem] italic leading-snug text-foreground/85 lg:text-[1.75rem]">
           “A haircut is a conversation before it is a service.”
@@ -86,7 +89,7 @@ function ArtistScreen() {
       </ul>
 
       <a
-        href={BUSINESS.instagram.bhargav.url}
+        href={BUSINESS.instagram.kiran.url}
         target="_blank"
         rel="noopener noreferrer"
         className="press tap-icon group mt-6 flex items-center gap-4 rounded-md border border-hairline bg-card p-4 hover:border-foreground/30 lg:p-5"
@@ -99,7 +102,7 @@ function ArtistScreen() {
             See his work
           </span>
           <span className="mt-1 block text-[0.98rem] leading-snug">
-            @{BUSINESS.instagram.bhargav.handle}
+            @{BUSINESS.instagram.kiran.handle}
           </span>
         </span>
         <ArrowUpRight
@@ -108,7 +111,8 @@ function ArtistScreen() {
         />
       </a>
 
-      <BookCTA className="mt-10">Book with Bhargav</BookCTA>
+      <BookCTA className="mt-10">Book with Kiran</BookCTA>
+      <SiteCredit className="mt-8" />
     </InfoPage>
   );
 }

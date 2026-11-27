@@ -2,9 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  BellRing,
   CalendarDays,
-  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -17,7 +15,11 @@ import {
   UserRound,
 } from "lucide-react";
 import { haptic } from "@/lib/utils";
+import { firstAvailableSlot } from "@/lib/soonest-slot";
 import { sfx } from "@/lib/sfx";
+import { closedDateInfo, stylistAwayOn, stylistBackOn } from "@/lib/calendar-options";
+import { CalendarClosureNotes } from "@/components/calendar-closure-notes";
+import { NearbyAppointments } from "@/components/nearby-appointments";
 import { Page, PrimaryAction, Screen, StepHeader, StepIntro, StickyBar } from "@/components/screen";
 import {
   SelectionThumb,
@@ -31,7 +33,7 @@ import {
 import { useBooking } from "@/lib/booking-store";
 import { YourAppointment, BookingDock } from "@/components/booking-dock";
 import { SkyReveal, skyFrom, useDaySky, useNight } from "@/components/day-arc";
-import { getAvailability, joinWaitlist, pushPublicKey } from "@/lib/salon.functions";
+import { dayCache, cacheKey, fetchDay, FRESH_MS } from "@/lib/day-availability";
 import type { DayAvailability } from "@/lib/engine.server";
 import {
   calendarDays,
@@ -49,14 +51,16 @@ import {
 export const Route = createFileRoute("/time")({
   head: () => ({
     meta: [
-      { title: "Pick a date and time — Hair by Bhargav" },
+      { title: "Pick a date and time — Hair by Kiran" },
       {
         name: "description",
         content:
-          "Choose from genuinely free 30-minute slots at Hair by Bhargav, open Wednesday to Monday, 10:00 AM to 8:00 PM.",
+          "Choose your date and a genuinely available appointment time at Hair by Kiran, with live stylist availability and clear holiday closures.",
       },
-      { property: "og:title", content: "Pick a date and time — Hair by Bhargav" },
+      { property: "og:title", content: "Pick a date and time — Hair by Kiran" },
       { property: "og:description", content: "Only genuinely free 30-minute slots are shown." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: TimeScreen,
@@ -78,31 +82,55 @@ function TimeScreen() {
       ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
   }, [draft.date, hydrated]);
 
-  const days = useMemo(() => calendarDays(56, now), [now]);
+  // a service only one stylist performs (Kiran's Signature) can't be booked on their leave days
+  const days = useMemo(
+    () =>
+      calendarDays(56, now).map((d) =>
+        d.selectable && stylistAwayOn(d.iso, draft.serviceIds) ? { ...d, selectable: false } : d,
+      ),
+    [now, draft.serviceIds],
+  );
   // No date chosen yet: open on today, or the first day with free times, so
   // the guest sees real times straight away (never replaces a chosen date).
-  const opening = useRef(false);
+  const opening = useRef(0);
   useEffect(() => {
-    if (!hydrated || draft.date || opening.current || !draft.audience || !draft.serviceIds.length)
+    const firstDay = days[0];
+    const invalidDate =
+      draft.date &&
+      (draft.date < (firstDay?.iso ?? "") ||
+        !days.some((d) => d.iso === draft.date && d.selectable));
+    if (!hydrated || (draft.date && !invalidDate) || !draft.audience || !draft.serviceIds.length)
       return;
-    opening.current = true;
-    const open = days.filter((d) => d.selectable).slice(0, 14);
+    const request = ++opening.current;
+    const open = days.filter((d) => d.selectable);
     const key = draft.serviceIds.join(",");
+    const audience = draft.audience;
     void (async () => {
       for (const d of open) {
         try {
-          const r = await fetchDay(d.iso, draft.audience!, key);
-          if (!r.closed && !r.message && r.slots.some((x) => x.available)) {
-            update((cur) => (cur.date ? {} : { date: d.iso, time: null }));
+          const r = await fetchDay(d.iso, audience, key);
+          if (request !== opening.current) return;
+          const minute = firstAvailableSlot(r, draft.staffId);
+          if (minute != null) {
+            update((cur) =>
+              cur.date && cur.date !== draft.date ? {} : { date: d.iso, time: minute },
+            );
             return;
           }
         } catch {
           break;
         }
       }
-      if (open[0]) update((cur) => (cur.date ? {} : { date: open[0]!.iso, time: null }));
+      const first = open[0];
+      if (first && request === opening.current)
+        update((cur) =>
+          cur.date && cur.date !== draft.date ? {} : { date: first.iso, time: null },
+        );
     })();
-  }, [hydrated, draft.date, draft.audience, draft.serviceIds, days, update]);
+    return () => {
+      opening.current++;
+    };
+  }, [hydrated, draft.date, draft.audience, draft.serviceIds, draft.staffId, days, update]);
 
   // The guest's date is never swapped for another one. Only a saved date that
   // has since passed is cleared (never replaced), so they choose again.
@@ -119,7 +147,7 @@ function TimeScreen() {
       .map((d) => d.iso);
   }, [days, draft.date]);
   const rawDay = useDayAvailability(draft.date, draft.audience, draft.serviceIds, ahead);
-  // a service with a preferred stylist (Bhargav's Signature) shows that stylist's times
+  // a service with a preferred stylist (Kiran's Signature) shows that stylist's times
   const day = forStylist(
     rawDay,
     draft.staffId ?? rawDay.data?.preferred?.id,
@@ -156,7 +184,7 @@ function TimeScreen() {
   }, [draft.timeStale, draft.time, draft.date, day.data, day.loading, update]);
 
   const breakNote = selectedBreaks.length
-    ? ` · ${selectedBreaks.map((b) => `${b.label ?? "Break"} ${minuteLabel(b.start)}–${minuteLabel(b.end)}`).join(", ")}`
+    ? `${selectedBreaks.map((b) => `${b.label ?? "Break"} ${minuteLabel(b.start)}–${minuteLabel(b.end)}`).join(", ")}`
     : "";
 
   return (
@@ -182,6 +210,11 @@ function TimeScreen() {
               <DayStrip days={days} />
             </div>
 
+            <CalendarClosureNotes
+              days={days}
+              after={draft.date || undefined}
+              serviceIds={draft.serviceIds}
+            />
             {draft.date ? (
               <div key={draft.date} className="slide-in mt-4">
                 <div className="flex items-center gap-3 rounded-md bg-champagne/12 px-4 py-3">
@@ -189,13 +222,22 @@ function TimeScreen() {
                   <div className="min-w-0">
                     <div className="text-[0.95rem]">{longDate(draft.date)}</div>
                     <div className="text-[0.75rem] text-muted-foreground">
-                      {day.data?.closed
-                        ? closureOn(draft.date)?.reason
-                          ? `Salon is closed on this date · ${closureOn(draft.date)!.reason}`
-                          : "Salon is closed on this date"
-                        : day.data
-                          ? `Open ${minuteLabel(day.data.open)} – ${minuteLabel(day.data.close)}${breakNote}`
-                          : ""}
+                      {day.data?.closed ? (
+                        closureOn(draft.date)?.reason ? (
+                          `Salon is closed on this date · ${closureOn(draft.date)!.reason}`
+                        ) : (
+                          "Salon is closed on this date"
+                        )
+                      ) : day.data ? (
+                        <>
+                          <span className="block">
+                            Open {minuteLabel(day.data.open)} – {minuteLabel(day.data.close)}
+                          </span>
+                          {breakNote ? <span className="block">{breakNote}</span> : null}
+                        </>
+                      ) : (
+                        ""
+                      )}
                     </div>
                   </div>
                 </div>
@@ -406,34 +448,6 @@ function StylistPicker({ day }: { day: DayState }) {
  * instantly (and refreshes quietly), and the next few open days are loaded
  * in the background so tapping them feels immediate.
  */
-const FRESH_MS = 60_000;
-const dayCache = new Map<string, { at: number; data: DayAvailability }>();
-const inflight = new Map<string, Promise<DayAvailability>>();
-const cacheKey = (date: string, audience: string, key: string) => `${date}|${audience}|${key}`;
-
-function fetchDay(
-  date: string,
-  audience: string,
-  key: string,
-  force = false,
-): Promise<DayAvailability> {
-  const k = cacheKey(date, audience, key);
-  const hit = dayCache.get(k);
-  if (!force && hit && Date.now() - hit.at < FRESH_MS) return Promise.resolve(hit.data);
-  const running = inflight.get(k);
-  if (running) return running;
-  const p = getAvailability({
-    data: { date, audience: audience as "men" | "women", serviceIds: key.split(",") },
-  })
-    .then((r) => {
-      dayCache.set(k, { at: Date.now(), data: r });
-      return r;
-    })
-    .finally(() => inflight.delete(k));
-  inflight.set(k, p);
-  return p;
-}
-
 /**
  * The earliest free appointment from today, for "Soonest" only: open days in
  * order, the chosen stylist (or the services' preferred stylist) respected.
@@ -448,10 +462,8 @@ async function findSoonest(
   const key = serviceIds.join(",");
   for (const d of days.filter((x) => x.selectable)) {
     const r = await fetchDay(d.iso, audience, key);
-    if (r.closed || r.message) continue;
-    const who = staffId ?? r.preferred?.id ?? null;
-    const slot = r.slots.find((x) => x.available && (!who || !x.staff || x.staff.includes(who)));
-    if (slot) return { date: d.iso, minute: slot.minute };
+    const minute = firstAvailableSlot(r, staffId);
+    if (minute != null) return { date: d.iso, minute };
   }
   return null;
 }
@@ -562,16 +574,21 @@ function DayStrip({ days }: { days: { iso: string; date: Date; selectable: boole
         return (
           <button
             key={d.iso}
+            disabled={!d.selectable}
             data-sfx-off=""
             onPointerDown={() =>
               d.selectable && prefetchDay(d.iso, draft.audience, draft.serviceIds)
             }
             aria-pressed={on}
-            aria-label={d.date.toDateString() + (d.selectable ? "" : " (closed)")}
+            aria-label={
+              d.date.toDateString() +
+              (d.selectable ? "" : ` (closed) · ${closedDateInfo(d.iso, draft.serviceIds)?.reason}`)
+            }
+            title={closedDateInfo(d.iso, draft.serviceIds)?.reason}
             onClick={() => {
+              if (!d.selectable) return;
               haptic();
               if (!on) sfx.dateSelect();
-              // the guest's date is kept exactly, open or closed
               update({ date: d.iso, time: null });
             }}
             className={
@@ -580,7 +597,7 @@ function DayStrip({ days }: { days: { iso: string; date: Date; selectable: boole
                 ? "border-foreground bg-foreground text-background shadow-[0_10px_24px_-14px_color-mix(in_oklab,var(--ink)_70%,transparent)]"
                 : d.selectable
                   ? "border-foreground/12 bg-card hover:border-foreground/45"
-                  : "border-transparent text-foreground/30 hover:border-foreground/15")
+                  : "cursor-not-allowed border-transparent text-muted-foreground")
             }
           >
             <span className="text-[0.62rem] uppercase tracking-[0.16em]">
@@ -594,7 +611,9 @@ function DayStrip({ days }: { days: { iso: string; date: Date; selectable: boole
               {d.date.getDate()}
             </span>
             <span className="mt-1 text-[0.6rem] uppercase tracking-[0.16em]">
-              {d.selectable ? d.date.toLocaleDateString("en-GB", { month: "short" }) : "Closed"}
+              {d.selectable
+                ? d.date.toLocaleDateString("en-GB", { month: "short" })
+                : closedDateInfo(d.iso, draft.serviceIds)?.label}
             </span>
           </button>
         );
@@ -618,7 +637,7 @@ function BreakDivider({ start, end }: { start: number; end: number }) {
 }
 
 /**
- * Services with a preferred stylist (Bhargav's Signature): the stylist is set,
+ * Services with a preferred stylist (Kiran's Signature): the stylist is set,
  * not chosen. If the guest explicitly continued with another stylist, say so
  * and offer the way back.
  */
@@ -665,7 +684,7 @@ function PreferredStylist({ day }: { day: DayState }) {
   );
 }
 
-/** "Bhargav isn't available at this time": calm choice, never a silent swap. */
+/** "Kiran isn't available at this time": calm choice, never a silent swap. */
 function OtherStylistChoice({
   minute,
   others,
@@ -766,6 +785,32 @@ function OtherStylistChoice({
   );
 }
 
+/** The only stylist for these services is away: jump to the day they're back. */
+function BackOn({ name }: { name: string }) {
+  const { draft, update } = useBooking();
+  const back = draft.date ? stylistBackOn(draft.date, draft.serviceIds) : null;
+  if (!back || !draft.audience) return null;
+  const label = fromISO(back).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+  // only offer the day itself while it can still be booked online
+  const bookable = calendarDays().some((d) => d.iso === back && d.selectable);
+  if (!bookable || draft.date === back) return null;
+  return (
+    <div className="mx-auto mt-5 max-w-sm">
+      <button
+        type="button"
+        onClick={() => update({ date: back, time: null })}
+        className="press min-h-12 w-full rounded-sm bg-foreground px-5 text-[0.72rem] uppercase tracking-[0.2em] text-background"
+      >
+        See {name}'s times on {label}
+      </button>
+    </div>
+  );
+}
+
 /** A calm message in place of the times (closed, or nothing that fits). */
 function EmptyDay({
   title,
@@ -785,84 +830,6 @@ function EmptyDay({
   );
 }
 
-const keyBytes = (b64: string) => {
-  const t = b64.replace(/-/g, "+").replace(/_/g, "/");
-  const bin = atob(t + "===".slice((t.length + 3) % 4));
-  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
-};
-
-/** A full day: "Tell me if a time opens up" (a free phone notification, first come first served). */
-function WaitForTime({ date }: { date: string }) {
-  const { draft } = useBooking();
-  const [state, setState] = useState<"hidden" | "off" | "busy" | "on" | "blocked">("hidden");
-  useEffect(() => {
-    const ok = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-    if (!ok) return setState("hidden");
-    if (Notification.permission === "denied") return setState("blocked");
-    let on = false;
-    try {
-      on = localStorage.getItem(`hb.wait.${date}.${draft.serviceIds.join(",")}`) === "1";
-    } catch {
-      /* ignore */
-    }
-    setState(on ? "on" : "off");
-  }, [date, draft.serviceIds]);
-  if (state === "hidden" || !draft.audience) return null;
-  const join = async () => {
-    setState("busy");
-    try {
-      if ((await Notification.requestPermission()) !== "granted") return setState("blocked");
-      const reg = await navigator.serviceWorker.register("/admin-sw.js");
-      await navigator.serviceWorker.ready;
-      const { publicKey } = await pushPublicKey();
-      const sub =
-        (await reg.pushManager.getSubscription()) ??
-        (await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: keyBytes(publicKey) as BufferSource,
-        }));
-      const j = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
-      const r = await joinWaitlist({
-        data: {
-          date,
-          audience: draft.audience!,
-          serviceIds: draft.serviceIds,
-          ...(draft.staffId ? { staffId: draft.staffId } : {}),
-          endpoint: j.endpoint,
-          p256dh: j.keys.p256dh,
-          auth: j.keys.auth,
-          origin: location.origin,
-        },
-      });
-      if (!r.ok) return setState("off");
-      try {
-        localStorage.setItem(`hb.wait.${date}.${draft.serviceIds.join(",")}`, "1");
-      } catch {
-        /* ignore */
-      }
-      haptic();
-      setState("on");
-    } catch {
-      setState("off");
-    }
-  };
-  return state === "on" ? (
-    <p className="mx-auto mt-4 flex max-w-sm items-center justify-center gap-2 text-[0.85rem] text-emerald-700">
-      <Check className="h-4 w-4" strokeWidth={2} /> We'll tell you on this phone if a time opens up.
-    </p>
-  ) : state === "blocked" ? null : (
-    <button
-      type="button"
-      onClick={() => void join()}
-      disabled={state === "busy"}
-      className="press mx-auto mt-4 flex min-h-11 items-center justify-center gap-2 rounded-sm border border-foreground/20 px-5 text-[0.72rem] uppercase tracking-[0.18em] hover:border-foreground/45 disabled:opacity-60"
-    >
-      <BellRing className="h-4 w-4 text-bronze" strokeWidth={1.5} />
-      Tell me if a time opens up
-    </button>
-  );
-}
-
 function SlotGroups({ day }: { day: DayState }) {
   const { draft, update } = useBooking();
   const [ask, setAsk] = useState<{ minute: number; others: string[] } | null>(null);
@@ -870,6 +837,39 @@ function SlotGroups({ day }: { day: DayState }) {
   if (day.error) return <p className="mt-6 text-sm text-destructive">{day.error}</p>;
   if (day.data?.message)
     return <p className="mt-6 text-[0.95rem] text-muted-foreground">{day.data.message}</p>;
+  if (day.data?.away)
+    return (
+      <EmptyDay
+        title={
+          day.data.away.off
+            ? `${day.data.away.service} isn't available right now`
+            : `${day.data.away.name} is away on this day`
+        }
+        sub={
+          day.data.away.off
+            ? `${day.data.away.service} is only with ${day.data.away.name}, who isn't taking bookings at the moment.`
+            : `${day.data.away.service} is only with ${day.data.away.name}. Please choose another date.`
+        }
+      >
+        {!day.data.away.off && draft.date && draft.audience ? (
+          <BackOn name={day.data.away.name} />
+        ) : null}
+        {!day.data.away.off && draft.date && draft.audience ? (
+          <NearbyAppointments
+            days={calendarDays().map((d) =>
+              d.selectable && stylistAwayOn(d.iso, draft.serviceIds)
+                ? { ...d, selectable: false }
+                : d,
+            )}
+            date={draft.date}
+            audience={draft.audience}
+            serviceIds={draft.serviceIds}
+            staffId={draft.staffId}
+            onPick={(date, time) => update({ date, time })}
+          />
+        ) : null}
+      </EmptyDay>
+    );
   if (day.data?.closed)
     return (
       <EmptyDay
@@ -909,7 +909,16 @@ function SlotGroups({ day }: { day: DayState }) {
             : "Nothing on this day fits your services. Try another time or choose a different date."
         }
       >
-        {day.data ? <WaitForTime date={day.data.date} /> : null}
+        {draft.date && draft.audience ? (
+          <NearbyAppointments
+            days={calendarDays()}
+            date={draft.date}
+            audience={draft.audience}
+            serviceIds={draft.serviceIds}
+            staffId={draft.staffId}
+            onPick={(date, time) => update({ date, time })}
+          />
+        ) : null}
       </EmptyDay>
     );
 
@@ -1076,6 +1085,7 @@ function MonthCalendar({
   });
 
   const pick = (iso: string) => {
+    if (bookable.get(iso) !== true) return;
     haptic();
     if (iso !== draft.date) sfx.dateSelect();
     update({ date: iso, time: null });
@@ -1176,13 +1186,19 @@ function MonthCalendar({
             <button
               key={iso}
               type="button"
-              disabled={!inWindow}
+              disabled={!open}
               data-sfx-off=""
               onPointerDown={() => open && prefetchDay(iso, draft.audience, draft.serviceIds)}
               aria-pressed={on}
               aria-label={
-                d.toDateString() + (closed ? " (closed)" : !inWindow ? " (unavailable)" : "")
+                d.toDateString() +
+                (closed
+                  ? ` (closed) · ${closedDateInfo(iso, draft.serviceIds)?.reason}`
+                  : !inWindow
+                    ? " (unavailable)"
+                    : "")
               }
+              title={closed ? closedDateInfo(iso, draft.serviceIds)?.reason : undefined}
               onClick={() => pick(iso)}
               className={
                 "press relative flex h-14 flex-col items-center justify-center rounded-md border lg:h-[3.4rem] " +
@@ -1191,7 +1207,7 @@ function MonthCalendar({
                   : open
                     ? "border-foreground/12 bg-card hover:border-foreground/50"
                     : closed
-                      ? "border-transparent bg-foreground/[0.04] text-foreground/30"
+                      ? "border-transparent bg-foreground/[0.04] text-muted-foreground"
                       : "border-transparent text-foreground/20") +
                 (current ? "" : " opacity-50")
               }
@@ -1206,7 +1222,7 @@ function MonthCalendar({
               </span>
               <span className="mt-1 text-[0.55rem] uppercase tracking-[0.16em]">
                 {closed
-                  ? "Closed"
+                  ? closedDateInfo(iso, draft.serviceIds)?.label
                   : iso === todayIso
                     ? "Today"
                     : d.toLocaleDateString("en-GB", { month: "short" })}
@@ -1215,6 +1231,14 @@ function MonthCalendar({
           );
         })}
       </div>
+      <CalendarClosureNotes
+        days={days.filter(
+          (d) =>
+            d.date.getMonth() === view.getMonth() && d.date.getFullYear() === view.getFullYear(),
+        )}
+        after={draft.date || undefined}
+        serviceIds={draft.serviceIds}
+      />
     </div>
   );
 }
@@ -1286,7 +1310,7 @@ function DesktopTime({
         >
           {!draft.date ? (
             <EmptySlots text="Pick a day on the calendar to see its free times." />
-          ) : slots.length === 0 ? (
+          ) : day.data?.closed ? (
             <EmptySlots
               text={
                 closureOn(draft.date)?.reason
