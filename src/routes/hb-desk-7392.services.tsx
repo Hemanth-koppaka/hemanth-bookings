@@ -44,10 +44,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/hb-desk-7392/services")({
   head: () => ({
     meta: [
-      { title: "Catalogue — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Catalogue — Hair by Kiran" },
       { name: "description", content: "Services, categories, prices, durations and photos." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Catalogue — Hair by Bhargav" },
+      { property: "og:title", content: "Catalogue — Hair by Kiran" },
       { property: "og:description", content: "The salon's service catalogue." },
     ],
   }),
@@ -798,7 +800,9 @@ function ServiceEditor({
               hint={
                 rule.preferred === "any"
                   ? "Any qualified stylist who is free."
-                  : "Booked with this stylist. If they're busy, guests can choose another available stylist themselves; it's never switched for them."
+                  : rule.preferred.startsWith("only:")
+                    ? "Only this stylist. On their leave days and days off the service can't be booked, and guests see when they're back."
+                    : "Booked with this stylist. If they're busy, guests can choose another available stylist themselves; it's never switched for them."
               }
             >
               <select
@@ -809,7 +813,12 @@ function ServiceEditor({
                 <option value="any">Any qualified stylist</option>
                 {rule.stylists.map((st) => (
                   <option key={st.id} value={st.id}>
-                    Prefer {st.name}
+                    Prefer {st.name} (others if guest agrees)
+                  </option>
+                ))}
+                {rule.stylists.map((st) => (
+                  <option key={"only:" + st.id} value={"only:" + st.id}>
+                    Only {st.name} (closed when away)
                   </option>
                 ))}
               </select>

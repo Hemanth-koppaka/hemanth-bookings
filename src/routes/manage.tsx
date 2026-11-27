@@ -1,13 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { CalendarDays, ChevronRight, Clock, RotateCcw, Search } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  ChevronRight,
+  Clock,
+  Plus,
+  RotateCcw,
+  Scissors,
+  Search,
+  X,
+} from "lucide-react";
 import { GhostAction, PrimaryAction } from "@/components/screen";
-import { InfoPage, InfoTitle, SectionLabel } from "@/components/info-page";
+import { Button } from "@/components/ui/button";
+import { BookCTA, InfoPage, InfoTitle, SectionLabel } from "@/components/info-page";
 import { ScrollStrip, prettyPhone } from "@/components/desktop";
 import { AddToCalendar } from "@/components/add-to-calendar";
 import { RemindMe } from "@/components/remind-me";
 import { RateVisit, visitOver } from "@/components/rate-visit";
-import { LookEditor } from "@/components/my-look";
+import { BookingLook } from "@/components/my-look";
 import { auth, useBooking, servicesOf, type Booking, type ChangeResult } from "@/lib/booking-store";
 import { getAvailability, getPublicRules } from "@/lib/salon.functions";
 import type { DayAvailability } from "@/lib/engine.server";
@@ -18,9 +29,15 @@ import {
   formatDuration,
   fromISO,
   inr,
+  menuFor,
   minuteLabel,
 } from "@/lib/salon";
 import { haptic } from "@/lib/utils";
+import { waLink } from "@/lib/whatsapp-link";
+import { closedDateInfo } from "@/lib/calendar-options";
+import { CalendarClosureNotes } from "@/components/calendar-closure-notes";
+import { NearbyAppointments } from "@/components/nearby-appointments";
+import { isUpcomingAppointment } from "@/lib/upcoming-bookings";
 import portrait from "@/assets/portrait.jpg.asset.json";
 
 export const Route = createFileRoute("/manage")({
@@ -31,14 +48,16 @@ export const Route = createFileRoute("/manage")({
       : {},
   head: () => ({
     meta: [
-      { title: "Manage your booking — Hair by Bhargav" },
+      { title: "Manage your booking — Hair by Kiran" },
       {
         name: "description",
         content:
-          "Look up your appointment with your reference and mobile number to reschedule or cancel at Hair by Bhargav.",
+          "Look up your appointment with your reference and mobile number to reschedule or cancel at Hair by Kiran.",
       },
-      { property: "og:title", content: "Manage your booking — Hair by Bhargav" },
+      { property: "og:title", content: "Manage your booking — Hair by Kiran" },
       { property: "og:description", content: "Reschedule or cancel an existing appointment." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ManageScreen,
@@ -51,7 +70,7 @@ const longDate = (iso: string) =>
   fromISO(iso).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
 function ManageScreen() {
-  const { findBookings, bookings, cancelBooking, rescheduleBooking } = useBooking();
+  const { findBookings, bookings, hydrated, cancelBooking, rescheduleBooking } = useBooking();
   const { ref } = Route.useSearch();
   const [query, setQuery] = useState(ref ?? "");
   const [phoneQuery, setPhoneQuery] = useState("");
@@ -64,27 +83,43 @@ function ManageScreen() {
   const booking: Booking | undefined = foundRef
     ? bookings.find((b) => b.reference === foundRef)
     : undefined;
-  const recent = bookings.filter((b) => b.status === "confirmed").slice(0, 3);
+  const recent = bookings
+    .filter((b) => isUpcomingAppointment(b))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.time - b.time)
+    .slice(0, 3);
 
   const q = query.trim();
+  const empty = hydrated && !recent.length && !matches && !q && !ref;
   const phoneDigits = phoneQuery.replace(/\D/g, "");
-  const ready = /^HB-[A-Z0-9]{6}$/i.test(q) && phoneDigits.length >= 10;
+  const idOk = /^HB-[A-Z0-9]{6}$/i.test(q);
+  const phoneOk = phoneDigits.length >= 10;
+  const ready = idOk && phoneOk;
+  // what's still needed, in plain words (shown when they tap Find, or as they type)
+  const missing =
+    !q && !phoneDigits
+      ? "Enter your booking ID and the mobile number you booked with."
+      : !idOk
+        ? q
+          ? "That booking ID doesn't look right. It looks like HB-7KQ2MX."
+          : "Add your booking ID too. It starts with HB- and is in your booking confirmation."
+        : !phoneOk
+          ? "Add the 10-digit mobile number you booked with."
+          : "";
+  // a nudge as soon as someone types only their number (the case that looked like nothing happened)
+  const liveHint = phoneOk && !q ? missing : "";
+  const forgotLink = waLink(
+    BUSINESS.phones[0]!,
+    `Hi Hair by Kiran, I need my booking ID.${phoneOk ? ` I booked with the number ${phoneDigits.slice(-10)}.` : ""}`,
+  );
 
-  const lookup = async (e?: FormEvent) => {
+  const lookup = async (e?: FormEvent, quiet = false) => {
     e?.preventDefault();
     if (searching) return;
     if (!ready) {
-      // say exactly what's missing instead of doing nothing
+      if (quiet) return;
       haptic(20);
       setAttempt((n) => n + 1);
-      const idOk = /^HB-[A-Z0-9]{6}$/i.test(q);
-      setError(
-        !q && phoneDigits.length >= 10
-          ? "Add your booking ID too. It starts with HB- and is on your confirmation. For your privacy, a mobile number alone isn't enough."
-          : !idOk
-            ? "Check the booking ID: it looks like HB-7KQ2MX and is on your confirmation."
-            : "Enter the 10-digit mobile number you booked with.",
-      );
+      setError(missing);
       return;
     }
     setSearching(true);
@@ -113,7 +148,7 @@ function ManageScreen() {
 
   // opened from a booking message: look the booking up straight away
   useEffect(() => {
-    if (ref) void lookup();
+    if (ref) void lookup(undefined, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -135,14 +170,42 @@ function ManageScreen() {
         <>
           <InfoTitle
             eyebrow="Manage booking"
-            sub="Enter both details from your booking confirmation."
+            sub={
+              empty
+                ? "Your next visit starts whenever you’re ready."
+                : "Enter both details from your booking confirmation."
+            }
           >
-            Find your <span className="italic text-bronze">appointment.</span>
+            {empty ? (
+              <>
+                Your next <span className="italic text-bronze">appointment.</span>
+              </>
+            ) : (
+              <>
+                Find your <span className="italic text-bronze">appointment.</span>
+              </>
+            )}
           </InfoTitle>
 
+          {empty ? (
+            <section
+              aria-labelledby="no-appointments"
+              className="mt-8 border-y border-hairline py-7"
+            >
+              <CalendarDays aria-hidden className="h-9 w-9 text-bronze" strokeWidth={1.1} />
+              <h2 id="no-appointments" className="mt-4 font-display text-2xl">
+                No upcoming appointments
+              </h2>
+              <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                There are no upcoming bookings saved on this device. A fresh cut, a new colour, or a
+                little time for you?
+              </p>
+              <BookCTA className="mt-5">Book an appointment</BookCTA>
+            </section>
+          ) : null}
           {recent.length ? (
             <div className="mt-9">
-              <SectionLabel>On this device</SectionLabel>
+              <SectionLabel>Upcoming on this device</SectionLabel>
               <ul className="stagger mt-4 space-y-2.5">
                 {recent.map((b) => (
                   <li key={b.reference}>
@@ -172,8 +235,10 @@ function ManageScreen() {
             </div>
           ) : (
             <form noValidate onSubmit={lookup} className="mt-9">
-              {recent.length ? <SectionLabel>Or look it up</SectionLabel> : null}
-              <div className={recent.length ? "mt-5 space-y-5" : "space-y-5"}>
+              {recent.length || empty ? (
+                <SectionLabel>{empty ? "Already have a booking?" : "Or look it up"}</SectionLabel>
+              ) : null}
+              <div className={recent.length || empty ? "mt-5 space-y-5" : "space-y-5"}>
                 <div>
                   <label
                     className="mb-3 block text-[0.68rem] uppercase tracking-[0.28em] text-foreground/75"
@@ -195,9 +260,7 @@ function ManageScreen() {
                     spellCheck={false}
                   />
                   <p className="mt-2 text-[0.78rem] text-muted-foreground">
-                    Both your booking ID and mobile number are needed, so only you can open your booking.
-                    Lost the ID? It's in your confirmation email and calendar entry, or call the salon on{" "}
-                    <span className="whitespace-nowrap text-foreground/80">+91 79816 48951</span>.
+                    Both your booking ID and mobile number are required.
                   </p>
                 </div>
                 <div>
@@ -225,6 +288,10 @@ function ManageScreen() {
                   <p key={attempt} role="alert" className="shake text-[0.88rem] text-destructive">
                     {error}
                   </p>
+                ) : liveHint ? (
+                  <p className="text-[0.85rem] text-bronze" aria-live="polite">
+                    {liveHint}
+                  </p>
                 ) : null}
                 <PrimaryAction type="submit" disabled={searching}>
                   <span className="inline-flex items-center gap-3">
@@ -232,6 +299,17 @@ function ManageScreen() {
                     {searching ? "Searching…" : "Find booking"}
                   </span>
                 </PrimaryAction>
+                <p className="text-center text-[0.82rem] text-muted-foreground">
+                  Forgot your booking ID?{" "}
+                  <a
+                    href={forgotLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground underline underline-offset-4 hover:text-bronze"
+                  >
+                    Message us on WhatsApp
+                  </a>
+                </p>
               </div>
             </form>
           )}
@@ -240,7 +318,9 @@ function ManageScreen() {
         <BookingPanel
           booking={booking}
           onCancel={() => cancelBooking(booking.reference)}
-          onReschedule={(date, time) => rescheduleBooking(booking.reference, date, time)}
+          onReschedule={(date, time, staffId, serviceIds) =>
+            rescheduleBooking(booking.reference, date, time, staffId, serviceIds)
+          }
           onBack={() => setFoundRef(null)}
         />
       )}
@@ -360,7 +440,12 @@ function BookingPanel({
 }: {
   booking: Booking;
   onCancel: () => Promise<ChangeResult>;
-  onReschedule: (date: string, time: number) => Promise<ChangeResult>;
+  onReschedule: (
+    date: string,
+    time: number,
+    staffId: string | null,
+    serviceIds?: string[],
+  ) => Promise<ChangeResult>;
   onBack: () => void;
 }) {
   const services = servicesOf(booking);
@@ -373,6 +458,19 @@ function BookingPanel({
   const [mode, setMode] = useState<"view" | "reschedule" | "confirm-cancel">("view");
   const [date, setDate] = useState(booking.date);
   const [time, setTime] = useState<number | null>(null);
+  const [staffId, setStaffId] = useState<string | null>(booking.staffId ?? null);
+  // the services while changing the booking (same men's/women's menu)
+  const [svcIds, setSvcIds] = useState<string[]>(booking.serviceIds);
+  const [addingService, setAddingService] = useState(false);
+  const menu = useMemo(() => menuFor(booking.audience), [booking.audience]);
+  const servicesChanged =
+    svcIds.length !== booking.serviceIds.length ||
+    svcIds.some((id) => !booking.serviceIds.includes(id));
+  const picked = svcIds
+    .map((id) => findService(booking.audience, id))
+    .filter((x): x is NonNullable<typeof x> => Boolean(x));
+  const newTotal = picked.reduce((n, x) => n + x.price, 0);
+  const newMinutes = picked.reduce((n, x) => n + (x.minutes ?? x.slots * 30), 0);
   const [day, setDay] = useState<DayAvailability | null>(null);
   const [loadingDay, setLoadingDay] = useState(false);
   const [working, setWorking] = useState(false);
@@ -405,8 +503,9 @@ function BookingPanel({
       data: {
         date,
         audience: booking.audience,
-        serviceIds: booking.serviceIds,
+        serviceIds: svcIds.length ? svcIds : booking.serviceIds,
         reference: booking.reference,
+        staffId,
         ...auth(booking),
       },
     })
@@ -419,9 +518,10 @@ function BookingPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     date,
+    staffId,
     mode,
     booking.audience,
-    booking.serviceIds,
+    svcIds,
     booking.reference,
     booking.customer.phone,
     booking.token,
@@ -507,6 +607,9 @@ function BookingPanel({
             {booking.customer.name} · {prettyPhone(booking.customer.phone)}
           </span>
         </div>
+        {booking.stylist ? (
+          <p className="mt-3 text-sm text-muted-foreground">Stylist · {booking.stylist}</p>
+        ) : null}
         <div className="mt-4 flex items-baseline justify-between hairline-t pt-4">
           <span className="text-[0.62rem] uppercase tracking-[0.28em] text-foreground/65">
             Estimated total
@@ -515,11 +618,29 @@ function BookingPanel({
         </div>
       </div>
 
+      {mode === "view" && booking.changes?.length ? (
+        <section
+          aria-label="Appointment updates"
+          aria-live="polite"
+          className="mt-6 border-y border-hairline py-4"
+        >
+          {booking.changes.map((change) => (
+            <div key={change.id} className="flex gap-3 py-2">
+              <Bell aria-hidden="true" className="mt-1 h-4 w-4 shrink-0 text-bronze" />
+              <div>
+                <p className="text-sm font-medium">{change.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{change.body}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
       {/* regulars: the same services again, straight to choosing a time */}
       {mode === "view" ? <BookAgain booking={booking} className="mt-6" /> : null}
 
-      {/* the guest's reference photos: add, remove or show the stylist (until the visit) */}
-      {mode === "view" ? <LookEditor booking={booking} className="mt-6" /> : null}
+      {/* the reference photos they booked with, ready for the stylist (until the slot ends) */}
+      {mode === "view" ? <BookingLook booking={booking} className="mt-6" /> : null}
 
       {/* after the visit: rate each service (once) */}
       {mode === "view" ? <RateVisit booking={booking} className="mt-6" /> : null}
@@ -554,7 +675,18 @@ function BookingPanel({
           {(canMove, canCancel) => (
             <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
               {canMove ? (
-                <PrimaryAction onClick={() => setMode("reschedule")}>Reschedule</PrimaryAction>
+                <PrimaryAction
+                  onClick={() => {
+                    setDate(booking.date);
+                    setTime(booking.time);
+                    setStaffId(booking.staffId ?? null);
+                    setSvcIds(booking.serviceIds);
+                    setAddingService(false);
+                    setMode("reschedule");
+                  }}
+                >
+                  Change time, stylist or services
+                </PrimaryAction>
               ) : null}
               {canCancel ? (
                 <GhostAction
@@ -584,6 +716,138 @@ function BookingPanel({
         </div>
       ) : (
         <div className="page-in mt-8">
+          <section aria-label="Services" className="mb-6">
+            <SectionLabel>
+              <Scissors className="h-3.5 w-3.5" strokeWidth={1.25} /> Services
+            </SectionLabel>
+            <ul className="mt-3 space-y-2">
+              {svcIds.map((id) => {
+                const svc = findService(booking.audience, id);
+                return (
+                  <li
+                    key={id}
+                    className="flex items-center gap-3 rounded-md border border-foreground/12 bg-card px-3 py-2.5"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[0.95rem]">{svc?.name ?? id}</span>
+                      {svc ? (
+                        <span className="text-[0.78rem] text-muted-foreground">
+                          {inr(svc.price)}
+                          {svc.from ? "+" : ""} · {formatDuration(svc.minutes ?? svc.slots * 30)}
+                        </span>
+                      ) : null}
+                    </span>
+                    {svcIds.length > 1 ? (
+                      <button
+                        type="button"
+                        aria-label={`Remove ${svc?.name ?? "service"}`}
+                        onClick={() => {
+                          setSvcIds((x) => x.filter((y) => y !== id));
+                          setTime(null);
+                          setProblem("");
+                        }}
+                        className="press flex h-8 w-8 items-center justify-center rounded-full text-foreground/60 hover:bg-foreground/5 hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" strokeWidth={1.5} />
+                      </button>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+            {addingService ? (
+              <div className="mt-3 max-h-80 overflow-y-auto rounded-md border border-foreground/12 bg-card p-3">
+                {menu.map((cat) => {
+                  const options = cat.services.filter((x) => !svcIds.includes(x.id));
+                  if (!options.length) return null;
+                  return (
+                    <div key={cat.id} className="mb-3 last:mb-0">
+                      <p className="mb-1.5 text-[0.66rem] uppercase tracking-[0.2em] text-muted-foreground">
+                        {cat.title}
+                      </p>
+                      <ul className="divide-y divide-foreground/8">
+                        {options.map((x) => (
+                          <li key={x.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                haptic();
+                                setSvcIds((ids) => [...ids, x.id]);
+                                setAddingService(false);
+                                setTime(null);
+                                setProblem("");
+                              }}
+                              className="press flex w-full items-center gap-3 py-2 text-left hover:text-bronze"
+                            >
+                              <span className="min-w-0 flex-1 truncate text-[0.9rem]">
+                                {x.name}
+                              </span>
+                              <span className="shrink-0 text-[0.78rem] text-muted-foreground">
+                                {inr(x.price)}
+                                {x.from ? "+" : ""} · {formatDuration(x.minutes ?? x.slots * 30)}
+                              </span>
+                              <Plus className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setAddingService((v) => !v)}
+                className="press inline-flex items-center gap-1.5 text-[0.82rem] underline-offset-4 hover:underline"
+              >
+                <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+                {addingService ? "Close the list" : "Add a service"}
+              </button>
+              {servicesChanged ? (
+                <>
+                  <span className="text-[0.82rem] text-muted-foreground">
+                    New total {inr(newTotal)} · {formatDuration(newMinutes || 30)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSvcIds(booking.serviceIds);
+                      setTime(booking.time);
+                    }}
+                    className="text-[0.82rem] text-muted-foreground underline underline-offset-4"
+                  >
+                    Undo
+                  </button>
+                </>
+              ) : null}
+            </div>
+            {servicesChanged ? (
+              <p className="mt-2 text-[0.78rem] text-muted-foreground">
+                Times below are for the new services. Pick a time (your current one if it still
+                fits) and save.
+              </p>
+            ) : null}
+          </section>
+          <section aria-label="Choose stylist" className="mb-6">
+            <SectionLabel>Stylist</SectionLabel>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[{ id: null, name: "Any available" }, ...(day?.stylists ?? [])].map((stylist) => (
+                <Button
+                  key={stylist.id ?? "any"}
+                  variant={staffId === stylist.id ? "default" : "outline"}
+                  aria-pressed={staffId === stylist.id}
+                  onClick={() => {
+                    setStaffId(stylist.id);
+                    setProblem("");
+                  }}
+                >
+                  {stylist.name}
+                </Button>
+              ))}
+            </div>
+          </section>
           <SectionLabel>
             <CalendarDays className="h-3.5 w-3.5" strokeWidth={1.25} /> Pick a new date
           </SectionLabel>
@@ -596,7 +860,13 @@ function BookingPanel({
                     key={d.iso}
                     disabled={!d.selectable}
                     aria-pressed={on}
+                    aria-label={
+                      d.date.toDateString() +
+                      (d.selectable ? "" : ` (closed) · ${closedDateInfo(d.iso)?.reason}`)
+                    }
+                    title={closedDateInfo(d.iso)?.reason}
                     onClick={() => {
+                      if (!d.selectable) return;
                       haptic();
                       setDate(d.iso);
                       setTime(null);
@@ -607,7 +877,7 @@ function BookingPanel({
                         ? "border-foreground bg-foreground text-background"
                         : d.selectable
                           ? "border-foreground/12 bg-card hover:border-foreground/45"
-                          : "border-transparent text-foreground/25")
+                          : "border-transparent text-muted-foreground")
                     }
                   >
                     <span className="text-[0.62rem] uppercase tracking-[0.16em]">
@@ -624,21 +894,25 @@ function BookingPanel({
                     <span className="mt-1 text-[0.6rem] uppercase tracking-[0.16em]">
                       {d.selectable
                         ? d.date.toLocaleDateString("en-GB", { month: "short" })
-                        : "Closed"}
+                        : closedDateInfo(d.iso)?.label}
                     </span>
                   </button>
                 );
               })}
             </div>
           </ScrollStrip>
+          <CalendarClosureNotes days={days} after={date} />
 
-          <div key={date} className="stagger mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4">
+          <div
+            key={`${date}.${staffId}`}
+            className="stagger mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4"
+          >
             {slots.map((x) => {
               const on = time === x.minute;
               return (
                 <button
                   key={x.minute}
-                  disabled={!x.available}
+                  disabled={loadingDay || !x.available}
                   aria-pressed={on}
                   onClick={() => {
                     haptic();
@@ -667,16 +941,48 @@ function BookingPanel({
               The salon is closed on this day.
             </p>
           ) : null}
+          {!loadingDay &&
+          day?.date === date &&
+          !day.closed &&
+          !day.message &&
+          !slots.some((s) => s.available) ? (
+            <>
+              <p className="mt-4 text-sm text-muted-foreground">
+                No free times for your appointment on this day.
+              </p>
+              <NearbyAppointments
+                days={days}
+                date={date}
+                audience={booking.audience}
+                serviceIds={svcIds}
+                staffId={staffId}
+                reference={booking.reference}
+                proof={auth(booking)}
+                onPick={(nextDate, nextTime) => {
+                  setDate(nextDate);
+                  setTime(nextTime);
+                }}
+              />
+            </>
+          ) : null}
 
           <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
             <PrimaryAction
-              disabled={time == null || working}
+              disabled={
+                time == null ||
+                working ||
+                loadingDay ||
+                !slots.some((slot) => slot.minute === time && slot.available)
+              }
               onClick={() => {
                 if (time == null) return;
-                void run(() => onReschedule(date, time), "Your appointment has been moved.");
+                void run(
+                  () => onReschedule(date, time, staffId, servicesChanged ? svcIds : undefined),
+                  "Your appointment has been updated.",
+                );
               }}
             >
-              {working ? "Moving…" : "Move appointment"}
+              {working ? "Saving…" : "Save changes"}
             </PrimaryAction>
             <GhostAction onClick={() => setMode("view")}>Never mind</GhostAction>
           </div>

@@ -1,3 +1,5 @@
+import { SiteCredit } from "@/components/site-credit";
+import { stylistAwayBanner } from "@/lib/calendar-options";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CONTENT } from "@/lib/site-content";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -7,6 +9,7 @@ import { LogoReveal } from "@/components/motion";
 import { CallButton, InfoStrip } from "@/components/desktop";
 import { UpcomingLook } from "@/components/my-look";
 import { SoundToggle } from "@/components/sound-toggle";
+import { MOTION_EVENT } from "@/lib/motion-preference";
 import { useBooking } from "@/lib/booking-store";
 import { shouldAskRating } from "@/components/rate-visit";
 import founder from "@/assets/founder.jpg.asset.json";
@@ -14,16 +17,18 @@ import founder from "@/assets/founder.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Hair by Bhargav — Reserve your chair" },
+      { title: "Hair by Kiran — Reserve your chair" },
       {
         name: "description",
         content:
-          "Hair, beauty and makeover by B. Bhargav. Choose a service, pick a time that is genuinely free, and you're booked. KPHB Phase 9, Kukatpally, Hyderabad.",
+          "Hair, beauty and makeover by B. Kiran. Choose a service, pick a time that is genuinely free, and you're booked. Sector 9, Midtown, Hyderabad.",
       },
-      { property: "og:title", content: "Hair by Bhargav — Reserve your chair" },
+      { property: "og:title", content: "Hair by Kiran — Reserve your chair" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
-        content: "Hair, beauty and makeover by B. Bhargav. A calm, private booking experience.",
+        content: "Hair, beauty and makeover by B. Kiran. A calm, private booking experience.",
       },
     ],
   }),
@@ -51,10 +56,11 @@ function useTodayStatus() {
     }
     const h = hoursFor(iso);
     const mins = now.getHours() * 60 + now.getMinutes();
-    if (mins >= h.close) setStatus({ open: false, text: "Closed for today" });
+    // the closing time is the last appointment, so the salon is still open then
+    if (mins > h.close) setStatus({ open: false, text: "Closed for today" });
     else if (mins < h.open)
       setStatus({ open: true, text: `Opens today at ${minuteLabel(h.open)}` });
-    else setStatus({ open: true, text: `Open now · until ${minuteLabel(h.close)}` });
+    else setStatus({ open: true, text: `Open now · last appointment ${minuteLabel(h.close)}` });
   }, []);
   return status;
 }
@@ -96,6 +102,23 @@ function Announcement({ className }: { className?: string }) {
       }
     >
       {CONTENT.announcement.text}
+    </p>
+  );
+}
+
+/** "Kiran is away · back on …" while he's away now or within a week (from his leave). */
+function StylistAway({ className }: { className?: string }) {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => setText(stylistAwayBanner()), []);
+  if (!text) return null;
+  return (
+    <p
+      className={
+        "border-l-2 border-bronze/60 pl-3 text-[0.85rem] leading-relaxed text-foreground/80 " +
+        (className ?? "")
+      }
+    >
+      {text}
     </p>
   );
 }
@@ -165,7 +188,11 @@ function Intro() {
       root.classList.remove("intro-run");
       setGone(true);
     };
-    if (!logo || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (
+      !logo ||
+      root.classList.contains("reduced-motion") ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       finish();
       return;
     }
@@ -213,14 +240,14 @@ function Intro() {
     const fly = logo.animate(
       [
         {
-          transform: at(`perspective(900px) scale(${scale * 1.35}) rotateX(22deg) rotateY(-80deg)`),
-          opacity: 0,
-          filter: "blur(14px)",
+          transform: at(`perspective(900px) scale(${scale}) rotateX(0deg) rotateY(0deg)`),
+          opacity: 1,
+          filter: "none",
           offset: 0,
           easing: "cubic-bezier(0.2, 0.7, 0.2, 1)",
         },
         {
-          transform: at(`perspective(900px) scale(${scale * 1.04}) rotateX(-4deg) rotateY(10deg)`),
+          transform: at(`perspective(900px) scale(${scale}) rotateX(0deg) rotateY(0deg)`),
           opacity: 1,
           filter: "blur(0px)",
           offset: 0.34,
@@ -274,7 +301,18 @@ function Intro() {
     };
     const el = overlay.current;
     el?.addEventListener("click", skip);
+    const reduce = () => {
+      if (document.documentElement.classList.contains("reduced-motion")) skip();
+    };
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const systemChange = () => {
+      if (media.matches) skip();
+    };
+    window.addEventListener(MOTION_EVENT, reduce);
+    media.addEventListener("change", systemChange);
     return () => {
+      window.removeEventListener(MOTION_EVENT, reduce);
+      media.removeEventListener("change", systemChange);
       el?.removeEventListener("click", skip);
       if (!done) fly.cancel();
       veil?.cancel();
@@ -304,7 +342,7 @@ function Intro() {
 
 function MobileHome() {
   return (
-    <div className="flex h-[100svh] min-h-[600px] flex-col overflow-hidden bg-background lg:hidden">
+    <div className="flex min-h-[100svh] flex-col overflow-x-hidden bg-background lg:hidden">
       <div className="safe-t">
         <header className="flex items-center justify-between px-5 pt-4 pb-3">
           <span data-hero-logo className="after-intro-logo inline-flex">
@@ -333,11 +371,11 @@ function MobileHome() {
         </header>
       </div>
 
-      <main className="flex min-h-0 flex-1 flex-col px-5">
+      <main className="flex flex-1 flex-col px-5">
         <Link
           to="/artist"
           className="press group relative min-h-[120px] flex-1 overflow-hidden rounded-xl bg-ink"
-          aria-label="Meet B. Bhargav"
+          aria-label="Meet B. Kiran"
         >
           <img
             src={founder.url}
@@ -377,6 +415,7 @@ function MobileHome() {
             {CONTENT.home.intro}
           </p>
           <Announcement className="mt-3" />
+          <StylistAway className="mt-3" />
           <RatePrompt className="mt-3" />
           <div className="mt-[clamp(1rem,2.5svh,1.5rem)] space-y-2.5">
             <Link
@@ -402,7 +441,7 @@ function MobileHome() {
         </div>
       </main>
 
-      <nav className="grid shrink-0 grid-cols-4 hairline-t safe-b pb-0">
+      <nav className="grid shrink-0 grid-cols-4 hairline-t pb-0">
         {quickLinks.map((l, i) => (
           <Link
             key={l.to}
@@ -416,6 +455,7 @@ function MobileHome() {
           </Link>
         ))}
       </nav>
+      <SiteCredit closed className="shrink-0 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]" />
     </div>
   );
 }
@@ -425,7 +465,7 @@ function DesktopHome() {
     <div className="hidden min-h-[100svh] flex-col bg-background lg:flex">
       {/* three columns, so the menu sits at the true centre of the page */}
       <header className="mx-8 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-8 hairline-b px-6 py-5 xl:mx-10 xl:px-16">
-        <Link to="/" aria-label="Hair by Bhargav" className="inline-flex justify-self-start">
+        <Link to="/" aria-label="Hair by Kiran" className="inline-flex justify-self-start">
           <span data-hero-logo className="after-intro-logo inline-flex">
             <LogoReveal className="h-14" />
           </span>
@@ -465,6 +505,7 @@ function DesktopHome() {
             {CONTENT.home.introLong}
           </p>
           <Announcement className="mt-5 max-w-md" />
+          <StylistAway className="mt-4 max-w-md" />
           <RatePrompt className="mt-4 max-w-md" />
           <div className="mt-10 flex items-center gap-4">
             <Link
@@ -503,7 +544,7 @@ function DesktopHome() {
         <Link
           to="/artist"
           className="group relative h-[clamp(420px,64svh,640px)] overflow-hidden rounded-xl bg-ink shadow-[0_40px_80px_-48px_color-mix(in_oklab,var(--ink)_80%,transparent)]"
-          aria-label="Meet B. Bhargav — read the story"
+          aria-label="Meet B. Kiran — read the story"
         >
           <img
             src={founder.url}
@@ -534,6 +575,7 @@ function DesktopHome() {
       </main>
 
       <InfoStrip className="mx-8 px-6 xl:mx-10 xl:px-16" />
+      <SiteCredit closed className="mx-8 py-3 xl:mx-10" />
     </div>
   );
 }

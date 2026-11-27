@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { findService, type Audience, type Service } from "./salon";
-import { createBooking, findMyBookings, updateMyBooking } from "./salon.functions";
+import { createBooking, findMyBooking, findMyBookings, updateMyBooking } from "./salon.functions";
 
 /** How a booking proves it's the guest's: its manage key, or the phone it was booked with. */
 export const auth = (b: { token?: string | undefined; customer: { phone: string } }) =>
@@ -40,6 +40,7 @@ export type Draft = {
 };
 
 export type Booking = {
+  changes?: { id: string; title: string; body: string }[];
   reference: string;
   audience: Audience;
   serviceIds: string[];
@@ -54,10 +55,11 @@ export type Booking = {
   readOnly?: boolean;
   /** From the salon: a finished visit the guest hasn't rated yet. */
   rateable?: boolean;
-  /** What was booked, as stored by the salon (never re-read from today's menu). */
+  /** Booked details with current prices until completion; completed prices are retained. */
   snapshot?: BookingSnapshot | undefined;
   /** The stylist assigned when the booking was confirmed. */
   stylist?: string | null | undefined;
+  staffId?: string | null | undefined;
   /** The guest picked this stylist themselves (not "any available"). */
   stylistChosen?: boolean;
 };
@@ -76,8 +78,8 @@ const EMPTY: Draft = {
   customer: null,
 };
 
-const DRAFT_KEY = "hbb.draft.v1";
-const BOOKINGS_KEY = "hbb.bookings.v1";
+const DRAFT_KEY = "hbb.draft.v2";
+const BOOKINGS_KEY = "hbb.bookings.v2";
 
 type Ctx = {
   draft: Draft;
@@ -93,11 +95,18 @@ type Ctx = {
   totalPrice: number;
   hasFromPricing: boolean;
   bookings: Booking[];
-  commitBooking: () => Promise<{ booking: Booking } | { error: string }>;
+  commitBooking: (allowRepeat?: boolean) => Promise<{ booking: Booking } | { error: string }>;
   /** Looks up by booking ID or by the mobile number used to book. null = couldn't reach the salon. */
   findBookings: (reference: string, phone: string) => Promise<Booking[] | null>;
   cancelBooking: (reference: string) => Promise<ChangeResult>;
-  rescheduleBooking: (reference: string, date: string, time: number) => Promise<ChangeResult>;
+  /** Moves a booking and/or changes its services (serviceIds omitted = keep them). */
+  rescheduleBooking: (
+    reference: string,
+    date: string,
+    time: number,
+    staffId?: string | null,
+    serviceIds?: string[],
+  ) => Promise<ChangeResult>;
   hydrated: boolean;
 };
 
@@ -123,9 +132,66 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    try {
+      window.localStorage.removeItem("hbb.draft.v1");
+      window.localStorage.removeItem("hbb.bookings.v1");
+    } catch {
+      /* Browser storage is optional. */
+    }
     setDraft(read<Draft>(DRAFT_KEY, EMPTY));
     setBookings(read<Booking[]>(BOOKINGS_KEY, []));
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const saved = read<Booking[]>(BOOKINGS_KEY, []);
+      const updates = await Promise.all(
+        saved
+          .filter((b) => !b.readOnly && (b.token || !b.customer.phone.includes("•")))
+          .map(async (b) => {
+            const result = await findMyBooking({
+              data: { reference: b.reference, ...auth(b) },
+            }).catch(() => null);
+            return result?.booking ? { reference: b.reference, booking: result.booking } : null;
+          }),
+      );
+      if (!active) return;
+      setBookings((current) =>
+        current.map((b) => {
+          const updated = updates.find((u) => u?.reference === b.reference)?.booking;
+          return updated
+            ? {
+                ...b,
+                customer: updated.customer,
+                staffId: updated.staffId,
+                stylist: updated.stylist,
+                stylistChosen: updated.stylistChosen,
+                date: updated.date,
+                time: updated.time,
+                status: updated.status,
+                rateable: updated.rateable,
+                changes: updated.changes,
+                snapshot: updated.snapshot ?? undefined,
+              }
+            : b;
+        }),
+      );
+    };
+    const visible = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    void refresh();
+    const timer = window.setInterval(visible, 30_000);
+    window.addEventListener("focus", visible);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", visible);
+      document.removeEventListener("visibilitychange", visible);
+    };
   }, []);
 
   useEffect(() => {
@@ -159,15 +225,35 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       totalPrice,
       hasFromPricing,
       bookings,
-      update: (patch) =>
-        setDraft((d) => ({ ...d, ...(typeof patch === "function" ? patch(d) : patch) })),
-      setAudience: (a) =>
+      update: (patch) => {
+        if (typeof patch !== "function" && draft.audience) {
+          if (patch.customer || patch.time != null) {
+            window.__lovableEvents?.track?.("project.booking_step_completed", {
+              audience: draft.audience,
+              stage: patch.customer ? "details" : "time",
+            });
+          }
+        }
+        setDraft((d) => ({ ...d, ...(typeof patch === "function" ? patch(d) : patch) }));
+      },
+      setAudience: (a) => {
+        window.__lovableEvents?.track?.("project.booking_step_completed", {
+          audience: a,
+          stage: "menu",
+        });
         setDraft((d) =>
           d.audience === a
             ? { ...d, audience: a }
             : { ...EMPTY, audience: a, customer: d.customer },
-        ),
-      toggleService: (id) =>
+        );
+      },
+      toggleService: (id) => {
+        if (draft.audience && !draft.serviceIds.includes(id) && findService(draft.audience, id)) {
+          window.__lovableEvents?.track?.("project.service_selected", {
+            audience: draft.audience,
+            service_id: id,
+          });
+        }
         setDraft((d) => ({
           ...d,
           // one entry per service (by id), never duplicates
@@ -176,7 +262,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             : [...d.serviceIds, id],
           // a chosen time is kept but re-checked on the time step (the length changed)
           ...(d.time != null ? { timeStale: true } : {}),
-        })),
+        }));
+      },
       removeService: (id) =>
         setDraft((d) => ({
           ...d,
@@ -184,7 +271,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           ...(d.time != null ? { timeStale: true } : {}),
         })),
       resetDraft: () => setDraft(EMPTY),
-      commitBooking: async () => {
+      commitBooking: async (allowRepeat = false) => {
         if (!draft.audience || !draft.date || draft.time == null || !draft.customer)
           return { error: "Your booking is incomplete." };
         const booking: Booking = {
@@ -212,6 +299,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
                 ...(booking.customer.notes ? { notes: booking.customer.notes } : {}),
               },
               consent: booking.customer.consent !== false,
+              allowRepeat,
               ...(draft.staffId ? { staffId: draft.staffId } : {}),
               ...(draft.photos?.length
                 ? {
@@ -229,6 +317,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           return { error: "We couldn't reach the salon. Check your connection and try again." };
         }
         setBookings((b) => [booking, ...b]);
+        window.__lovableEvents?.track?.("project.booking_completed", {
+          audience: booking.audience,
+          service_count: booking.serviceIds.length,
+        });
         return { booking };
       },
       findBookings: async (reference, phone) => {
@@ -243,6 +335,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
             customer: r.customer,
             status: r.status,
             createdAt: r.createdAt,
+            staffId: r.staffId,
+            stylist: r.stylist,
+            stylistChosen: r.stylistChosen,
             ...("token" in r && r.token ? { token: r.token } : {}),
             ...("readOnly" in r && r.readOnly ? { readOnly: true } : {}),
             rateable: r.rateable,
@@ -293,16 +388,46 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         );
         return { ok: true };
       },
-      rescheduleBooking: async (reference, date, time) => {
+      rescheduleBooking: async (reference, date, time, staffId, serviceIds) => {
         const bk = bookings.find((x) => x.reference === reference);
         if (!bk) return { ok: false, error: "Booking not found on this device." };
         const r = await updateMyBooking({
-          data: { reference, ...auth(bk), action: "reschedule", date, time },
+          data: {
+            reference,
+            ...auth(bk),
+            action: "reschedule",
+            date,
+            time,
+            staffId,
+            ...(serviceIds ? { serviceIds } : {}),
+          },
         }).catch(() => null);
         if (!r) return { ok: false, error: OFFLINE };
         if (!r.ok)
           return { ok: false, error: ("error" in r && r.error) || "Couldn't move this booking." };
-        setBookings((b) => b.map((x) => (x.reference === reference ? { ...x, date, time } : x)));
+        const updated = await findMyBooking({ data: { reference, ...auth(bk) } }).catch(() => null);
+        setBookings((b) =>
+          b.map((x) =>
+            x.reference === reference
+              ? {
+                  ...x,
+                  date,
+                  time,
+                  ...(serviceIds ? { serviceIds } : {}),
+                  ...(updated?.booking
+                    ? {
+                        customer: updated.booking.customer,
+                        staffId: updated.booking.staffId,
+                        stylist: updated.booking.stylist,
+                        stylistChosen: updated.booking.stylistChosen,
+                        serviceIds: updated.booking.serviceIds,
+                        snapshot: updated.booking.snapshot ?? undefined,
+                      }
+                    : {}),
+                }
+              : x,
+          ),
+        );
         return { ok: true };
       },
     };

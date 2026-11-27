@@ -5,7 +5,7 @@
 
 export type CalendarBooking = {
   reference: string;
-  serviceName: string; // e.g. "Bhargav's Signature" or "Basic Haircut + Beard Trim"
+  serviceName: string; // e.g. "Kiran's Signature" or "Basic Haircut + Beard Trim"
   minutes: number; // booked duration (from the booking snapshot)
   price?: number | undefined;
   date: string; // YYYY-MM-DD (salon date)
@@ -55,11 +55,11 @@ export const durationText = (min: number) => {
   return h && m ? `${h} hr ${m} min` : h ? `${h} hour${h > 1 ? "s" : ""}` : `${m} min`;
 };
 
-export const eventTitle = (b: CalendarBooking) => `Hair by Bhargav — ${b.serviceName}`;
+export const eventTitle = (b: CalendarBooking) => `Hair by Kiran — ${b.serviceName}`;
 
 export function eventDescription(b: CalendarBooking) {
   return [
-    "Hair by Bhargav",
+    "Hair by Kiran",
     "",
     `Service: ${b.serviceName}`,
     `Duration: ${durationText(instants(b).minutes)}`,
@@ -142,7 +142,7 @@ export function buildIcs(b: CalendarBooking, opts: { cancelled?: boolean; now?: 
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Hair by Bhargav//Bookings//EN",
+    "PRODID:-//Hair by Kiran//Bookings//EN",
     "CALSCALE:GREGORIAN",
     `METHOD:${opts.cancelled ? "CANCEL" : "PUBLISH"}`,
     "BEGIN:VTIMEZONE",
@@ -155,7 +155,7 @@ export function buildIcs(b: CalendarBooking, opts: { cancelled?: boolean; now?: 
     "END:STANDARD",
     "END:VTIMEZONE",
     "BEGIN:VEVENT",
-    `UID:${b.reference}@hairbybhargav`,
+    `UID:${b.reference}@hairbykiran`,
     `DTSTAMP:${utcStamp(now)}`,
     // later downloads (e.g. after a reschedule) carry a higher sequence
     `SEQUENCE:${Math.floor(now.getTime() / 60_000) % 2_000_000_000}`,
@@ -181,7 +181,7 @@ export function buildIcs(b: CalendarBooking, opts: { cancelled?: boolean; now?: 
   return lines.map(fold).join("\r\n") + "\r\n";
 }
 
-export const icsFileName = (b: CalendarBooking) => `hair-by-bhargav-${b.reference}.ics`;
+export const icsFileName = (b: CalendarBooking) => `hair-by-kiran-${b.reference}.ics`;
 
 /** Best first choice for this device (Apple devices → Apple Calendar, Android → Google…). */
 export function preferredCalendar(ua: string): "apple" | "google" | "outlook" {

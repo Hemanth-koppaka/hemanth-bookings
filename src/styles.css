@@ -812,7 +812,7 @@
 @keyframes hbReveal {
   from {
     clip-path: inset(0 100% 0 0);
-    filter: blur(3px);
+    filter: none;
     opacity: 0.4;
   }
   to {
@@ -845,6 +845,20 @@
 }
 
 /* first-visit intro (home only); hidden when html.intro-seen or reduced motion */
+html.reduced-motion .intro,
+html.reduced-motion .logo-sheen {
+  display: none !important;
+}
+html.reduced-motion [data-hero-logo],
+html.reduced-motion .logo-reveal {
+  animation: none !important;
+  opacity: 1 !important;
+  clip-path: none !important;
+  filter: none !important;
+}
+html.reduced-motion .after-intro > * {
+  animation: none !important;
+}
 /* fallback only: if scripts never run, the veil lifts on its own */
 .intro {
   animation: hbIntroOut 0.75s cubic-bezier(0.65, 0, 0.35, 1) 3.4s both;

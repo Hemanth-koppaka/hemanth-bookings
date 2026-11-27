@@ -8,6 +8,7 @@ import {
   CalendarX2,
   ChevronRight,
   Info,
+  MessageCircle,
   IndianRupee,
   Plus,
   Receipt,
@@ -29,7 +30,7 @@ import {
   useAdminData,
 } from "@/components/admin-ops";
 import { useAdmin, STATUS_LABEL, type ApptStatus } from "@/lib/admin-store";
-import { adminDashboard, type AdminBooking } from "@/lib/admin-data.functions";
+import { adminDashboard, adminDay, type AdminBooking } from "@/lib/admin-data.functions";
 import { adminUpsertBooking } from "@/lib/salon.functions";
 import { formatDuration, inr, minuteLabel } from "@/lib/salon";
 import { cn } from "@/lib/utils";
@@ -37,10 +38,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/hb-desk-7392/")({
   head: () => ({
     meta: [
-      { title: "Today at the salon — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Today at the salon — Hair by Kiran" },
       { name: "description", content: "Live view of today's chair, arrivals and takings." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Today at the salon — Hair by Bhargav" },
+      { property: "og:title", content: "Today at the salon — Hair by Kiran" },
       { property: "og:description", content: "Live view of today's appointments." },
     ],
   }),
@@ -124,6 +127,36 @@ function TodayScreen() {
   const [newOpen, setNewOpen] = useState<{ time: number | null } | null>(null);
   const [blockOpen, setBlockOpen] = useState(false);
   const [closeOpen, setCloseOpen] = useState(false);
+  // "Tomorrow's list": tomorrow's appointments as a message for the staff group
+  const [shareText, setShareText] = useState<string | null>(null);
+  const shareTomorrow = async () => {
+    const base = data?.today ?? new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+    const d = new Date(base + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() + 1);
+    const date = d.toISOString().slice(0, 10);
+    const day = await adminDay({ data: { pin, date } }).catch(() => null);
+    if (!day) return void toast.error("Couldn't load tomorrow.");
+    const title = `Tomorrow · ${d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })}`;
+    const list = day.bookings.filter(isActive);
+    if (day.plan.closed && !list.length) return setShareText(`${title}\nThe salon is closed.`);
+    if (!list.length) return setShareText(`${title}\nNo appointments yet.`);
+    const groups = new Map<string, AdminBooking[]>();
+    for (const b of list) {
+      const k = b.staffName || "Any stylist";
+      groups.set(k, [...(groups.get(k) ?? []), b]);
+    }
+    const lines = [title, ""];
+    for (const [who, items] of groups) {
+      lines.push(`*${who}* (${items.length})`);
+      for (const b of items.sort((x, y) => x.time - y.time))
+        lines.push(
+          `${minuteLabel(b.time)} · ${b.customer.name || "Guest"} · ${b.services.map((x) => x.name).join(", ")} (${formatDuration(b.minutes)})`,
+        );
+      lines.push("");
+    }
+    lines.push(`${list.length} appointment${list.length === 1 ? "" : "s"} in total`);
+    setShareText(lines.join("\n"));
+  };
   const [busy, setBusy] = useState<string | null>(null);
 
   // keep the day live while the screen is open
@@ -189,6 +222,9 @@ function TodayScreen() {
             <TinyButton onClick={() => setCloseOpen(true)}>
               <CalendarX2 className="h-4 w-4" /> Close a day
             </TinyButton>
+            <TinyButton onClick={() => void shareTomorrow()}>
+              <MessageCircle className="h-4 w-4" /> Tomorrow's list
+            </TinyButton>
           </span>
         </div>
       }
@@ -197,12 +233,55 @@ function TodayScreen() {
 
       <PhoneAlertsNudge />
 
+      {shareText != null ? (
+        <Panel className="mb-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="eyebrow">Tomorrow's list</div>
+            <button
+              type="button"
+              onClick={() => setShareText(null)}
+              className="text-[0.75rem] text-muted-foreground underline underline-offset-4"
+            >
+              Close
+            </button>
+          </div>
+          <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-md bg-foreground/[0.04] p-3 font-sans text-[0.82rem] leading-relaxed">
+            {shareText}
+          </pre>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="press inline-flex items-center gap-2 rounded-md bg-[#1f7a4d] px-4 py-2 text-[0.82rem] text-white"
+            >
+              <MessageCircle className="h-4 w-4" /> Send on WhatsApp
+            </a>
+            <TinyButton
+              onClick={() =>
+                void navigator.clipboard
+                  ?.writeText(shareText)
+                  .then(() => toast.success("Copied."))
+                  .catch(() => toast.error("Couldn't copy."))
+              }
+            >
+              Copy
+            </TinyButton>
+          </div>
+          <p className="mt-2 text-[0.75rem] text-muted-foreground">
+            WhatsApp opens and asks which chat or group to send it to. Phone numbers aren't
+            included.
+          </p>
+        </Panel>
+      ) : null}
+
       {/* phones and tablets: the other quick actions, one tap away */}
-      <div className="mb-4 grid grid-cols-3 gap-2 lg:hidden">
+      <div className="mb-4 grid grid-cols-4 gap-2 lg:hidden">
         {[
           { icon: UserRoundPlus, label: "Walk-in", on: () => setNewOpen({ time: null }) },
           { icon: Ban, label: "Block time", on: () => setBlockOpen(true) },
           { icon: CalendarX2, label: "Close a day", on: () => setCloseOpen(true) },
+          { icon: MessageCircle, label: "Tomorrow", on: () => void shareTomorrow() },
         ].map((a) => (
           <button
             key={a.label}

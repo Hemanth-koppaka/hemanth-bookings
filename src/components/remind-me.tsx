@@ -7,6 +7,7 @@ import { BellRing, Check, Loader2 } from "lucide-react";
 import { auth, type Booking } from "@/lib/booking-store";
 import { pushPublicKey, remindMeOnPhone } from "@/lib/salon.functions";
 import { haptic, cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const KEY = (ref: string) => `hb.remind.${ref}`;
 
@@ -20,13 +21,16 @@ export function RemindMe({
   booking,
   className,
   tone = "light",
+  prompt = false,
 }: {
   booking: Booking;
   className?: string;
   tone?: "light" | "dark";
+  prompt?: boolean;
 }) {
   const [state, setState] = useState<"hidden" | "off" | "busy" | "on" | "blocked">("hidden");
   const [error, setError] = useState("");
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     const ok = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -41,7 +45,7 @@ export function RemindMe({
     setState(on && Notification.permission === "granted" ? "on" : "off");
   }, [booking.reference]);
 
-  if (state === "hidden" || booking.status === "cancelled") return null;
+  if (booking.status === "cancelled" || dismissed || (state === "hidden" && !prompt)) return null;
 
   const turnOn = async () => {
     setError("");
@@ -89,6 +93,16 @@ export function RemindMe({
   const dark = tone === "dark";
   return (
     <div className={className}>
+      {prompt && state !== "on" && state !== "blocked" && state !== "hidden" ? (
+        <div className={cn("mb-3", dark ? "text-[#E8E1D8]" : "text-foreground")}>
+          <p className="font-display text-xl">Your booking is confirmed. Turn on alerts?</p>
+          <p className={cn("mt-1 text-sm", dark ? "text-[#E8E1D8]/65" : "text-muted-foreground")}>
+            Get reminders and updates if the salon changes your time, stylist or price. After your
+            visit, we’ll invite you to rate the service. Alerts are optional; your booking stays
+            confirmed either way.
+          </p>
+        </div>
+      ) : null}
       {state === "on" ? (
         <p
           className={cn(
@@ -96,23 +110,32 @@ export function RemindMe({
             dark ? "text-[#E8E1D8]/80" : "text-muted-foreground",
           )}
         >
-          <Check className="h-4 w-4 text-emerald-500" strokeWidth={2} /> We'll remind you on this
-          phone a day before and 2 hours before.
+          <Check
+            className={cn("h-4 w-4", dark ? "text-[#E8E1D8]" : "text-foreground")}
+            strokeWidth={2}
+          />{" "}
+          Booking alerts are enabled on this phone, including reminders and appointment updates.
         </p>
       ) : state === "blocked" ? (
-        <p className={cn("text-[0.82rem]", dark ? "text-[#E8E1D8]/60" : "text-muted-foreground")}>
+        <p className={cn("text-[0.82rem]", dark ? "text-[#E8E1D8]/65" : "text-muted-foreground")}>
           Notifications are blocked for this site, so we can't remind you here. Add it to your
           calendar instead.
         </p>
+      ) : state === "hidden" ? (
+        <p className={cn("text-sm", dark ? "text-[#E8E1D8]/65" : "text-muted-foreground")}>
+          This browser cannot receive phone alerts. On iPhone, add the site to your Home Screen
+          first, or add your appointment to your calendar.
+        </p>
       ) : (
-        <button
+        <Button
+          variant="outline"
           type="button"
           onClick={() => void turnOn()}
           disabled={state === "busy"}
           className={cn(
             "press flex min-h-12 w-full items-center justify-center gap-2.5 rounded-sm border px-5 text-[0.72rem] uppercase tracking-[0.2em] disabled:opacity-60",
             dark
-              ? "border-[#E8E1D8]/25 text-[#E8E1D8] hover:border-[#E8E1D8]/50"
+              ? "border-[#E8E1D8]/28 bg-transparent text-[#E8E1D8] hover:border-[#E8E1D8]/55 hover:bg-white/5 hover:text-[#E8E1D8]"
               : "border-foreground/20 hover:border-foreground/45",
           )}
         >
@@ -121,9 +144,19 @@ export function RemindMe({
           ) : (
             <BellRing className="h-4 w-4" strokeWidth={1.5} />
           )}
-          Remind me on this phone
-        </button>
+          Enable appointment alerts
+        </Button>
       )}
+      {prompt && state !== "on" && state !== "busy" && state !== "blocked" && state !== "hidden" ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn("mt-2", dark && "text-[#E8E1D8]/75 hover:bg-white/5 hover:text-[#E8E1D8]")}
+          onClick={() => setDismissed(true)}
+        >
+          Not now
+        </Button>
+      ) : null}
       {error ? <p className="mt-2 text-[0.8rem] text-destructive">{error}</p> : null}
     </div>
   );

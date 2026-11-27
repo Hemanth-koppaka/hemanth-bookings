@@ -21,7 +21,11 @@ import { PhoneAlertsPanel } from "@/components/phone-alerts";
 export const Route = createFileRoute("/hb-desk-7392/notifications")({
   head: () => ({
     meta: [
-      { title: "Notifications — Hair by Bhargav" },
+      { property: "og:title", content: "Notifications \u2014 Hair by Kiran" },
+      { property: "og:description", content: "Booking emails, reminders and delivery status." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Notifications — Hair by Kiran" },
       {
         name: "description",
         content: "Booking emails, reminders and delivery status.",
@@ -138,7 +142,7 @@ function NotificationsScreen() {
                   className={inputClass}
                   value={s.publicSiteUrl}
                   onChange={(e) => set({ publicSiteUrl: e.target.value })}
-                  placeholder="https://hairbybhargav.com"
+                  placeholder="https://salon.example.com"
                 />
               </Field>
             </div>
@@ -186,7 +190,7 @@ function ProviderStatus({ info }: { info: Info }) {
       label: "Reminder schedule",
       ok: st.cronSecret,
       text: st.cronSecret ? "Ready" : "Not configured",
-      detail: `Schedule POST ${origin}/api/notifications/dispatch every 10 minutes (Lovable cron).`,
+      detail: `Schedule POST ${origin}/api/notifications/dispatch every 10 minutes (Supabase pg_cron job "hb-notifications", see docs/hosting.md).`,
     },
     {
       label: "Email (free)",
@@ -307,7 +311,7 @@ function EmailSettings({
             className={inputClass}
             value={s.email.fromName}
             onChange={(e) => set({ email: { ...s.email, fromName: e.target.value } })}
-            placeholder="Hair by Bhargav"
+            placeholder="Hair by Kiran"
           />
         </Field>
       </div>

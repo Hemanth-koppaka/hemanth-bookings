@@ -64,6 +64,104 @@
       "when": 1793490000000,
       "tag": "0008_staff_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794137405394,
+      "tag": "0009_email_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794137439507,
+      "tag": "0010_staff_availability",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794145968211,
+      "tag": "0011_durable_customer_waitlist",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794188022719,
+      "tag": "0012_sync_unfinished_booking_prices",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794195270471,
+      "tag": "0013_customer_appointment_change_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794272089414,
+      "tag": "0014_reuse_cancelled_admin_booking_numbers",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794272367622,
+      "tag": "0015_enforce_reusable_booking_number_uniqueness",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1794320289454,
+      "tag": "0016_admin_assistant_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794546563829,
+      "tag": "0017_sync_customer_booking_contact",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794546602451,
+      "tag": "0018_sync_booking_contact_profile",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794546698837,
+      "tag": "0019_complete_elapsed_confirmed_visits",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794546937052,
+      "tag": "0020_capture_booking_detail_updates",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794547332432,
+      "tag": "0021_capture_finished_booking_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1794547392432,
+      "tag": "0022_revoke_public_table_access",
+      "breakpoints": true
     }
   ]
 }

@@ -40,6 +40,7 @@ export type StylistAppt = {
   status: string;
   note: string;
   photos: number;
+  photoUrls: string[];
 };
 
 /** The stylist's own appointments on a day (cancelled ones left out). */
@@ -80,8 +81,21 @@ export const stylistDay = createServerFn({ method: "POST" })
           status: (meta["status"] as string) ?? "upcoming",
           note: (meta["note"] as string) ?? "",
           photos: (c.photos ?? []).length,
+          photoUrls: [],
         };
       });
+    const { REF_BUCKET } = await import("./photos.server");
+    for (const appt of appts) {
+      if (!appt.photos || ["completed", "no-show"].includes(appt.status)) continue;
+      const folder = `bookings/${appt.reference}`;
+      const { data: files } = await sb.storage.from(REF_BUCKET).list(folder, { limit: 3 });
+      const paths = (files ?? []).filter((f) => f.id).map((f) => `${folder}/${f.name}`);
+      if (!paths.length) continue;
+      const { data: signed } = await sb.storage.from(REF_BUCKET).createSignedUrls(paths, 600);
+      appt.photoUrls = (signed ?? [])
+        .map((s) => s.signedUrl)
+        .filter((url): url is string => Boolean(url));
+    }
     const now = new Date(Date.now() + 330 * 60_000);
     return {
       name: await staffName(sid),
@@ -209,4 +223,150 @@ export const adminSetStylistCode = createServerFn({ method: "POST" })
       summary: code ? "Set a stylist's phone code" : "Removed a stylist's phone code",
     });
     return { ok: true as const };
+  });
+
+const clockLabel = (m: number) =>
+  m >= 1440
+    ? "close"
+    : `${((Math.floor(m / 60) + 11) % 12) + 1}:${String(m % 60).padStart(2, "0")} ${m < 720 ? "AM" : "PM"}`;
+
+/**
+ * The stylist marks themselves away today: from now until a time ("back at"),
+ * or the rest of the day. No new bookings are offered in that time; bookings
+ * already in it are kept and listed so the guests can be told. The salon's
+ * phones get an alert. `until: null` = "I'm back now" (ends today's away time).
+ */
+export const stylistAway = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        token,
+        until: z.number().int().min(1).max(1440).nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const sid = await stylist(data.token);
+    const { stable } = await import("./staff-store.server");
+    const now = new Date(Date.now() + 330 * 60_000);
+    const today = now.toISOString().slice(0, 10);
+    const nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+    const from = Math.floor(nowMin / 15) * 15;
+    const name = await staffName(sid);
+    const mine = (r: Record<string, unknown>) =>
+      r["staff_id"] === sid &&
+      r["date"] === today &&
+      !r["archived_at"] &&
+      String(r["reason"] ?? "").startsWith("Away (from phone)");
+    const { data: rows } = await stable("staff_unavailability").select("*");
+    const open = ((rows ?? []) as Record<string, unknown>[]).filter(
+      (r) => mine(r) && (r["end_minute"] as number) > nowMin,
+    );
+    // end any away time still running before setting a new one
+    for (const r of open)
+      if ((r["start_minute"] as number) >= from)
+        await stable("staff_unavailability").delete().eq("id", r["id"]); // nothing used yet
+      else
+        await stable("staff_unavailability")
+          .update({ end_minute: from } as never)
+          .eq("id", r["id"]);
+    const E = await import("./engine.server");
+    if (data.until == null) {
+      await E.audit({
+        actor: `stylist:${name}`,
+        action: "staff.back",
+        entity: "staff",
+        entityId: sid,
+        summary: `${name} is back (from their phone)`,
+      });
+      void import("./push.server")
+        .then((P) =>
+          P.pushToSalon(
+            { title: `${name} is back`, body: "Bookable again from now." },
+            { ownersOnly: true },
+          ),
+        )
+        .catch(() => {});
+      return { ok: true as const, affected: [] };
+    }
+    if (data.until <= from) return { ok: false as const, error: "Pick a time later than now." };
+    const label = data.until >= 1440 ? "rest of today" : `back at ${clockLabel(data.until)}`;
+    const { error } = await stable("staff_unavailability").insert({
+      staff_id: sid,
+      date: today,
+      start_minute: from,
+      end_minute: data.until,
+      reason: `Away (from phone) · ${label}`,
+    } as never);
+    if (error) return { ok: false as const, error: "Couldn't save. Please try again." };
+    // the stylist's bookings in that time: kept, but the guests need telling
+    const { supabaseAdmin: sb } = await import("@/integrations/supabase/client.server");
+    const { staffIdOf } = await import("./booking-staff");
+    const { data: bk } = await sb
+      .from("bookings")
+      .select("*")
+      .eq("date", today)
+      .neq("status", "cancelled");
+    const affected = ((bk ?? []) as Record<string, unknown>[])
+      .filter((r) => staffIdOf(r) === sid)
+      .filter(
+        (r) =>
+          !["cancelled", "no-show", "completed"].includes(
+            ((r["meta"] as { status?: string } | null)?.status as string) ?? "",
+          ),
+      )
+      .filter((r) => {
+        const t = r["time"] as number;
+        const end = t + ((r["duration_minutes"] as number | null) ?? 30);
+        return t < data.until! && end > from;
+      })
+      .map((r) => ({
+        reference: r["reference"] as string,
+        time: r["time"] as number,
+        name: ((r["customer"] as { name?: string } | null)?.name ?? "") as string,
+        phone: ((r["customer"] as { phone?: string } | null)?.phone ?? "") as string,
+      }));
+    await E.audit({
+      actor: `stylist:${name}`,
+      action: "staff.away",
+      entity: "staff",
+      entityId: sid,
+      summary: `${name} away today from ${clockLabel(from)}, ${label} (from their phone)${affected.length ? ` · ${affected.length} booking(s) in that time` : ""}`,
+    });
+    void import("./push.server")
+      .then((P) =>
+        P.pushToSalon(
+          {
+            title: `${name} is away · ${label}`,
+            body: affected.length
+              ? `${affected.length} booking(s) in that time: ${affected.map((a) => `${clockLabel(a.time)} ${a.name}`).join(", ")}`
+              : "No bookings in that time.",
+            url: "/hb-desk-7392",
+          },
+          { ownersOnly: true },
+        ),
+      )
+      .catch(() => {});
+    return { ok: true as const, affected, label };
+  });
+
+/** Today's away time the stylist set from their phone (still running), if any. */
+export const stylistAwayNow = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ token }).parse(d))
+  .handler(async ({ data }) => {
+    const sid = await stylist(data.token);
+    const { stable } = await import("./staff-store.server");
+    const now = new Date(Date.now() + 330 * 60_000);
+    const today = now.toISOString().slice(0, 10);
+    const nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+    const { data: rows } = await stable("staff_unavailability").select("*");
+    const r = ((rows ?? []) as Record<string, unknown>[]).find(
+      (x) =>
+        x["staff_id"] === sid &&
+        x["date"] === today &&
+        !x["archived_at"] &&
+        (x["start_minute"] as number) <= nowMin &&
+        (x["end_minute"] as number) > nowMin,
+    );
+    return r ? { until: r["end_minute"] as number, reason: String(r["reason"] ?? "") } : null;
   });

@@ -1,18 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
 import { AdminShell, Empty, Panel, TinyButton } from "@/components/admin";
 import { LoadState, salonToday, useAdminData } from "@/components/admin-ops";
 import { useAdmin } from "@/lib/admin-store";
-import { adminAddClosure, adminClosures, adminReopen } from "@/lib/admin-staff.functions";
+import {
+  adminAddClosure,
+  adminClosures,
+  adminReopen,
+  adminUpdateClosure,
+} from "@/lib/admin-staff.functions";
 import { fromISO, minuteLabel } from "@/lib/salon";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/hb-desk-7392/closures")({
   head: () => ({
     meta: [
-      { title: "Salon closures — Hair by Bhargav" },
+      { property: "og:title", content: "Salon closures \u2014 Hair by Kiran" },
+      {
+        property: "og:description",
+        content: "Close the whole salon for hours, days or until further notice.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Salon closures — Hair by Kiran" },
       {
         name: "description",
         content: "Close the whole salon for hours, days or until further notice.",
@@ -64,6 +76,59 @@ function ClosuresScreen() {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  /** The closure being edited (its earliest allowed start: today, or its own start if it began already). */
+  const [editing, setEditing] = useState<{ id: string; minStart: string } | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  type Closure = NonNullable<typeof data>["closures"][number];
+  const startEdit = (c: Closure) => {
+    const hours = c.startMinute != null && c.endMinute != null;
+    setKind(hours ? "hours" : c.end === null ? "open" : "days");
+    setStart(c.start);
+    setEnd(c.end ?? c.start);
+    if (hours) {
+      setFrom(c.startMinute!);
+      setTo(c.endMinute!);
+    }
+    setReason(c.reason);
+    setConfirmId(null);
+    setEditing({ id: c.id, minStart: c.start < today ? c.start : today });
+    window.requestAnimationFrame(() =>
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  };
+  const stopEdit = () => {
+    setEditing(null);
+    setKind("days");
+    setStart(today);
+    setEnd(today);
+    setReason("");
+  };
+  const saveEdit = async () => {
+    if (!editing || kind === "dates") return;
+    setBusy(true);
+    try {
+      const r = await adminUpdateClosure({
+        data: {
+          pin,
+          id: editing.id,
+          kind,
+          start,
+          reason: reason.trim(),
+          ...(kind === "days" ? { end } : {}),
+          ...(kind === "hours" ? { startMinute: from, endMinute: to } : {}),
+        },
+      });
+      if (!r.ok) return void toast.error(r.error);
+      toast.success("Closure updated.");
+      stopEdit();
+      reload();
+    } catch {
+      toast.error("Couldn't save the changes.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const add = async () => {
     setBusy(true);
@@ -110,9 +175,12 @@ function ClosuresScreen() {
       {data?.available ? (
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <Panel>
-            <h2 className="font-display text-[1.35rem]">Close the salon</h2>
+            <div ref={formRef} className="scroll-mt-24" />
+            <h2 className="font-display text-[1.35rem]">
+              {editing ? "Edit closure" : "Close the salon"}
+            </h2>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {KINDS.map((k) => (
+              {KINDS.filter((k) => !editing || k.key !== "dates").map((k) => (
                 <button
                   key={k.key}
                   onClick={() => setKind(k.key)}
@@ -176,7 +244,7 @@ function ClosuresScreen() {
                   <input
                     type="date"
                     value={start}
-                    min={today}
+                    min={editing?.minStart ?? today}
                     onChange={(e) => {
                       setStart(e.target.value);
                       if (e.target.value > end) setEnd(e.target.value);
@@ -254,13 +322,24 @@ function ClosuresScreen() {
                 maxLength={120}
                 className={cn(field, "w-full")}
               />
-              <TinyButton
-                tone="danger"
-                disabled={busy || (kind === "dates" && !dates.length)}
-                onClick={() => void add()}
-              >
-                {busy ? "Saving…" : "Close the salon"}
-              </TinyButton>
+              {editing ? (
+                <div className="flex flex-wrap gap-2">
+                  <TinyButton tone="primary" disabled={busy} onClick={() => void saveEdit()}>
+                    {busy ? "Saving…" : "Save changes"}
+                  </TinyButton>
+                  <TinyButton disabled={busy} onClick={stopEdit}>
+                    Cancel
+                  </TinyButton>
+                </div>
+              ) : (
+                <TinyButton
+                  tone="danger"
+                  disabled={busy || (kind === "dates" && !dates.length)}
+                  onClick={() => void add()}
+                >
+                  {busy ? "Saving…" : "Close the salon"}
+                </TinyButton>
+              )}
               <p className="text-[0.75rem] text-muted-foreground">
                 Guests see "Salon is closed on this date." Existing appointments stay booked and
                 visible here and in the calendar — contact or move them.
@@ -272,7 +351,13 @@ function ClosuresScreen() {
             <h2 className="font-display text-[1.35rem]">Current and upcoming</h2>
             <ul className="mt-3 divide-y divide-hairline">
               {data.closures.map((c) => (
-                <li key={c.id} className="py-3">
+                <li
+                  key={c.id}
+                  className={cn(
+                    "py-3",
+                    editing?.id === c.id && "-mx-2 rounded-md bg-foreground/[0.04] px-2",
+                  )}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-[0.95rem]">
@@ -300,7 +385,12 @@ function ClosuresScreen() {
                         <TinyButton onClick={() => setConfirmId(null)}>Keep</TinyButton>
                       </div>
                     ) : (
-                      <TinyButton onClick={() => setConfirmId(c.id)}>Reopen</TinyButton>
+                      <div className="flex shrink-0 gap-1.5">
+                        <TinyButton onClick={() => startEdit(c)}>
+                          {editing?.id === c.id ? "Editing…" : "Edit"}
+                        </TinyButton>
+                        <TinyButton onClick={() => setConfirmId(c.id)}>Reopen</TinyButton>
+                      </div>
                     )}
                   </div>
                 </li>

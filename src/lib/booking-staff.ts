@@ -1,6 +1,12 @@
 // Which stylist a booking belongs to (safe to import anywhere).
 type Row = Record<string, unknown>;
 
+/** Undefined preserves the booking's choice; null explicitly requests any stylist. */
+export const rescheduleChoice = (row: Row, staffId: string | null | undefined): string =>
+  staffId === undefined
+    ? (staffChoiceOf(row) === "specific" ? staffIdOf(row) ?? "any" : "any")
+    : staffId ?? "any";
+
 /* ── bookings: which stylist ──────────────────────────────────── */
 
 // Bookings remember their stylist in `meta` (works on every database); the

@@ -8,6 +8,7 @@
 // The site's VAPID key pair is created once and kept server-side in
 // site_settings (never sent to browsers except the public half).
 import { supabaseAdmin as sb } from "@/integrations/supabase/client.server";
+import { isBookingAlert, receivesBookingAlert } from "./booking-alert-policy";
 
 const VAPID_KEY = "push_vapid";
 const SUBS_KEY = "push_subscriptions";
@@ -84,8 +85,9 @@ export async function getVapid(): Promise<Vapid> {
       .select("value")
       .eq("key", VAPID_KEY)
       .maybeSingle();
-    if ((again?.value as unknown as Vapid | null)?.publicKey)
-      return (vapidCache = again!.value as unknown as Vapid);
+    const existing = again?.value as unknown as Vapid | null;
+    if (existing?.publicKey) return (vapidCache = existing);
+    throw new Error("Couldn't save notification keys");
   }
   return (vapidCache = fresh);
 }
@@ -98,7 +100,7 @@ async function vapidHeader(endpoint: string, origin: string, v: Vapid) {
       JSON.stringify({
         aud,
         exp: Math.floor(Date.now() / 1000) + 12 * 3600,
-        sub: /^https:\/\//.test(origin) ? origin : "mailto:salon@hairbybhargav.app",
+        sub: /^https:\/\//.test(origin) ? origin : "mailto:hello@salon.example.com",
       }),
     ),
   );
@@ -210,6 +212,7 @@ async function sendOne(sub: PushSub, msg: PushMessage, v: Vapid) {
   const body = await encryptPayload(sub, enc.encode(JSON.stringify(msg)));
   const res = await fetch(sub.endpoint, {
     method: "POST",
+    signal: AbortSignal.timeout(8000),
     headers: {
       authorization: await vapidHeader(sub.endpoint, sub.origin, v),
       "content-encoding": "aes128gcm",
@@ -226,15 +229,12 @@ async function sendOne(sub: PushSub, msg: PushMessage, v: Vapid) {
 /** Sends to every phone that turned alerts on; forgets phones that unsubscribed. */
 export async function pushToSalon(
   msg: PushMessage,
-  only?: { staffId?: string | null; ownersOnly?: boolean },
+  only?: { staffId?: string | null; ownersOnly?: boolean; staffOnly?: boolean },
 ) {
   // the salon's phones get everything; a stylist's phone only their own bookings
-  const subs = (await listSubs()).filter((s) =>
-    !s.staffId
-      ? true
-      : only?.ownersOnly
-        ? false
-        : Boolean(only?.staffId) && s.staffId === only?.staffId,
+  const allSubs = await listSubs();
+  const subs = allSubs.filter((s) =>
+    only?.ownersOnly ? !s.staffId : receivesBookingAlert(s, only?.staffId, only?.staffOnly),
   );
   if (!subs.length) return { sent: 0, failed: 0 };
   const v = await getVapid();
@@ -254,7 +254,7 @@ export async function pushToSalon(
       }
     }),
   );
-  if (gone.length) await saveSubs(subs.filter((s) => !gone.includes(s.endpoint)));
+  if (gone.length) await saveSubs(allSubs.filter((s) => !gone.includes(s.endpoint)));
   return { sent, failed };
 }
 
@@ -267,15 +267,16 @@ const clock = (m: number) => {
 export async function pushBookingEvent(
   reference: string,
   event: "BOOKING_CONFIRMED" | "BOOKING_RESCHEDULED" | "BOOKING_CANCELLED" | string,
+  options?: { staffOnly?: boolean; ownersOnly?: boolean; snapshot?: Record<string, unknown> },
 ) {
-  const { data: r } = await sb
-    .from("bookings")
-    .select("*")
-    .eq("reference", reference)
-    .maybeSingle();
+  if (!isBookingAlert(event)) return { sent: 0, failed: 0 };
+  const { data: r } = options?.snapshot
+    ? { data: options.snapshot }
+    : await sb.from("bookings").select("*").eq("reference", reference).maybeSingle();
   if (!r) return { sent: 0, failed: 0 };
   const row = r as Record<string, unknown>;
-  const c = (row["customer"] ?? {}) as { name?: string };
+  if (row["status"] !== "confirmed" && event !== "BOOKING_CANCELLED") return { sent: 0, failed: 0 };
+  const c = (row["customer"] ?? {}) as { name?: string; photos?: string[] };
   const services = ((row["services_snapshot"] as { name: string }[] | null) ?? [])
     .map((x) => x.name)
     .join(", ");
@@ -296,16 +297,26 @@ export async function pushBookingEvent(
       ? `Cancelled: ${c.name ?? "a guest"}`
       : event === "BOOKING_RESCHEDULED"
         ? `Moved: ${c.name ?? "a guest"} → ${when}`
-        : `New booking: ${c.name ?? "a guest"}`;
-  const body = `${services || "Appointment"} · ${when}${staff ? ` · ${staff}` : ""}`;
+        : event === "BOOKING_CONFIRMED"
+          ? `New booking: ${c.name ?? "a guest"}`
+          : event === "BOOKING_PRICE_CHANGED"
+            ? `Price updated: ${c.name ?? "a guest"}`
+            : event === "BOOKING_COMPLETED"
+              ? `Completed: ${c.name ?? "a guest"}`
+              : event === "NO_SHOW"
+                ? `No-show: ${c.name ?? "a guest"}`
+                : `Booking updated: ${c.name ?? "a guest"}`;
+  const body = `${services || "Appointment"} · ${when}${staff ? ` · ${staff}` : ""}${c.photos?.length ? " · Reference photos attached" : ""}`;
   return pushToSalon(
     {
       title,
       body,
-      url: `/hb-desk-7392/appointments?ref=${encodeURIComponent(reference)}`,
+      url: options?.staffOnly
+        ? "/stylist"
+        : `/hb-desk-7392/appointments?ref=${encodeURIComponent(reference)}`,
       tag: reference,
     },
-    { staffId },
+    { staffId, staffOnly: options?.staffOnly ?? false, ownersOnly: options?.ownersOnly ?? false },
   );
 }
 
@@ -314,6 +325,21 @@ export async function pushBookingEvent(
 type GuestSub = Pick<PushSub, "endpoint" | "keys" | "origin">;
 
 /** Sends one message to one guest phone; false when the phone has unsubscribed. */
+/** Delivery outcome: "sent" (accepted), "gone" (unsubscribed), "retry" (temporary failure). */
+export async function deliverToGuest(
+  sub: GuestSub,
+  msg: PushMessage,
+): Promise<"sent" | "gone" | "retry"> {
+  try {
+    const v = await getVapid();
+    const status = await sendOne({ ...sub, device: "guest", at: 0 }, msg, v);
+    if (status === 404 || status === 410) return "gone";
+    return status >= 200 && status < 300 ? "sent" : "retry";
+  } catch {
+    return "retry";
+  }
+}
+
 export async function pushToGuest(sub: GuestSub, msg: PushMessage) {
   const v = await getVapid();
   try {
@@ -365,7 +391,7 @@ export async function guestReminders() {
     const when = `${r["date"] === today ? "today" : "tomorrow"} at ${clock(time)}`;
     const msg: PushMessage = {
       title: kind === "2h" ? `See you at ${clock(time)} today` : `Your appointment is ${when}`,
-      body: `${services || "Your appointment"}${staff ? ` with ${staff}` : ""} · Hair by Bhargav. Tap to view or change.`,
+      body: `${services || "Your appointment"}${staff ? ` with ${staff}` : ""} · Hair by Kiran. Tap to view or change.`,
       url: `/manage?ref=${encodeURIComponent(r["reference"] as string)}`,
       tag: `${r["reference"] as string}-${kind}`,
     };

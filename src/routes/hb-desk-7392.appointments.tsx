@@ -17,10 +17,12 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/hb-desk-7392/appointments")({
   head: () => ({
     meta: [
-      { title: "Bookings — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Bookings — Hair by Kiran" },
       { name: "description", content: "Every booking, with filters and search." },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Bookings — Hair by Bhargav" },
+      { property: "og:title", content: "Bookings — Hair by Kiran" },
       { property: "og:description", content: "Every booking, with filters and search." },
     ],
   }),
@@ -174,7 +176,7 @@ function BookingsScreen() {
             <option value="">Any status</option>
             {STATUSES.map((s) => (
               <option key={s} value={s}>
-                {STATUS_LABEL[s]}
+                {s === "upcoming" ? "Confirmed" : STATUS_LABEL[s]}
               </option>
             ))}
           </select>
@@ -211,7 +213,7 @@ function BookingsScreen() {
             )}
           >
             {list.map((b, i) => {
-              const newDay = i === 0 || list[i - 1]!.date !== b.date;
+              const newDay = i === 0 || list[i - 1]?.date !== b.date;
               return (
                 <div key={b.reference}>
                   {newDay ? (
@@ -232,17 +234,17 @@ function BookingsScreen() {
                       <span className="block truncate text-[0.78rem] text-muted-foreground">
                         {b.services.map((s) => s.name).join(" · ")}
                       </span>
+                      <span className="block text-[0.7rem] tabular-nums text-muted-foreground">
+                        {b.reference}
+                      </span>
                     </span>
                     <span className="hidden w-28 shrink-0 text-[0.75rem] tabular-nums text-muted-foreground md:block">
                       {b.customer.phone}
                     </span>
-                    <span className="hidden w-24 shrink-0 text-[0.72rem] text-muted-foreground lg:block">
-                      {b.reference}
-                    </span>
                     <span className="hidden w-16 shrink-0 text-right text-[0.85rem] tabular-nums sm:block">
                       {inr(b.price)}
                     </span>
-                    <StatusPill status={b.status} />
+                    <StatusPill status={b.status} label={b.status === "upcoming" ? "Confirmed" : STATUS_LABEL[b.status]} />
                   </button>
                 </div>
               );

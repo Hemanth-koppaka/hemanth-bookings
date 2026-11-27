@@ -3,8 +3,8 @@
 // (stored with the other salon media as "staff:<id>"); until then the known
 // team photos are used, matched by name.
 const DEFAULTS: [RegExp, string][] = [
-  [/^bhargav\b/i, "/team/stylist-bhargav.webp"],
-  [/\bneha\b/i, "/team/stylist-neha.webp"],
+  [/^kiran\b/i, "/team/stylist-kiran.webp"],
+  [/\bmeera\b/i, "/team/stylist-meera.webp"],
 ];
 
 export const defaultStaffPhoto = (name: string) =>

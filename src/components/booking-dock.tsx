@@ -141,7 +141,12 @@ export function BookingDock({
   useEffect(() => {
     if (!open) return;
     const away = (e: PointerEvent) => {
-      if (root.current && !root.current.contains(e.target as Node)) toggle.current?.();
+      const el = root.current;
+      // the dock is phone-only: on a laptop it's hidden, and the open state it
+      // shares with the laptop summary must not be closed by taps inside that
+      // summary (e.g. its ✕ would close it before removing the service)
+      if (!el || !el.getClientRects().length) return;
+      if (!el.contains(e.target as Node)) toggle.current?.();
     };
     document.addEventListener("pointerdown", away);
     return () => document.removeEventListener("pointerdown", away);

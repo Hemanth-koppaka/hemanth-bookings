@@ -9,7 +9,6 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, useRef, type ReactNode } from "react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -80,20 +79,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { title: "Hair by Bhargav — Reserve your chair" },
+      { title: "Hair by Kiran — Reserve your chair" },
+      { name: "author", content: "Hemanth Koppaka" },
       {
         name: "description",
         content:
-          "Book hair, beauty and makeover appointments with B. Bhargav at KPHB Phase 9, Kukatpally, Hyderabad.",
+          "Book hair, beauty and makeover appointments with B. Kiran at Sector 9, Midtown, Hyderabad.",
       },
-      { property: "og:site_name", content: "Hair by Bhargav" },
+      { name: "google-site-verification", content: "-E2n6oC7-8kwVVCbhPLKbJ3KZgGBIlxC1ig4witN4K0" },
+      { property: "og:site_name", content: "Hair by Kiran" },
       { property: "og:locale", content: "en_IN" },
-      ...(loaderData?.origin
-        ? [
-            { property: "og:image", content: `${loaderData.origin}/brand/hb-emblem.webp` },
-            { name: "twitter:image", content: `${loaderData.origin}/brand/hb-emblem.webp` },
-          ]
-        : []),
       { name: "theme-color", content: "#FBF8F3" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -106,7 +101,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Jost:wght@300;400;500&display=swap",
       },
-      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "icon", type: "image/x-icon", href: "/favicon.ico?v=3" },
+      { rel: "icon", type: "image/png", sizes: "48x48", href: "/icons/favicon-48.png?v=3" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icons/favicon-192.png?v=3" },
+      { rel: "icon", type: "image/png", sizes: "96x96", href: "/favicon.png?v=3" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/icons/apple-touch-icon.png?v=3" },
     ],
     // the salon for search engines (name, address, hours, services, prices)
     scripts: loaderData?.configJson
@@ -140,7 +139,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var k='hb-intro';if(sessionStorage.getItem(k)||location.pathname!=='/'){document.documentElement.classList.add('intro-seen')}sessionStorage.setItem(k,'1')}catch(e){document.documentElement.classList.add('intro-seen')}",
+              "try{var k='hb-intro',r=document.documentElement,m=matchMedia('(prefers-reduced-motion: reduce)').matches||localStorage.getItem('hb-reduced-motion')==='reduce';if(m)r.classList.add('reduced-motion');if(m||sessionStorage.getItem(k)||location.pathname!=='/')r.classList.add('intro-seen');sessionStorage.setItem(k,'1')}catch(e){document.documentElement.classList.add('intro-seen')}",
           }}
         />
         <HeadContent />
@@ -148,7 +147,6 @@ function RootShell({ children }: { children: ReactNode }) {
       <body>
         {children}
         <Scripts />
-        <SpeedInsights />
       </body>
     </html>
   );

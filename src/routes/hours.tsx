@@ -1,19 +1,29 @@
+import { SiteCredit } from "@/components/site-credit";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Coffee } from "lucide-react";
 import { BookCTA, InfoPage, InfoTitle } from "@/components/info-page";
-import { BUSINESS, CLOSE_MINUTE, OPEN_MINUTE, WEEK, minuteLabel } from "@/lib/salon";
+import {
+  BUSINESS,
+  CLOSE_MINUTE,
+  OPEN_MINUTE,
+  WEEK,
+  closedDaysLabel,
+  minuteLabel,
+} from "@/lib/salon";
 
 export const Route = createFileRoute("/hours")({
   head: () => ({
     meta: [
-      { title: "Opening hours — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Opening hours — Hair by Kiran" },
       {
         name: "description",
         content:
-          "Hair by Bhargav is open Wednesday to Monday, 10:00 AM to 8:00 PM. Closed on Tuesdays. KPHB Phase 9, Kukatpally.",
+          "Hair by Kiran is open Wednesday to Monday, 10:00 AM to 8:00 PM. Closed on Tuesdays. Sector 9, Midtown.",
       },
-      { property: "og:title", content: "Opening hours — Hair by Bhargav" },
+      { property: "og:title", content: "Opening hours — Hair by Kiran" },
       { property: "og:description", content: "Open Wednesday to Monday, 10:00 AM to 8:00 PM." },
     ],
   }),
@@ -27,6 +37,11 @@ function HoursScreen() {
 
   // One shared break across every open day is shown as a single note.
   const open = WEEK.filter((d) => !d.closed);
+  // from the hours themselves, so it can never disagree with the times guests see
+  const lasts = [...new Set(open.map((d) => d.close ?? CLOSE_MINUTE))];
+  const firsts = [...new Set(open.map((d) => d.open ?? OPEN_MINUTE))];
+  // one line each: first appointment, then last appointment
+  const sameEveryDay = lasts.length === 1 && firsts.length === 1;
   const first = open[0]?.breaks?.[0];
   const lunch =
     first &&
@@ -42,7 +57,7 @@ function HoursScreen() {
   return (
     <InfoPage
       label="Hours"
-      image="/team/bhargav-sketch.webp"
+      image="/team/kiran-sketch.webp"
       imagePos="50% 22%"
       panelEyebrow="Open six days"
       panelTitle={
@@ -52,7 +67,7 @@ function HoursScreen() {
           <span className="italic text-champagne">well kept.</span>
         </>
       }
-      panelSub={`Closed ${BUSINESS.closedDay}s`}
+      panelSub={closedDaysLabel() ? `Closed ${closedDaysLabel()}s` : "Open every day"}
     >
       <InfoTitle
         eyebrow="Opening hours"
@@ -98,14 +113,27 @@ function HoursScreen() {
       {lunch ? (
         <p className="mt-6 flex items-center gap-3 rounded-md bg-champagne/14 px-4 py-3 text-[0.9rem]">
           <Coffee className="h-4 w-4 shrink-0 text-bronze" strokeWidth={1.25} aria-hidden />
-          Lunch break every open day, {minuteLabel(lunch.start)} – {minuteLabel(lunch.end)}.
+          Lunch break every open day,{" "}
+          <span className="whitespace-nowrap">
+            {minuteLabel(lunch.start)} – {minuteLabel(lunch.end)}.
+          </span>
         </p>
       ) : null}
-      <p className="mt-4 text-[0.9rem] leading-relaxed text-muted-foreground">
-        Last appointment starts at {BUSINESS.lastSlot}.
-      </p>
+      {sameEveryDay ? (
+        <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[0.9rem] leading-relaxed text-muted-foreground">
+          <dt>First appointment</dt>
+          <dd className="tabular-nums text-foreground/80">{minuteLabel(firsts[0]!)}</dd>
+          <dt>Last appointment</dt>
+          <dd className="tabular-nums text-foreground/80">{minuteLabel(lasts[0]!)}</dd>
+        </dl>
+      ) : (
+        <p className="mt-4 text-[0.9rem] leading-relaxed text-muted-foreground">
+          Times shown are the first and last appointment of each day.
+        </p>
+      )}
 
       <BookCTA className="mt-10" />
+      <SiteCredit className="mt-8" />
     </InfoPage>
   );
 }

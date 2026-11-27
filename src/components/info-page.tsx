@@ -40,7 +40,7 @@ export function InfoPage({
               <ArrowLeft className="h-[18px] w-[18px]" strokeWidth={1.25} />
               <span className="label-caps hidden lg:inline">Back</span>
             </Link>
-            <Link to="/" aria-label="Hair by Bhargav" className="inline-flex">
+            <Link to="/" aria-label="Hair by Kiran" className="inline-flex">
               <Wordmark className="h-8 lg:h-11" />
             </Link>
             <span className="label-caps justify-self-end pr-2 text-[0.6rem] text-foreground/55 lg:text-[0.68rem]">

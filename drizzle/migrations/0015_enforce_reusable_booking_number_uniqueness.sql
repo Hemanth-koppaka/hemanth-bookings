@@ -1,0 +1,2 @@
+ALTER TABLE public.bookings ADD CONSTRAINT bookings_booking_no_unique UNIQUE USING INDEX bookings_booking_no_idx;
+COMMENT ON CONSTRAINT bookings_booking_no_unique ON public.bookings IS 'Database-wide safeguard against duplicate reusable admin booking numbers, including simultaneous bookings. NULL released numbers may repeat; guest references remain unchanged.';

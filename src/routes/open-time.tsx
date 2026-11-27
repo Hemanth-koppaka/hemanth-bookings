@@ -19,7 +19,12 @@ export const Route = createFileRoute("/open-time")({
       })
       .parse(s),
   head: () => ({
-    meta: [{ title: "A time opened up — Hair by Bhargav" }, { name: "robots", content: "noindex" }],
+    meta: [
+      { name: "description", content: "Book a newly available appointment at Hair by Kiran." },
+      { property: "og:title", content: "A time opened up \u2014 Hair by Kiran" },
+      { property: "og:description", content: "Book a newly available appointment at Hair by Kiran." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },{ title: "A time opened up — Hair by Kiran" }, { name: "robots", content: "noindex" }],
   }),
   component: OpenTime,
 });

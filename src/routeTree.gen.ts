@@ -44,6 +44,7 @@ import { Route as HbDesk7392StaffRouteImport } from './routes/hb-desk-7392.staff
 import { Route as HbDesk7392SystemRouteImport } from './routes/hb-desk-7392.system'
 import { Route as ApiNotificationsDispatchRouteImport } from './routes/api/notifications/dispatch'
 import { Route as ApiNotificationsWebhookRouteImport } from './routes/api/notifications/webhook'
+import { Route as ApiPublicWaitlistDispatchRouteImport } from './routes/api/public/waitlist-dispatch'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -221,6 +222,12 @@ const ApiNotificationsWebhookRoute = ApiNotificationsWebhookRouteImport.update({
   path: '/api/notifications/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWaitlistDispatchRoute =
+  ApiPublicWaitlistDispatchRouteImport.update({
+    id: '/api/public/waitlist-dispatch',
+    path: '/api/public/waitlist-dispatch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/hb-desk-7392/': typeof HbDesk7392IndexRoute
   '/api/notifications/dispatch': typeof ApiNotificationsDispatchRoute
   '/api/notifications/webhook': typeof ApiNotificationsWebhookRoute
+  '/api/public/waitlist-dispatch': typeof ApiPublicWaitlistDispatchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -294,6 +302,7 @@ export interface FileRoutesByTo {
   '/hb-desk-7392': typeof HbDesk7392IndexRoute
   '/api/notifications/dispatch': typeof ApiNotificationsDispatchRoute
   '/api/notifications/webhook': typeof ApiNotificationsWebhookRoute
+  '/api/public/waitlist-dispatch': typeof ApiPublicWaitlistDispatchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -332,6 +341,7 @@ export interface FileRoutesById {
   '/hb-desk-7392/': typeof HbDesk7392IndexRoute
   '/api/notifications/dispatch': typeof ApiNotificationsDispatchRoute
   '/api/notifications/webhook': typeof ApiNotificationsWebhookRoute
+  '/api/public/waitlist-dispatch': typeof ApiPublicWaitlistDispatchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
     | '/hb-desk-7392/'
     | '/api/notifications/dispatch'
     | '/api/notifications/webhook'
+    | '/api/public/waitlist-dispatch'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -407,6 +418,7 @@ export interface FileRouteTypes {
     | '/hb-desk-7392'
     | '/api/notifications/dispatch'
     | '/api/notifications/webhook'
+    | '/api/public/waitlist-dispatch'
   id:
     | '__root__'
     | '/'
@@ -444,6 +456,7 @@ export interface FileRouteTypes {
     | '/hb-desk-7392/'
     | '/api/notifications/dispatch'
     | '/api/notifications/webhook'
+    | '/api/public/waitlist-dispatch'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -468,6 +481,7 @@ export interface RootRouteChildren {
   ApiPhotoSweepRoute: typeof ApiPhotoSweepRoute
   ApiNotificationsDispatchRoute: typeof ApiNotificationsDispatchRoute
   ApiNotificationsWebhookRoute: typeof ApiNotificationsWebhookRoute
+  ApiPublicWaitlistDispatchRoute: typeof ApiPublicWaitlistDispatchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -717,6 +731,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiNotificationsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/waitlist-dispatch': {
+      id: '/api/public/waitlist-dispatch'
+      path: '/api/public/waitlist-dispatch'
+      fullPath: '/api/public/waitlist-dispatch'
+      preLoaderRoute: typeof ApiPublicWaitlistDispatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -780,6 +801,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPhotoSweepRoute: ApiPhotoSweepRoute,
   ApiNotificationsDispatchRoute: ApiNotificationsDispatchRoute,
   ApiNotificationsWebhookRoute: ApiNotificationsWebhookRoute,
+  ApiPublicWaitlistDispatchRoute: ApiPublicWaitlistDispatchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -305,15 +305,17 @@ async function clashes(staffId: string, from: string, to: string, start?: number
       date: b["date"] as string,
       time: b["time"] as number,
       name: ((b["customer"] as { name?: string })?.name ?? "") as string,
+      phone: ((b["customer"] as { phone?: string })?.phone ?? "") as string,
     }));
 }
 
-export const adminAddLeave = createServerFn({ method: "POST" })
+/** Changes a stylist's leave (dates and reason), with the same clash check as adding. */
+export const adminUpdateLeave = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z
       .object({
         pin,
-        staffId: z.string().uuid(),
+        id: z.string().uuid(),
         start: isoDate,
         end: isoDate,
         reason: z.string().trim().max(120),
@@ -323,32 +325,199 @@ export const adminAddLeave = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const sb = await admin(data.pin);
-    const hit = await clashes(data.staffId, data.start, data.end);
+    await admin(data.pin);
+    const { data: r } = await (
+      await staffTable()
+    )("staff_leave")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    const before = r as Row | null;
+    if (!before || before["archived_at"]) return { ok: false as const, error: "Leave not found." };
+    if (data.end < salonToday())
+      return {
+        ok: false as const,
+        error: "The last day of leave can't be in the past. Use Remove instead.",
+      };
+    const staffId = before["staff_id"] as string;
+    const hit = await clashes(staffId, data.start, data.end);
     if (hit.length && !data.confirm) return { ok: false as const, clashes: hit };
     const { error } = await (
       await staffTable()
-    )("staff_leave").insert({
-      staff_id: data.staffId,
-      start_date: data.start,
-      end_date: data.end,
-      reason: data.reason,
-    } as never);
-    if (error) return { ok: false as const, error: "Couldn't save the leave." };
+    )("staff_leave")
+      .update({ start_date: data.start, end_date: data.end, reason: data.reason } as never)
+      .eq("id", data.id);
+    if (error) return { ok: false as const, error: "Couldn't save the changes." };
     const { data: s } = await (
       await staffTable()
     )("staff")
       .select("name")
-      .eq("id", data.staffId)
+      .eq("id", staffId)
       .maybeSingle();
+    const span = (a: unknown, b: unknown) => `${a}${b !== a ? ` to ${b}` : ""}`;
+    await audit({
+      action: "staff.leave_edit",
+      entity: "staff",
+      entityId: staffId,
+      summary: `${(s as Row | null)?.["name"] ?? "Stylist"} leave changed from ${span(before["start_date"], before["end_date"])} to ${span(data.start, data.end)}${data.reason ? ` (${data.reason})` : ""}`,
+      reason: data.reason,
+    });
+    return { ok: true as const, clashes: hit };
+  });
+
+const dayBefore = (iso: string) => {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+};
+const clock = (m: number) =>
+  `${((Math.floor(m / 60) + 11) % 12) + 1}:${String(m % 60).padStart(2, "0")} ${m < 720 ? "AM" : "PM"}`;
+
+export const adminAddLeave = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        pin,
+        staffId: z.string().uuid(),
+        start: isoDate,
+        end: isoDate,
+        /** more separate stretches saved together (dates tapped on the calendar) */
+        more: z
+          .array(z.object({ start: isoDate, end: isoDate }))
+          .max(40)
+          .optional(),
+        reason: z.string().trim().max(120),
+        /** the same leave for other stylists too (e.g. a couple's trip) */
+        alsoFor: z.array(z.string().uuid()).max(10).optional(),
+        /** back on the very last day at this minute (they're away until then that day) */
+        backAt: z.number().int().min(1).max(1439).optional(),
+        confirm: z.boolean().optional(),
+      })
+      .refine(
+        (v) => v.end >= v.start && (v.more ?? []).every((r) => r.end >= r.start),
+        "Leave must end on or after its start",
+      )
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    await admin(data.pin);
+    const uniq = [...new Set([data.staffId, ...(data.alsoFor ?? [])])];
+    const T = await staffTable();
+    const [{ data: team }, { data: hours }] = await Promise.all([
+      T("staff").select("*"),
+      T("staff_working_hours").select("*"),
+    ]);
+    const nameOf = (id: string) =>
+      String(((team ?? []) as Row[]).find((r) => r["id"] === id)?.["name"] ?? "Stylist");
+    // every stretch, in date order; "back at" applies to the very last day
+    const runs = [{ start: data.start, end: data.end }, ...(data.more ?? [])].sort((a, b) =>
+      a.start.localeCompare(b.start),
+    );
+    const first = runs[0]!.start;
+    const last = runs.at(-1)!.end;
+    const back = data.backAt;
+    const full = runs
+      .map((r) => (back != null && r.end === last ? { ...r, end: dayBefore(r.end) } : r))
+      .filter((r) => r.end >= r.start);
+    const inFull = (d: string) => full.some((r) => r.start <= d && d <= r.end);
+    const dow = new Date(last + "T00:00:00Z").getUTCDay();
+    const dayStart = (id: string) => {
+      const h = ((hours ?? []) as Row[]).find(
+        (r) => r["staff_id"] === id && r["day_of_week"] === dow,
+      );
+      const st = (h?.["start_minute"] as number | undefined) ?? 0;
+      return Math.min(st, (back ?? 1) - 1);
+    };
+    // one look per stylist over the whole span, then kept to the chosen days;
+    // others' bookings are labelled with whose they are
+    const hit = (
+      await Promise.all(
+        uniq.map(async (id) =>
+          (await clashes(id, first, last))
+            .filter((c) => inFull(c.date) || (back != null && c.date === last && c.time < back))
+            .map((c) => (id === data.staffId ? c : { ...c, with: nameOf(id) })),
+        ),
+      )
+    ).flat();
+    if (hit.length && !data.confirm) return { ok: false as const, clashes: hit };
+    let made: Row[] = [];
+    if (full.length) {
+      const r = await T("staff_leave")
+        .insert(
+          uniq.flatMap((id) =>
+            full.map((run) => ({
+              staff_id: id,
+              start_date: run.start,
+              end_date: run.end,
+              reason: data.reason,
+            })),
+          ) as never,
+        )
+        .select();
+      if (r.error) return { ok: false as const, error: "Couldn't save the leave." };
+      made = (r.data ?? []) as Row[];
+    }
+    let blocks: Row[] = [];
+    if (back != null) {
+      const label = `Back at ${clock(back)}${data.reason ? ` · ${data.reason}` : ""}`.slice(0, 120);
+      const r = await T("staff_unavailability")
+        .insert(
+          uniq.map((id) => ({
+            staff_id: id,
+            date: last,
+            start_minute: dayStart(id),
+            end_minute: back,
+            reason: label,
+          })) as never,
+        )
+        .select();
+      if (r.error) return { ok: false as const, error: "Couldn't save the return time." };
+      blocks = (r.data ?? []) as Row[];
+    }
+    const span = (r: { start: string; end: string }) =>
+      `${r.start}${r.end !== r.start ? ` to ${r.end}` : ""}`;
     await audit({
       action: "staff.leave",
       entity: "staff",
       entityId: data.staffId,
-      summary: `${(s as Row | null)?.["name"] ?? "Stylist"} on leave ${data.start}${data.end !== data.start ? ` → ${data.end}` : ""}${data.reason ? ` (${data.reason})` : ""}`,
+      summary: `${uniq.map(nameOf).join(" & ")} on leave ${runs.map(span).join(", ")}${back != null ? `, back at ${clock(back)}` : ""}${data.reason ? ` (${data.reason})` : ""}`,
       reason: data.reason,
     });
-    return { ok: true as const, clashes: hit };
+    const mine = made.filter((r) => r["staff_id"] === data.staffId);
+    const myBlock = blocks.find((r) => r["staff_id"] === data.staffId);
+    return {
+      ok: true as const,
+      clashes: hit,
+      id: mine[0]?.["id"] as string | undefined,
+      leaves: mine.map((r) => ({
+        id: r["id"] as string,
+        start: r["start_date"] as string,
+        end: r["end_date"] as string,
+        reason: data.reason,
+      })),
+      block: myBlock
+        ? {
+            id: myBlock["id"] as string,
+            date: last,
+            start: myBlock["start_minute"] as number,
+            end: back!,
+            reason: myBlock["reason"] as string,
+          }
+        : null,
+    };
+  });
+
+/** Days in a span on which this stylist has bookings (dots on the leave calendar). */
+export const adminStaffBusyDays = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z.object({ pin, staffId: z.string().uuid(), from: isoDate, to: isoDate }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    await admin(data.pin);
+    const list = await clashes(data.staffId, data.from, data.to);
+    const count: Record<string, number> = {};
+    for (const c of list) count[c.date] = (count[c.date] ?? 0) + 1;
+    return count;
   });
 
 export const adminAddStaffBlock = createServerFn({ method: "POST" })
@@ -370,15 +539,17 @@ export const adminAddStaffBlock = createServerFn({ method: "POST" })
     const sb = await admin(data.pin);
     const hit = await clashes(data.staffId, data.date, data.date, data.start, data.end);
     if (hit.length && !data.confirm) return { ok: false as const, clashes: hit };
-    const { error } = await (
+    const { data: made, error } = await (
       await staffTable()
-    )("staff_unavailability").insert({
-      staff_id: data.staffId,
-      date: data.date,
-      start_minute: data.start,
-      end_minute: data.end,
-      reason: data.reason,
-    } as never);
+    )("staff_unavailability")
+      .insert({
+        staff_id: data.staffId,
+        date: data.date,
+        start_minute: data.start,
+        end_minute: data.end,
+        reason: data.reason,
+      } as never)
+      .select();
     if (error) return { ok: false as const, error: "Couldn't save." };
     const { data: s } = await (
       await staffTable()
@@ -393,7 +564,13 @@ export const adminAddStaffBlock = createServerFn({ method: "POST" })
       summary: `${(s as Row | null)?.["name"] ?? "Stylist"} unavailable ${data.date} ${label(data.start)}–${label(data.end)}${data.reason ? ` (${data.reason})` : ""}`,
       reason: data.reason,
     });
-    return { ok: true as const, clashes: hit };
+    return {
+      ok: true as const,
+      clashes: hit,
+      id: Array.isArray(made)
+        ? ((made[0] as Row | undefined)?.["id"] as string | undefined)
+        : undefined,
+    };
   });
 
 /** Removes a leave period or a temporary block (logged). */
@@ -549,6 +726,77 @@ export const adminAddClosure = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Changes a closure's dates, hours or reason (one closure record). */
+export const adminUpdateClosure = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        pin,
+        id: z.string().uuid(),
+        kind: z.enum(["days", "open", "hours"]),
+        start: isoDate,
+        end: isoDate.optional(),
+        startMinute: minute.optional(),
+        endMinute: minute.optional(),
+        reason: z.string().trim().max(120),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    await admin(data.pin);
+    const table = (await staffTable())("salon_closures");
+    const { data: r } = await (
+      await staffTable()
+    )("salon_closures")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!r || (r as Row)["reopened_at"]) return { ok: false as const, error: "Closure not found." };
+    const before = r as Row;
+    let patch: Row;
+    if (data.kind === "hours") {
+      if (data.startMinute == null || data.endMinute == null || data.endMinute <= data.startMinute)
+        return { ok: false as const, error: "Choose the hours (end after start)." };
+      patch = {
+        start_date: data.start,
+        end_date: data.start,
+        start_minute: data.startMinute,
+        end_minute: data.endMinute,
+      };
+    } else if (data.kind === "open") {
+      patch = { start_date: data.start, end_date: null, start_minute: null, end_minute: null };
+    } else {
+      if (!data.end || data.end < data.start)
+        return { ok: false as const, error: "Choose the dates (end on or after start)." };
+      if (data.end < salonToday())
+        return {
+          ok: false as const,
+          error: "The last closed date can't be in the past. Use Reopen instead.",
+        };
+      patch = { start_date: data.start, end_date: data.end, start_minute: null, end_minute: null };
+    }
+    const { error } = await table
+      .update({ ...patch, reason: data.reason } as never)
+      .eq("id", data.id);
+    if (error) return { ok: false as const, error: "Couldn't save the changes." };
+    const describe = (x: Row) =>
+      x["start_minute"] != null
+        ? `${x["start_date"]} ${label(x["start_minute"] as number)}–${label(x["end_minute"] as number)}`
+        : x["end_date"] == null
+          ? `from ${x["start_date"]} until further notice`
+          : x["end_date"] === x["start_date"]
+            ? `${x["start_date"]}`
+            : `${x["start_date"]} → ${x["end_date"]}`;
+    await audit({
+      action: "salon.close_edit",
+      entity: "date",
+      entityId: data.start,
+      summary: `Salon closure changed: ${describe(before)} → ${describe({ ...before, ...patch })}${data.reason ? ` (${data.reason})` : ""}`,
+      reason: data.reason,
+    });
+    return { ok: true as const };
+  });
+
 /** Reopens: a closure that already began ends yesterday; a future one is withdrawn. */
 export const adminReopen = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ pin, id: z.string().uuid() }).parse(d))
@@ -588,7 +836,7 @@ export const adminReopen = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/* ── a service's stylist rule (e.g. Bhargav's Signature → Bhargav) ── */
+/* ── a service's stylist rule (e.g. Kiran's Signature → Kiran) ── */
 
 /** The stylist rule for one service record, with the stylists to choose from. */
 export const adminServiceRule = createServerFn({ method: "POST" })
@@ -605,7 +853,11 @@ export const adminServiceRule = createServerFn({ method: "POST" })
     const stylists = (store.staff as Row[])
       .filter((r) => r["active"] !== false && !r["archived_at"])
       .map((r) => ({ id: r["id"] as string, name: r["name"] as string }));
-    return { preferred: rule?.preferred ?? null, fallback: rule?.fallback ?? [], stylists };
+    return {
+      preferred: rule ? (rule.only ? `only:${rule.preferred}` : rule.preferred) : null,
+      fallback: rule?.fallback ?? [],
+      stylists,
+    };
   });
 
 /** "any" = every qualified stylist; otherwise prefer this stylist (others only if the guest chooses). */
@@ -628,10 +880,15 @@ export const adminSetServiceRule = createServerFn({ method: "POST" })
       .maybeSingle();
     const value = { ...((cur?.value as Record<string, unknown>) ?? {}) };
     value[data.id] =
-      data.preferred === "any" ? { mode: "any" } : { mode: "preferred", stylist: data.preferred };
+      data.preferred === "any"
+        ? { mode: "any" }
+        : data.preferred.startsWith("only:")
+          ? { mode: "only", stylist: data.preferred.slice(5) }
+          : { mode: "preferred", stylist: data.preferred };
     const { error } = await sb
       .from("site_settings")
       .upsert({ key: "service_rules", value: value as never });
+    (await import("./settings-cache.server")).forgetSetting("service_rules");
     if (error) return { ok: false as const, error: "Couldn't save the stylist rule." };
     await audit({
       action: "service.stylist_rule",
@@ -640,7 +897,9 @@ export const adminSetServiceRule = createServerFn({ method: "POST" })
       summary:
         data.preferred === "any"
           ? "Service open to any qualified stylist"
-          : "Service prefers a specific stylist",
+          : data.preferred.startsWith("only:")
+            ? "Service only with one stylist (closed while they're away)"
+            : "Service prefers a specific stylist",
       before: cur?.value ?? null,
       after: value,
     });

@@ -43,9 +43,9 @@ export function computeSlots(i: AvailabilityInput): Slot[] {
   if (plan.closed || plan.close <= plan.open || i.interval <= 0) return [];
   const out: Slot[] = [];
   const need = Math.max(1, i.duration);
-  for (let m = plan.open; m < plan.close; m += i.interval) {
-    // Any start before closing is offered: a longer service may finish after
-    // closing (the salon's choice). Breaks are still fully protected.
+  // The closing time is the last start time offered ("10 to 7" = 10:00 … 7:00):
+  // a service may finish after it (the salon's choice). Breaks stay protected.
+  for (let m = plan.open; m <= plan.close; m += i.interval) {
     const serviceEnd = m + need;
     const heldEnd = serviceEnd + Math.max(0, i.buffer);
     let reason: SlotReason | null = null;
@@ -81,7 +81,7 @@ export type StaffDay = {
   start: number;
   end: number;
   breaks: Range[]; // their breaks (lunch etc.)
-  blocks: Range[]; // temporary unavailability
+  blocks: (Range & { id?: string })[]; // temporary unavailability (id: the row, for unblocking)
   busy: Range[]; // their active appointments (incl. buffers)
 };
 
@@ -108,7 +108,8 @@ export function staffReason(
   heldEnd: number,
   allowOverrun: boolean,
 ): SlotReason | null {
-  if (m < s.start || m >= s.end || (!allowOverrun && serviceEnd > s.end)) return "closing";
+  // a stylist's end time is their last start time, like the salon's closing time
+  if (m < s.start || m > s.end || (!allowOverrun && serviceEnd > s.end)) return "closing";
   if (s.breaks.some((b) => overlaps(b, m, serviceEnd))) return "break";
   if (s.blocks.some((b) => overlaps(b, m, heldEnd))) return "blocked";
   if (s.busy.some((b) => overlaps(b, m, heldEnd))) return "booked";
@@ -122,7 +123,7 @@ export function computeStaffSlots(i: StaffAvailabilityInput): StaffSlot[] {
   const pool = i.choice === "any" ? i.staff : i.staff.filter((s) => s.id === i.choice);
   const out: StaffSlot[] = [];
   const need = Math.max(1, i.duration);
-  for (let m = plan.open; m < plan.close; m += i.interval) {
+  for (let m = plan.open; m <= plan.close; m += i.interval) {
     const serviceEnd = m + need;
     const heldEnd = serviceEnd + Math.max(0, i.buffer);
     let reason: SlotReason | null = null;

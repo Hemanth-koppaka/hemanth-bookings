@@ -1,21 +1,24 @@
+import { SiteCredit } from "@/components/site-credit";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight, Clock, MapPin, Instagram, MessageCircle, Phone } from "lucide-react";
 import { BookCTA, InfoPage, InfoTitle } from "@/components/info-page";
 import { openDaysLabel, prettyPhone } from "@/components/desktop";
-import { CLOSE_MINUTE, OPEN_MINUTE, minuteLabel } from "@/lib/salon";
+import { closedDaysLabel, minuteLabel, typicalHours } from "@/lib/salon";
 import { BUSINESS } from "@/lib/salon";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — Hair by Bhargav" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { title: "Contact — Hair by Kiran" },
       {
         name: "description",
         content:
-          "Call or WhatsApp Hair by Bhargav at KPHB Phase 9, Kukatpally, Hyderabad, or book online in under a minute.",
+          "Call or WhatsApp Hair by Kiran at Sector 9, Midtown, Hyderabad, or book online in under a minute.",
       },
-      { property: "og:title", content: "Contact — Hair by Bhargav" },
-      { property: "og:description", content: "Call, WhatsApp or find us in KPHB Phase 9." },
+      { property: "og:title", content: "Contact — Hair by Kiran" },
+      { property: "og:description", content: "Call, WhatsApp or find us in Sector 9." },
     ],
   }),
   component: ContactScreen,
@@ -42,16 +45,16 @@ function ContactScreen() {
     },
     {
       icon: Instagram,
-      label: "Instagram · Bhargav's work",
-      value: `@${BUSINESS.instagram.bhargav.handle}`,
-      href: BUSINESS.instagram.bhargav.url,
+      label: "Instagram · Kiran's work",
+      value: `@${BUSINESS.instagram.kiran.handle}`,
+      href: BUSINESS.instagram.kiran.url,
       external: true,
     },
     { icon: MapPin, label: "Visit", value: BUSINESS.address, href: maps, external: true },
     {
       icon: Clock,
       label: "Hours",
-      value: `${openDaysLabel()} · ${minuteLabel(OPEN_MINUTE)} – ${minuteLabel(CLOSE_MINUTE)} · Closed ${BUSINESS.closedDay}`,
+      value: `${openDaysLabel()} · ${minuteLabel(typicalHours().open)} – ${minuteLabel(typicalHours().close)}${closedDaysLabel() ? ` · Closed ${closedDaysLabel()}` : ""}`,
       href: "/hours",
       external: false,
     },
@@ -60,7 +63,7 @@ function ContactScreen() {
   return (
     <InfoPage
       label="Contact"
-      image="/team/bhargav-dog.webp"
+      image="/team/kiran-dog.webp"
       imagePos="50% 0%"
       panelEyebrow="We'd love to see you"
       panelTitle={
@@ -107,6 +110,7 @@ function ContactScreen() {
       </ul>
 
       <BookCTA className="mt-10" />
+      <SiteCredit className="mt-8" />
     </InfoPage>
   );
 }

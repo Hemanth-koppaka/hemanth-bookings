@@ -44,18 +44,41 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// Browser security headers for every page. Pages may only be framed by the
+// site itself and the Lovable editor preview (blocks click-jacking of the admin
+// desk); plugins, foreign <base> tags and cross-site form posts are refused; and
+// powerful browser features stay off except the mic/camera the site uses.
+const PAGE_HEADERS: Record<string, string> = {
+  "content-security-policy":
+    "frame-ancestors 'self' https://lovable.dev https://*.lovable.dev https://*.lovable.app https://*.lovableproject.com; object-src 'none'; base-uri 'self'; form-action 'self'",
+  "permissions-policy":
+    "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), interest-cohort=()",
+  "x-content-type-options": "nosniff",
+  "referrer-policy": "strict-origin-when-cross-origin",
+};
+
+function withSecurityHeaders(response: Response): Response {
+  if (response.status === 101) return response; // live socket upgrade
+  if (!(response.headers.get("content-type") ?? "").includes("text/html")) return response;
+  const out = new Response(response.body, response);
+  for (const [k, v] of Object.entries(PAGE_HEADERS)) if (!out.headers.has(k)) out.headers.set(k, v);
+  return out;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return withSecurityHeaders(await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return withSecurityHeaders(
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      );
     }
   },
 };

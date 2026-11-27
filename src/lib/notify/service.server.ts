@@ -110,7 +110,7 @@ export function settingsFromRow(r: Row): NotifySettings {
     email: {
       provider: (r["email_provider"] as string) === "resend" ? "resend" : "brevo",
       from: (r["email_from"] as string) || "",
-      fromName: (r["email_from_name"] as string) || "Hair by Bhargav",
+      fromName: (r["email_from_name"] as string) || "Hair by Kiran",
     },
   };
 }
@@ -154,6 +154,7 @@ export function factsFromBooking(
     customerName: customer.name?.trim() || "Guest",
     customerPhone: toE164(customer.phone ?? ""),
     customerEmail: (customer.email ?? "").trim(),
+    stylist: ((r["meta"] as Row | null)?.["staff_name"] as string | undefined) ?? "",
     date: r["date"] as string,
     time: r["time"] as number,
     services: snap.map((s) => s.name),
@@ -298,7 +299,7 @@ async function attemptEmail(
   const tries = row.attempt_count + 1;
   const r = await sendEmail(s.email, {
     to: row.recipient_email ?? "",
-    subject: row.payload.subject ?? "Hair by Bhargav",
+    subject: row.payload.subject ?? "Hair by Kiran",
     html: row.payload.html ?? "",
     text: row.payload.text ?? "",
   });
@@ -508,6 +509,9 @@ export type EventContext = {
   /** Who caused it: admin changes don't alert the admin about their own action. */
   actor: "guest" | "admin";
   previous?: { date: string; time: number } | undefined;
+  previousPrice?: number | undefined;
+  occurrence?: string | undefined;
+  snapshot?: Row | undefined;
 };
 
 async function loadBooking(reference: string): Promise<Row | null> {
@@ -528,21 +532,29 @@ export async function notifyBookingEvent(
   try {
     const s = await loadSettings();
     if (!s) return;
-    const r = await loadBooking(reference);
+    const r = ctx.snapshot ?? (await loadBooking(reference));
     if (!r) return;
+    if (r["status"] !== "confirmed" && event !== "BOOKING_CANCELLED") return;
     const facts = factsFromBooking(r, {
       location: await locationText(),
       siteUrl: s.publicSiteUrl,
       previous: ctx.previous,
     });
     const consent = Boolean(r["notify_consent"]);
+    facts.previousPrice = ctx.previousPrice;
     const occurrence =
-      event === "BOOKING_RESCHEDULED" ? slotStamp(facts.date, facts.time) : undefined;
+      ctx.occurrence ??
+      (event === "BOOKING_RESCHEDULED" ? slotStamp(facts.date, facts.time) : undefined);
 
     const customerOn =
       event === "BOOKING_CONFIRMED"
         ? s.customerConfirmation
-        : event === "BOOKING_RESCHEDULED" || event === "BOOKING_CANCELLED"
+        : event === "BOOKING_RESCHEDULED" ||
+            event === "BOOKING_CANCELLED" ||
+            event === "BOOKING_PRICE_CHANGED" ||
+            event === "BOOKING_UPDATED" ||
+            event === "BOOKING_COMPLETED" ||
+            event === "NO_SHOW"
           ? s.customerUpdates
           : false;
     const adminOn =
@@ -554,7 +566,10 @@ export async function notifyBookingEvent(
           : false);
 
     const jobs: Promise<void>[] = [];
-    if (customerOn && facts.customerPhone) {
+    // SMS/WhatsApp are paid and switched off by default: with no channel on there
+    // is nothing to send, so no log rows are written (each row is database calls,
+    // and Cloudflare's free plan allows 50 per request).
+    if (customerOn && facts.customerPhone && channelsFor("customer", s, consent).length) {
       jobs.push(
         deliver({
           s,
@@ -571,7 +586,7 @@ export async function notifyBookingEvent(
       );
     }
     const adminPhone = toE164(s.adminPhone);
-    if (adminOn && adminPhone) {
+    if (adminOn && adminPhone && channelsFor("admin", s, true).length) {
       jobs.push(
         deliver({
           s,
@@ -708,6 +723,9 @@ async function scheduleReminders(r: Row, s: NotifySettings, facts: BookingFacts,
  * requests. Returns counts for the cron log.
  */
 export async function dispatchDue(limit = 40) {
+  const appointmentChanges = await import("../appointment-change.server").then((C) =>
+    C.dispatchAppointmentChanges(),
+  );
   // guests' free phone reminders (independent of the message settings)
   const guestPush = await import("../push.server")
     .then((P) => P.guestReminders())
@@ -716,7 +734,8 @@ export async function dispatchDue(limit = 40) {
       return -1;
     });
   const s = await loadSettings();
-  if (!s) return { ok: false, reason: "notifications not set up", guestPush };
+  if (!s)
+    return { ok: true, reason: "email notifications not set up", guestPush, appointmentChanges };
   const nowIso = new Date().toISOString();
   const counts = { reminders: 0, retries: 0, stale: 0, cancelled: 0 };
   const location = await locationText();
@@ -760,9 +779,11 @@ export async function dispatchDue(limit = 40) {
             vars: templateVars("customer", row.event_type, facts),
             text: messageText("customer", row.event_type, facts),
           };
-    await patchRow(row.id, { payload });
+    const recipient_email = facts.customerEmail ?? "";
+    const recipient_phone = facts.customerPhone;
+    await patchRow(row.id, { payload, recipient_email, recipient_phone });
     if (!(await claim(row.id, "scheduled"))) continue;
-    const fresh = { ...row, payload };
+    const fresh = { ...row, payload, recipient_email, recipient_phone };
     const res = await attempt(fresh, s);
     counts.reminders++;
     if (res.outcome !== "sent" && s.fallback && row.channel === "whatsapp") {
@@ -925,8 +946,8 @@ export async function morningSummary(s: NotifySettings, force = false): Promise<
   });
   const total = lines.reduce((n, l) => n + l.total, 0);
   const subject = list.length
-    ? `Today at Hair by Bhargav: ${list.length} appointment${list.length > 1 ? "s" : ""}`
-    : "Today at Hair by Bhargav: no appointments yet";
+    ? `Today at Hair by Kiran: ${list.length} appointment${list.length > 1 ? "s" : ""}`
+    : "Today at Hair by Kiran: no appointments yet";
   const text = [
     `${day}`,
     list.length
@@ -1020,7 +1041,7 @@ export async function sendTest(
     customerPhone: phone,
     date: new Date(Date.now() + 330 * 60_000 + 86_400_000).toISOString().slice(0, 10),
     time: 16 * 60 + 30,
-    services: ["Bhargav's Signature"],
+    services: ["Kiran's Signature"],
     minutes: 30,
     price: 1000,
     priceFrom: false,

@@ -63,10 +63,14 @@ export const DEFAULT_RULES: BookingRules = {
 
 /** Live booking rules (admin → Booking rules), with safe defaults. */
 export async function loadRules(): Promise<BookingRules> {
-  const { data } = await sb
-    .from("site_settings")
-    .select("key, value")
-    .in("key", ["booking", "booking_rules"]);
+  const { cachedSetting } = await import("./settings-cache.server");
+  const data = await cachedSetting("booking_rules", async () => {
+    const { data: rows } = await sb
+      .from("site_settings")
+      .select("key, value")
+      .in("key", ["booking", "booking_rules"]);
+    return rows ?? [];
+  });
   const get = (k: string) => (data?.find((r) => r.key === k)?.value ?? {}) as Partial<BookingRules>;
   const legacy = get("booking") as { accepting?: boolean; maxAdvanceDays?: number };
   const r = { ...DEFAULT_RULES, ...legacy, ...get("booking_rules") };
@@ -293,6 +297,7 @@ export async function staffDay(
           label: (r["label"] as string) || "Break",
         })),
       blocks: mine((unavail.data ?? []) as R[]).map((r) => ({
+        id: (r["id"] as string | undefined) ?? "",
         start: r["start_minute"] as number,
         end: r["end_minute"] as number,
         label: (r["reason"] as string) || "Unavailable",
@@ -411,11 +416,22 @@ export type DayAvailability = {
   /** Stylists who can do the chosen services (multi-stylist salons). */
   stylists?: Stylist[];
   /**
-   * The chosen services prefer one stylist (e.g. Bhargav's Signature → Bhargav):
+   * The chosen services prefer one stylist (e.g. Kiran's Signature → Kiran):
    * booked with them unless the guest explicitly picks another stylist.
    */
   preferred?: { id: string; name: string };
+  /**
+   * The chosen services are only with one stylist, who isn't working this day
+   * (`off`: not taking bookings at all right now).
+   */
+  away?: { name: string; service: string; off: boolean };
 };
+
+/** The name of the first "only one stylist" service among these (for messages). */
+function signatureName(serviceIds: string[], rules: Record<string, ServiceRule>) {
+  const id = serviceIds.find((x) => rules[x]?.only);
+  return (id && (findService("men", id) ?? findService("women", id))?.name) || "This service";
+}
 
 /** Everything the time picker needs for one day. */
 export async function availability(
@@ -481,6 +497,17 @@ export async function availability(
     now: date === now.iso ? now.minute : null,
     notice: options.staff ? 0 : rules.minNoticeMinutes,
   };
+  // a service only one stylist performs (Kiran's Signature) is closed on days
+  // they aren't working: on leave, their day off, or not taking bookings
+  if (team && pref?.only && !plan.closed && !team.working.some((w) => w.id === pref.preferred)) {
+    const svcName = signatureName(options.serviceIds ?? [], svcRules);
+    return {
+      ...base,
+      slots: [],
+      bookable: false,
+      away: { name: pref.preferredName, service: svcName, off: Boolean(pref.off) },
+    };
+  }
   if (team) {
     let slots: StaffSlot[] = computeStaffSlots({
       ...common,
@@ -541,7 +568,7 @@ export async function checkTime(
     exclude?: string[];
   } = {},
 ): Promise<{ ok: true; staffId?: string | null } | { ok: false; error: string }> {
-  // A service with a preferred stylist (Bhargav's Signature → Bhargav) is booked
+  // A service with a preferred stylist (Kiran's Signature → Kiran) is booked
   // with that stylist unless the guest explicitly chose someone from its pool:
   // "any" never quietly becomes someone else.
   let implicitPreferred: ServiceRule | null = null;
@@ -558,6 +585,13 @@ export async function checkTime(
   const day = await availability(date, q, rules, options);
   if (day.closed) return { ok: false, error: "The studio is closed that day." };
   if (day.message) return { ok: false, error: day.message };
+  if (day.away)
+    return {
+      ok: false,
+      error: day.away.off
+        ? `${day.away.service} is only with ${day.away.name}, who isn't taking bookings right now.`
+        : `${day.away.name} is away on this day, and ${day.away.service} is only with ${day.away.name}. Please choose another date.`,
+    };
   const slot = day.slots.find((s) => s.minute === time);
   if (!slot)
     return { ok: false, error: "That time is outside opening hours. Please choose another time." };
